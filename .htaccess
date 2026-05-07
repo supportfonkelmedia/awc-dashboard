@@ -1,0 +1,11 @@
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Web root is this folder (parent of `public`). Internally route everything into
+    # `public/` so you do not need `/public` in the browser URL.
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>

@@ -1,0 +1,92 @@
+{
+  "source_export": "7t_export_20260611_072424.json",
+  "schema_version": "2026-06-11T07:24:24.767439+00:00",
+  "catalog": "7t_db7t_7866",
+  "schema": "dbo",
+  "awc_admin_code": "alaw",
+  "kpi_tables": [
+    "Administraties",
+    "Artikel_Magazijnlocaties",
+    "Magazijn_Plaatscodes",
+    "Magazijn_Plaatssoorten",
+    "Magazijnen",
+    "Ontvangsten",
+    "Orderregel_Leverdata",
+    "Orderregels",
+    "Orders",
+    "Telling_Locaties",
+    "Tellingen"
+  ],
+  "query_fields": {
+    "bezetting_locaties": [
+      "ID",
+      "Naam",
+      "Magazijn_ID",
+      "Geblokkeerd_Voor_Picken",
+      "Extern",
+      "Magazijn_Plaatssoort_ID"
+    ],
+    "bezetting_palletplaatsen": [
+      "ID",
+      "Aantal_Palletplaatsen"
+    ],
+    "bezetting_magazijnen": [
+      "ID",
+      "Administratie_ID"
+    ],
+    "bezetting_voorraad": [
+      "Magazijn_Plts_ID",
+      "Technische_Voorraad",
+      "Er_Is_Voorraad"
+    ],
+    "ontvangsten": [
+      "ID",
+      "Datum",
+      "Aankomst_Leverancier",
+      "Ontvangst_Definitief",
+      "Relatie_ID",
+      "MutatieDatum",
+      "Status",
+      "Administratie_ID"
+    ],
+    "telling_locaties": [
+      "ID",
+      "Telling_ID",
+      "Totaal_Aantal_Verwacht",
+      "Totaal_Aantal_Geteld",
+      "Totaal_Aantal_Correctie",
+      "Telling_Gereed",
+      "Datum_Telling_Gereed"
+    ],
+    "tellingen": [
+      "ID",
+      "Administratie_ID"
+    ],
+    "leverdata": [
+      "ID",
+      "Orderregel_ID",
+      "Informatief",
+      "Oude_Leverdatum",
+      "Nieuwe_Leverdatum",
+      "MutatieDatum"
+    ],
+    "orderregels": [
+      "ID",
+      "Order_ID"
+    ],
+    "orders": [
+      "ID",
+      "Administratie_ID"
+    ],
+    "administraties": [
+      "ID",
+      "Code",
+      "Naam"
+    ]
+  },
+  "assumed_columns": {
+    "Administraties": [
+      "Code"
+    ]
+  }
+}

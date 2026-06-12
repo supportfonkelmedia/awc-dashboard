@@ -1,7 +1,12 @@
 <?php
 
+use App\Http\Controllers\AwcDashboardController;
 use App\Http\Controllers\MtDashboardController;
+use App\Http\Controllers\MtWmsDataController;
+use App\Http\Controllers\Peliqan7tDataController;
+use App\Http\Controllers\Peliqan7tDebugController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Middleware\EnsureDebugMode;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -23,9 +28,17 @@ Route::get('/mt-dashboard', MtDashboardController::class)
     ->middleware(['auth', 'verified'])
     ->name('mt.dashboard');
 
-Route::get('/awc-dashboard', function () {
-    return Inertia::render('TeamRapportage', ['teamCode' => 'AWC']);
-})->middleware(['auth', 'verified'])->name('awc.dashboard');
+Route::get('/mt-dashboard/wms', MtWmsDataController::class)
+    ->middleware(['auth', 'verified'])
+    ->name('mt.wms');
+
+Route::get('/awc-dashboard', AwcDashboardController::class)
+    ->middleware(['auth', 'verified'])
+    ->name('awc.dashboard');
+
+Route::get('/awc-dashboard/7t', Peliqan7tDataController::class)
+    ->middleware(['auth', 'verified'])
+    ->name('awc.7t');
 
 Route::get('/afc-dashboard', function () {
     return Inertia::render('TeamRapportage', ['teamCode' => 'AFC']);
@@ -62,6 +75,16 @@ Route::middleware(['auth', 'verified'])
         Route::get('/gebruikers', function () {
             return Inertia::render('OperationalModule', ['module' => 'users']);
         })->name('users');
+    });
+
+Route::middleware(['auth', 'verified', EnsureDebugMode::class])
+    ->prefix('debug')
+    ->name('debug.')
+    ->group(function () {
+        Route::get('/peliqan/7t', [Peliqan7tDebugController::class, 'index'])
+            ->name('peliqan.7t');
+        Route::get('/peliqan/7t/call', [Peliqan7tDebugController::class, 'call'])
+            ->name('peliqan.7t.call');
     });
 
 Route::middleware('auth')->group(function () {

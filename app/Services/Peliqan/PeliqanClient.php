@@ -30,6 +30,20 @@ class PeliqanClient
     }
 
     /**
+     * Fast 7T WMS KPI aggregates from the dedicated direct-SQL 7T endpoint.
+     *
+     * @param  array<string, string|int|null>  $query
+     * @return array<string, mixed>
+     */
+    public function fetch7tWms(array $query = []): array
+    {
+        $url = (string) config('peliqan.awc_7t_url', '');
+        $timeout = (int) config('peliqan.wms_timeout', config('peliqan.timeout', 60));
+
+        return $this->getJson($url, $query, $timeout);
+    }
+
+    /**
      * MT dashboard handler (?bundle=cashweb|hubspot|sprinter|all + filters).
      *
      * @param  array<string, string|int|null>  $query
@@ -38,6 +52,19 @@ class PeliqanClient
     public function fetchMt(array $query = []): array
     {
         $url = (string) config('peliqan.mt_data_url', '');
+
+        return $this->getJson($url, $query);
+    }
+
+    /**
+     * 7T schema export handler (?bundle=summary|kpi|full|table + filters).
+     *
+     * @param  array<string, string|int|null>  $query
+     * @return array<string, mixed>
+     */
+    public function fetch7tSchema(array $query = []): array
+    {
+        $url = (string) config('peliqan.schema_7t_url', '');
 
         return $this->getJson($url, $query);
     }
@@ -57,11 +84,11 @@ class PeliqanClient
      * @param  array<string, string|int|null>  $query
      * @return array<string, mixed>
      */
-    protected function getJson(string $url, array $query): array
+    protected function getJson(string $url, array $query, ?int $timeoutSeconds = null): array
     {
-        $url = trim($url);
+        $url = $this->normalizeUrl($url);
         if ($url === '') {
-            throw new PeliqanException('Peliqan URL is not configured (check PELIQAN_AWC_DATA_URL / PELIQAN_MT_DATA_URL).');
+            throw new PeliqanException('Peliqan URL is not configured (check PELIQAN_*_URL in .env).');
         }
 
         if ($this->token === '') {
@@ -69,8 +96,9 @@ class PeliqanClient
         }
 
         $query = $this->filterQuery($query);
+        $timeout = $timeoutSeconds ?? $this->timeout;
 
-        $response = Http::timeout($this->timeout)
+        $response = Http::timeout($timeout)
             ->acceptJson()
             ->withHeaders([
                 'Authorization' => 'JWT '.$this->token,
@@ -78,6 +106,18 @@ class PeliqanClient
             ->get($url, $query);
 
         return $this->decodeSuccessfulResponse($response, $url);
+    }
+
+    protected function normalizeUrl(string $url): string
+    {
+        $url = trim($url);
+
+        // Common .env typo: PELIQAN_*_URL==https://… leaves a leading "=" in the value.
+        while (str_starts_with($url, '=')) {
+            $url = ltrim($url, '=');
+        }
+
+        return trim($url);
     }
 
     /**
@@ -106,17 +146,31 @@ class PeliqanClient
     protected function decodeSuccessfulResponse(Response $response, string $url): array
     {
         if (! $response->successful()) {
+            $body = mb_substr($response->body(), 0, 2000);
+
             Log::warning('Peliqan HTTP error', [
                 'url' => $url,
                 'status' => $response->status(),
-                'body' => mb_substr($response->body(), 0, 2000),
+                'body' => $body,
             ]);
 
+            $detail = '';
+            /** @var array<string, mixed>|null $errJson */
+            $errJson = $response->json();
+            if (is_array($errJson)) {
+                $msg = $errJson['message'] ?? $errJson['error'] ?? null;
+                if (is_string($msg) && $msg !== '') {
+                    $detail = ': '.$msg;
+                }
+            } elseif ($body !== '') {
+                $detail = ': '.mb_substr(trim($body), 0, 300);
+            }
+
             throw new PeliqanException(
-                'Peliqan request failed: HTTP '.$response->status(),
+                'Peliqan request failed: HTTP '.$response->status().$detail,
                 0,
                 null,
-                null,
+                is_array($errJson ?? null) ? $errJson : null,
                 $response->status(),
             );
         }

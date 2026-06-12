@@ -1,8 +1,9 @@
 <script setup>
 import RapportageKpiCard from '@/Components/Management/RapportageKpiCard.vue';
+import { useAwcPeliqanData } from '@/composables/useAwcPeliqanData';
 import ManagementLayout from '@/Layouts/ManagementLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, ref, toRef } from 'vue';
 import Card from 'primevue/card';
 import DatePicker from 'primevue/datepicker';
 import MultiSelect from 'primevue/multiselect';
@@ -13,7 +14,22 @@ const props = defineProps({
         required: true,
         validator: (v) => ['AWC', 'AFC', 'ACC'].includes(v),
     },
+    peliqan: { type: Object, default: null },
+    peliqanError: { type: String, default: null },
 });
+
+const isAwcLive = computed(() => props.teamCode === 'AWC');
+
+const {
+    occupancy,
+    storageLeadTime,
+    openTickets,
+    npsScore,
+    wmsAvailable,
+    schema,
+    fmtPct,
+    fmtDays,
+} = useAwcPeliqanData(toRef(props, 'peliqan'));
 
 const filterLabel =
     'mb-1 block text-[11px] font-semibold uppercase tracking-wider text-gray-500';
@@ -40,6 +56,33 @@ const pageTitle = computed(
     () => `Dashboard Rapportage · ${props.teamCode}`,
 );
 
+const occupancyValue = computed(() => {
+    if (!isAwcLive.value || occupancy.value.rate == null) return '78%';
+    return fmtPct(occupancy.value.rate);
+});
+
+const occupancySublabel = computed(() => {
+    if (!isAwcLive.value || occupancy.value.rate == null) return 'stabiel';
+    const { occupied, total } = occupancy.value;
+    return total ? `${occupied}/${total} locaties` : 'geen data';
+});
+
+const ticketsValue = computed(() => {
+    if (!isAwcLive.value || openTickets.value == null) return '156';
+    return String(openTickets.value);
+});
+
+const leadTimeValue = computed(() => {
+    if (!isAwcLive.value || storageLeadTime.value == null) return '2,3 dgn';
+    return fmtDays(storageLeadTime.value);
+});
+
+const npsDisplay = computed(() => {
+    if (!isAwcLive.value || npsScore.value == null) return '+56';
+    const v = npsScore.value;
+    return v >= 0 ? `+${v}` : String(v);
+});
+
 const sharedKpis = computed(() => [
     {
         title: 'Bruto marge per FTE',
@@ -58,36 +101,42 @@ const sharedKpis = computed(() => [
     },
     {
         title: '# Tickets',
-        value: '156',
-        sublabel: '+12',
-        sublabelTone: 'positive',
-        sparkData: [118, 125, 132, 138, 142, 148, 152, 156],
+        value: ticketsValue.value,
+        sublabel: isAwcLive.value ? 'open' : '+12',
+        sublabelTone: isAwcLive.value ? 'neutral' : 'positive',
+        sparkData: isAwcLive.value
+            ? undefined
+            : [118, 125, 132, 138, 142, 148, 152, 156],
         footerInitial: 'S',
         footerName: 'Sanne',
-        footerSource: 'Zendesk',
+        footerSource: isAwcLive.value ? 'HubSpot' : 'Zendesk',
         footerFrequency: 'Wekelijks',
     },
     {
         title: '# Occupancy Rate',
-        value: '78%',
-        sublabel: 'stabiel',
+        value: occupancyValue.value,
+        sublabel: occupancySublabel.value,
         sublabelTone: 'neutral',
-        sparkData: [74, 75, 76, 76.5, 77, 77.5, 78, 78],
+        sparkData: isAwcLive.value
+            ? undefined
+            : [74, 75, 76, 76.5, 77, 77.5, 78, 78],
         footerInitial: 'T',
         footerName: 'Team Ops',
-        footerSource: 'WMS',
+        footerSource: '7T WMS',
         footerFrequency: 'Dagelijks',
     },
     {
         title: `Storage Lead Time (${props.teamCode})`,
-        value: '2,3 dgn',
-        sublabel: 'indicatief',
+        value: leadTimeValue.value,
+        sublabel: isAwcLive.value ? '7T leverdata' : 'indicatief',
         sublabelTone: 'neutral',
-        sparkData: [3.4, 3.1, 2.9, 2.8, 2.65, 2.5, 2.4, 2.3],
-        sparkDotted: true,
+        sparkData: isAwcLive.value
+            ? undefined
+            : [3.4, 3.1, 2.9, 2.8, 2.65, 2.5, 2.4, 2.3],
+        sparkDotted: !isAwcLive.value,
         footerInitial: 'K',
         footerName: 'Karin',
-        footerSource: 'Excel',
+        footerSource: isAwcLive.value ? '7T WMS' : 'Excel',
         footerFrequency: 'Wekelijks',
     },
 ]);
@@ -171,6 +220,28 @@ const filterCoId = computed(() => `filter-co-${props.teamCode}`);
                         :max-selected-labels="2"
                     />
                 </div>
+            </div>
+
+            <div
+                v-if="isAwcLive && peliqanError"
+                class="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800"
+            >
+                <p class="font-semibold">Peliqan (AWC)</p>
+                <p class="mt-1">{{ peliqanError }}</p>
+            </div>
+
+            <div
+                v-else-if="isAwcLive && peliqan && !wmsAvailable"
+                class="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-900"
+            >
+                <p class="font-semibold">7T WMS niet bereikbaar</p>
+                <p class="mt-1">
+                    Trino-catalog
+                    <code class="rounded bg-white/70 px-1">{{
+                        schema?.catalog ?? '7t_db7t_7866'
+                    }}</code>
+                    — controleer de Peliqan API handler.
+                </p>
             </div>
 
             <div
@@ -261,7 +332,7 @@ const filterCoId = computed(() => `filter-co-${props.teamCode}`);
                                 </button>
                             </div>
                             <p class="mt-2 text-3xl font-bold text-gray-900">
-                                +56
+                                {{ npsDisplay }}
                             </p>
                             <p class="mt-3 border-t border-gray-100 pt-3 text-xs text-gray-500">
                                 CX · Maandelijks

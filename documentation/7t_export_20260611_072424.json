@@ -1,0 +1,3262 @@
+{
+  "ok": true,
+  "exported_at": "2026-06-11T07:24:24.767439+00:00",
+  "catalog": "7t_db7t_7866",
+  "schema": "dbo",
+  "awc_admin_code": "alaw",
+  "tables": [
+    {
+      "table_name": "Administraties",
+      "present": true,
+      "columns_source": "get_table",
+      "columns": [
+        {
+          "column_name": "\"ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Naam\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Controle_Minimum_Verkoopprijs\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"FinAdministratie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Orderbevestiging_Sturen\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Wachten_op_Bevestiging\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Ltst_Factuurnummer\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Export_EU_BTW_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Export_BEU_BTW_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Import_EU_BTW_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Import_BEU_BTW_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Voorraad_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Prijsverschillen_Inkoop_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Koersverschillen_Inkoop_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Herwaardeer_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Verkoop_Dagboek_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Kas_Dagboek_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"NOF_Dagboek_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Afboek_NOF_Dagboek_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Inkoop_Dagboek_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Memoriaal_Dagboek_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Voorraad_Ink_Dagboek_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Voorraad_Vrk_Dagboek_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Verk_Omzet_NL_Excl_BTW_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Verk_Omzet_EU_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Verk_Omzet_BEU_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Verk_Omzet_KP_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Verk_Omzet_KD_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Ink_Omzet_NL_Excl_BTW_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Ink_Omzet_EU_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Ink_Omzet_BEU_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Ink_Omzet_KP_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Ink_Omzet_KD_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"TB_Ink_Omzet_NL_Excl_BTW_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"TB_Ink_Omzet_EU_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"TB_Ink_Omzet_BEU_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Ink_Kosten_ZonderFactuur_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Orderkorting_EU_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Orderkorting_BEU_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Orderkorting_KP_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Orderkorting_KD_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Kredietbeperking_EU_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Kredietbeperking_BEU_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Kredietbeperking_KP_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Kredietbeperking_KD_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"KostprijsVerkopen_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"NOF_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Inkoopkosten_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Kas_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"EDI_Orderdatum_Overnemen\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"EDI_Vrk_Magazijn_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"EDI_Vrk_Prijssrt_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"EDI_Rozis_Orders_Input\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"EDI_Rozis_Orders_Historie_Dir\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"EDI_Rozis_Facturen_Output\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"EDI_Adrescode\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"EDI_Naam_Afzender\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"BTW_Nummer\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"AanmaakDatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"AanmaakGebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"MutatieDatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"MutatieGebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"BTW_0_NL__BTW_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"EDI_Rozis_Pakbonnen_Output\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Vrk_Magazijn_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Interc_Gebruiken\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Interc_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Interc_Opslagperc\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Interc_Relatie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Interc_Magazijn_NL_Reden_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Project_Levermethode_Default\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"OHW_Methode\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Project_Dagboek_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"OHW_VW_VrdKosten_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"OHW_VW_Opbrengst_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"OHW_Balans_VrdKosten_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"OHW_Balans_Opbrengst_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Vrijgevallen_VrdKosten_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Vrijgevallen_Opbrengst_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Aanbetaling_Artikel_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Aanbetaling_Corr_Artikel_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Eigen_Land_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Relatie_BTW_Regime_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Ink_Magazijn_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Inkoop_Mogelijk\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"EDI_Ink_Relatie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"EDI_Ink_CPers_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"EDI_Ink_Emailadres\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"VrkBest_Alt_Prefix\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Fac_Alt_Prefix\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"KostprijsVerkopen_OHW_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"OHW_VW_LoonKosten_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"OHW_Balans_LoonKosten_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Vrijgevallen_LoonKosten_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Opslag_Vrdkosten_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"TR_Opslag_Vrdkosten_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Opslag_loonkosten_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"TR_Opslag_loonkosten_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Opslagperc_VrdKosten\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Opslagperc_LoonKosten\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Dekking_loonkosten_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"TR_Dekking_loonkosten_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Interc_KP_corr_Mutatiereden_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"EDI_XML_Orders_Import_Input\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"EDI_XML_Orders_Import_HistDir\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Vrk_Magazijn_Bepaling\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Kst_Art_Voorraad_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Vrije_Art_Voorraad_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Gebruiksgroep_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Sync_Database\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"BTW_Regime_Groep\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Interc_Ink_VrijeArt_Mogelijk\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Ink_Auto_Correctie_KP_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Ink_Auto_Correctie_KD_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Pakbon_Auto_Vrijgeven_Manifest\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"FTP_In_Aanvraag\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Rit_Verkoopvoorstel_Mogelijk\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Correctie_Magazijn_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Tekst_Code\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Negeer_Zending_Genereren_Pickl\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Via_Genereren_Picklijsten\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Interc_Goederensoort_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Gebruik_Vrd_Eenh_Als_Vrk_Eenh\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Spare_Facturatie\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Opnemen_Op_Manifest\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"ContrAfdr_Na_Akkoord_Picklijst\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Orderbevestiging_Via_JobServer\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Ink_Gebruik_InterneLev\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Ink_InterneLev_Adm_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Dagen_Geldigheid_Offerte\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Geen_Vrd_Res_Na_Maak_Order\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Gebruiken_Voor_Omzetfee\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Aanvr_InkOff_Alle_Regels\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Std_Aanvraagtype\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Splits_Pick_Per_VerzArtGrp\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Vrk_Deelreservering_Mogelijk\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Splits_Pick_Per_Hoofdlocatie\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"iPortal_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Handm_Interc_Gebruiken\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"iPortal_Vertegenw_Relatie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"EDI_Rozis_Facturen_LogDir\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"EDI_Rozis_Pakbonnen_LogDir\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Interc_Via_Gebruiksgroep\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Verk_Factuur_KP_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Ink_Factuur_KP_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"NOF_KP_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Std_Vertegenw_Relatie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"ExcelSjabloon_InkBestellingen\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"ExcelSjabloon_InkOffertes\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Aanvr_Zending_Maken_Mogelijk\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Default_Zendinggroep_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Picklijstadministratiegroep_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"iPortal_Vertegenw_Bijwerken\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Contract_Via_OHW\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Contract_Reserv_Dagboek_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Contract_Reserv_VW_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Contract_Reserv_Bal_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Contract_Vrijval_Dagboek_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Contract_Vrijval_VW_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Contract_Vrijval_Bal_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"EDI_Rozis_Voorkeur_Adm\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Email_Facturatie\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Genereer_Contr_Maandfacturen\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"iPortal_Afkorting\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Eigen_Relatie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Auto_Inboeken\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"SSCC_Aansluitnummer\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"SSCC_Aansluitnummer_lengte\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"SSCC_Basisnummer\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"SSCC_Laatste_Volgnummer\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Reg_Nooit_Colli_Aantallen\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Gebruiksgroep_Beperking_Inkoop\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"DHLF_URL\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"DHLF_Gebruikersnaam\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"DHLF_Wachtwoord\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Financiele_Administratie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Afkorting\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"DHLF_EuroC_URL\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"DHLF_EuroC_Gebruikersnaam\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"DHLF_EuroC_Wachtwoord\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Vrd_Eigenaar_Administratie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Contr_Dir_Klant_KP_Verk_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Aan_InkOff_Aanvullen\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Aan_InkOrd_Aanvullen\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Vul_Aanvr_Ext_Art_Handm_Inv\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Aan_LevArtOms_Overnemen_Naar\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Std_Vrk_Levertijd_In_Dagen\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Peppol_Account_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Combineer_Colli_En_TE_Label\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Standaard_Transport_Eenheid_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Maten_En_Gewichten_Via_Ontv\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Aanvr_Uitbest_Lev_Oms_Overn\"",
+          "data_type": "boolean"
+        }
+      ]
+    },
+    {
+      "table_name": "Magazijn_Plaatscodes",
+      "present": true,
+      "columns_source": "get_table",
+      "columns": [
+        {
+          "column_name": "\"ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Naam\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Magazijn_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"AanmaakDatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"AanmaakGebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"MutatieDatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"MutatieGebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Dynamisch_Magazijn\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Pick_Prioriteit\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Pick_Overslaan\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Magazijn_Plaatssoort_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Toon_Op_Picklijst\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Verzamellocatie\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Ontv_Prioriteit\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Omschrijving\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Logorder_Groep_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Geblokkeerd_Voor_Picken\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Extern\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Stelling\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Stellingplaats\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"FA_Locatie\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Externe_Code\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"FA_Locatie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Magazijn_Hoofdlocatie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"DynMag_Inruimlocatie\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Ontv_Vrije_Locatie_Keuze\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Niet_Leeg_Melden\"",
+          "data_type": "boolean"
+        }
+      ]
+    },
+    {
+      "table_name": "Magazijn_Plaatssoorten",
+      "present": true,
+      "columns_source": "get_table",
+      "columns": [
+        {
+          "column_name": "\"ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Naam\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Lengte\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Breedte\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Hoogte\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Magazijn_Plaatscode_Test_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"AanmaakDatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"AanmaakGebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"MutatieDatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"MutatieGebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Std_Plaatscodenaam\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Verhuur\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Emballage\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Zending_Locatie_Plaatssoort\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Afkorting_Op_Handheld\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"GS_Locatie\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Laad_Locatie_Plaatssoort\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Verzamel_Locatie_Plaatssoort\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Rijnummer\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Spares\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Magazijn_Hoofdplaatssoort_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Ontvangst\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Niet_Ingekl_Goed_Toegestaan\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Opslag\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Aantal_Palletplaatsen\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Bulklocaties\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Signaalcode_Verdelen_Picklijst\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Na_Nac_Naar_Blok_Magazijn\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Zending_Verzamellocatie\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Verpl_Waarsch_Ander_Art_OpLoc\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Tussenlocatie\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Overgavelocatie\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Controle_Bezette_Locatie\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Loslocatie\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Verpl_Blokkade_Ander_Art_OpLoc\"",
+          "data_type": "boolean"
+        }
+      ]
+    },
+    {
+      "table_name": "Magazijnen",
+      "present": true,
+      "columns_source": "get_table",
+      "columns": [
+        {
+          "column_name": "\"ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Naam\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Adres_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Voorraad_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Verk_Omzet_KP_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Verk_Omzet_KD_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"VerH_Omzet_KP_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Verh_Omzet_KD_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Ink_Omzet_KP_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Ink_Omzet_KD_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"KostprijsVerkopen_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Prijsverschillen_Inkoop_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Koersverschillen_Inkoop_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Inkoop\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Handel\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Credit\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Leveren\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Direct_Naar_Klant\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Inkoop_Magazijn_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Assemblage_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Leveringstekst\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"AanmaakDatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"AanmaakGebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"MutatieDatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"MutatieGebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Pickprobleem_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Directe_Ass_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Retour_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Vaste_Picklocatie\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"VP_Vrd_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"VP_NietVrd_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"VP_Vrije_Art_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Ink_Auto_Inboeken_Mogelijk\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Inboek_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Adm_Verzamel_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Techn_Contr_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Administratie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Type_Partijregistratie\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Klantmagazijn\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Klant_Relatie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Gsrt_Probleem_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Blk_Vrd_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Blk_NietVrd_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Blk_Vrije_Art_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Auto_Locaties_Verwijderen\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Ontv_Contr_Partij_Kenmerken\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Ontv_Vrd_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Ontv_NietVrd_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Ontv_Vrij_Art_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Web_Tonen\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Default_Barcode_MagPlts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Restvoorraad_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Extern\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Transsmart_Account_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Picklijst_Afdrukken\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Auto_Partijreg_Bij_Ontvangst\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Alt_Retourmagazijn\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Geblokkeerde_Voorraad\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Directe_Facturatie_Mogelijk\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Mutreden_Verpl_bij_Verplaats\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Voorraad_Naar_Inkoopsysteem\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Vaste_Pickloc_Uniek_Per_Art\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Ontv_Contr_Geg_Art_Geen_Part\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Transsmart2_Account_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Std_DynMag_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Verzamel_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Vooraankond_EDI_Document_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Pick_EDI_Document_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Geen_Controle_Advies_Lev\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Weeg_Vast_Gem_Gewicht\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Haenel_Server\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Haenel_Poort\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Blokkade_Magazijn\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Max_Aantal_Nwe_Locatie_Sel\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Afkorting\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"InkBev_CC_Emailadres\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Houdbhdat_Verplicht_Bij_Ontv\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Temperatuur_Controle\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"LvO_Verplicht_Bij_Ontv\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"DynMag_Retour_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Log_Status_Afronden_Picklijst\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"HH_Pick_Toon_Orig_Aant_Aanvr\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"HH_Pick_Bereken_Aant_Via_Colli\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"HH_Pick_Afdruk_Colli_Labels\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"HH_Pick_Afdruk_TE_Labels\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Vrk_Geen_Douane_Aangiftes\"",
+          "data_type": "boolean"
+        }
+      ]
+    },
+    {
+      "table_name": "Artikel_Magazijnlocaties",
+      "present": true,
+      "columns_source": "get_table",
+      "columns": [
+        {
+          "column_name": "\"ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Artikel_Magazijn_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Technische_Voorraad\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Te_Verdelen_Voorraad\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Laatste_Teldatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"AanmaakDatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"AanmaakGebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"MutatieDatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"MutatieGebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Laatste_Ontvangstdatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Wacht_Op_Nacalculatie\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Artikel_Partij_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Colli\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Gepickt\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Colli_Gepickt\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Per_Colli\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Colli_Per_Aantal\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Er_Is_Voorraad\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Transport_Eenheid_ID\"",
+          "data_type": "number"
+        }
+      ]
+    },
+    {
+      "table_name": "Ontvangsten",
+      "present": true,
+      "columns_source": "get_table",
+      "columns": [
+        {
+          "column_name": "\"ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Statussoort\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Status\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Proces_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Relatie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Pakbonnummer\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Datum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Opmerkingen\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Valuta_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Ontvangstbedrag\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Nacalc_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Goederenbedrag_V\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Kostenbedrag_V\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Goederenbedrag_NV\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Kostenbedrag_NV\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"CBS_Verwerkt\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"CBS_Verslagnummer\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"AanmaakDatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"AanmaakGebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"MutatieDatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"MutatieGebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Ontvangst_Gebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Partijregistratie_Gebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Partijregistratie_Gereed\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Inkoop_Levering_Probleem_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Administratie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Ontvangst_Definitief\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Regels_Douane_Aangifte\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Teller_Aangiftes_Aangeboden\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Aangiftes\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Aangiftes_Geaccepteerd\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Wacht_Op_Colliregistratie\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Herkomst_ISO_Landcode_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Douanevergunning_Accijns\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Aantal_Aangiftes_Vervallen\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Vervalreden\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Aankomst_Leverancier\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Inruim_Gebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Spare_Order_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Herwaardering_Gejournaliseerd\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Pre_Ontvangst_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Kenteken\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Transporteur\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Chauffeur\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Aantal_Aangiftes_Geblokkeerd\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Voorraadverplaatsing_Aangemaakt\"",
+          "data_type": "boolean"
+        }
+      ]
+    },
+    {
+      "table_name": "Telling_Locaties",
+      "present": true,
+      "columns_source": "get_table",
+      "columns": [
+        {
+          "column_name": "\"ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Telling_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Magazijn_Plaatscode_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Instructie\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Totaal_Aantal_Verwacht\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Totaal_Aantal_Geteld\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Totaal_Aantal_Correctie\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Partijen_Met_Verschil\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Telling_Gereed\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Datum_Telling_Gereed\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Hertellen\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"AanmaakDatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"AanmaakGebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"MutatieDatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"MutatieGebr_ID\"",
+          "data_type": "text"
+        }
+      ]
+    },
+    {
+      "table_name": "Tellingen",
+      "present": true,
+      "columns_source": "get_table",
+      "columns": [
+        {
+          "column_name": "\"ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Status\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Statussoort\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Proces_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Soort\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Instructie\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Teller_Gebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Magazijn_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Mutatiereden_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Datum_Verwerkt\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Artikel_Mutatie_Sessie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Hertelling_Telling_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"AanmaakDatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"AanmaakGebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"MutatieDatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"MutatieGebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Eigenaar_Relatie_ID\"",
+          "data_type": "number"
+        }
+      ]
+    },
+    {
+      "table_name": "Orderregel_Leverdata",
+      "present": true,
+      "columns_source": "get_table",
+      "columns": [
+        {
+          "column_name": "\"ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Orderregel_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Informatief\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Oude_Leverdatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Nieuwe_Leverdatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"AanmaakDatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"AanmaakGebr_ID\"",
+          "data_type": "text"
+        }
+      ]
+    },
+    {
+      "table_name": "Orderregels",
+      "present": true,
+      "columns_source": "get_table",
+      "columns": [
+        {
+          "column_name": "\"ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Order_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Soort\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Regelnummer\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Pakbonplaats_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Pakbonplaats_code\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Aantal_Reserv_Regels\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Reserv_Regels_Geleverd\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Reserv_Regels_Gereed\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Artikel_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Artikel_Omschrijving\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Artikel_Deb_Code\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Referentie\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Magazijn_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Assemblage_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Assemblage_Magazijn_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Artikel_Eenheid_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Besteld\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Logistiek\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Geleverd\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Gefactureerd\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Geassembleerd\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Niet_Geassembleerd\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Omrekenfactor\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Gewenste_Leverdatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Levering_Voor_of_Na\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Laatste_Leverdatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Laatste_Peildatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Startdatum_Verhuur\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Einddatum_Verhuur\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Verwachte_Einddatum_Verhuur\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Prijssrt_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Prijs\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Korting\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Kostprijs_Regel_EV\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Gemiddelde_Kostprijs_EV\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Max_Draaiuren\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Deelleveren\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Prod_Direct_Naar_NTV\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"InkRegel_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Magazijn_NL_Reden_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Magazijn_NL_Omschrijving\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Automatische_Prijsafspraak\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Import\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"AanmaakDatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"AanmaakGebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"MutatieDatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"MutatieGebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Directe_Assemblage\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Reserveren_Na_Volgende_Ontv\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Afroep_Orderregel_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Handmatig_Afgeroepen\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Standaard_Prijs\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Standaard_Korting\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Bericht_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Bericht_Prioriteit\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Meenemen_Min_Vrd_Berekening\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Offertegroep_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Project_termijn_id\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Extra_Aantal\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"ProjectDl_Progn_Regel_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Project_Deel_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"AutoCombArt_Aanmaken\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Aanbetalingstype\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Orig_Artikel_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Meenemen_Met_Kopieren\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Alt_Artikel_Eenheid_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Vrk_Extra_Omschrijving\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Assemblage_Artikel_Partij_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Zending_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Aantal_In_Zending\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Aangiftes_Geblokkeerd\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Goederensoort_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Herkomst_Orderregel_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Netto_Gewicht\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Retour\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Object_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Voortschrijdend\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "begin_factuurdatum",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Bruto_Gewicht\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Min_Huurperiode_Hanteren\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Afgeleid_Van_Orderregel_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Prijs_Vast_Datum_TM\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Betaalde_Borg\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Terugbetaalde_Borg\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Verhuur_Retour_Totaal\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Verhuur_Retour_Ontv\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Voorraadreserveren_Vanaf\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Artikel_Status\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Alt_Aantal\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Leverdatum_Informatief\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Commissie_Factuur_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Geen_Voorraadreserveren\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Verbruik_Datum_Va\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Verbruik_Datum_Tm\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Aantal_Backorder\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Commissie_Order\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Commissie_Grondslag\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Commissie_Percentage\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Kenmerk_Koppeling_Via_Artikel\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Backorder_Meenemen\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Correctie_LogRegel_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Subregel\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Meenemen_In_Douaneaangifte\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Mld_Ontvangstregel_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"InterneLev_InkRegel_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Niet_Afdrukken\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Factureren\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Statistieknum\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Leveringsinstructie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Oorsprong_ISO_Landcode_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Aantal_Lopende_LogOrders\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"CorrLev_Manco_Status_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Gepland\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Externe_Transportsoort_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Verkoopregeltype_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"KostprijsVerkopen_GB_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"KostprijsVerkopen_KD_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Aantal_Colli\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Interc_Artikel_Identity_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Colli_Geassembleerd\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Geselecteerd\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Geselecteerd2\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Geselecteerd3\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Geselecteerd4\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Geselecteerd5\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Kostprijs_EV\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Bijwerken_Orderregel_Mogelijk\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Kopie_Orderregel_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Niet_Op_Picklijst\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Backorder_Behoud_Besteld_Aant\"",
+          "data_type": "boolean"
+        }
+      ]
+    },
+    {
+      "table_name": "Orders",
+      "present": true,
+      "columns_source": "get_table",
+      "columns": [
+        {
+          "column_name": "\"ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Administratie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Soort\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Statussoort\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Status\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Proces_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Gecontroleerd\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Orderdatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Order_Relatie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Relatie_Zoeknaam\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Order_Cpers_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Order_Telefoonnummer\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Order_Faxnummer\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Order_Emailadres\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Referentie_Klant\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Ordernummer_Klant\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Aantal_Orderregels\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Orderregels_Geleverd\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Orderregels_Gereed\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Order_Kostenregels\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_LogOrders_Aangemaakt\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_LogOrders_Gefactureerd\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Wacht_Op_Retour\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Retour_Ontvangen\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Debet_Regels\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Taal_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Valuta_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Verkoopkoers_Invoer\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Vertegenwoordiger_Relatie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aflever_Relatie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aflever_Adres_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aflever_Cpers_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aflever_Telefoonnummer\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Aflever_Tekst\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Vervoerder_Adres_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Vervoerder_CPers_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Transport_Tekst\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Picklijst_Tekst\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Gewenste_Leverdatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Levering_Voor_of_Na\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Orderkorting\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Leverwijze_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Factuur_Relatie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Factuur_Adres_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Factuur_Cpers_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Factuur_Tekst\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Deb_Facturatiekenmerk_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Factuurinterval_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"EDI_Facturering\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Betcond_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Korting_Toeslag\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"BTW_Berekenen\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Deelleveren\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Totale_Kostprijs_EV\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Totaalbedrag\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Bruto_Regeltotaal\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Kortingsbedrag\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Kredietbeperkingbedrag\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Regelkostenbedrag\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Orderkostenbedrag\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Factuurbedrag\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Totaal_Gefactureerd\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Totaal_Niet_Gefactureerd\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Kredietcontrole_Bedrag\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Borgbedrag\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Borgbedrag_Betaald\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Orderbevestiging_Versturen\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Orderbevestiging_Tekst\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Orderbevestiging_Datum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Wachten_Op_Akkoord_Orderbev\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Akkoord_Orderbev\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Datum_Akkoord_Orderbev\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Aantal_Credit_Blokkade_Regels\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Blokkade_Reden\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Blokkade_Datum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Blokkade_Gebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Geen_Voorraadreserveren\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Van_Offerte_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Kopieren\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Import\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Bericht_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Bericht_Prioriteit\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"AanmaakDatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"AanmaakGebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"MutatieDatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"MutatieGebr_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Direct_Factureren\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Geen_Kosten_Doorberekenen\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Retourreden_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Correctie_Factuur\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Wacht_Op_Volgende_Order\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Afwijkend_Factuuradres\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Afwijkend_Afleveradres\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Afleveradres_Is_Factuuradres\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Aflever_Naam\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Aflever_Contactpersoon\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Aflever_Adres\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Factuur_Naam\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Factuur_Contactpersoon\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Factuur_Adres\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"EDI_Pakbon\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Orderbevestiging_Koptekst\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Scoringskans\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Verplaatsingsopdracht\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Backorder_Van_Order_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Leverwijze_Kosten_Bedrag\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Anonieme_Bonnen\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Ordernummer_klant_Kaal\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Ltst_Job_Melding\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Ordernummer_Tussenpersoon\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Project_Deel_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Ordertype\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Factuurprijzen_Incl_BTW\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Voorraadverwerking\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Bruto_Regeltotaal_BTW\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Regelkostenbedrag_BTW\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Orderkostenbedrag_BTW\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Kortingsbedrag_BTW\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aanbetaald\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Aanbetalingscorrectie_Bedrag\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Samenstellen_Aanbetaling\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Aanbetaald_Bedrag\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Offertestatus_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Fac_Tegenhouden\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"BTW_Regime_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Splits_Logistieke_Orders\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Verzamel_Magazijn_Plts_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Factuurverzend_Adres_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Factuurverzend_CPers_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Extra_Werknemer_Relatie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Wijze_Afhandeling_Orderkorting\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Orderkorting_Relatie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Orderkorting_Adres_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Orderkorting_CPers_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Orderkorting_Via_Credit\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_Orderregels_OK_Zending\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Ordertype_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Eerste_Leverdatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Laatste_Leverdatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Laaddatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Datum_va_Leveringcontrole\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Art_Niet_Op_Pick_Deelleveren\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Nacalculeren\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Factureren\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Startdatum_Verhuur\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Verwachte_Einddatum_Verhuur\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Einddatum_Verhuur\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Betaalde_Borg\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Terugbetaalde_Borg\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Retour_Leverwijze_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Logorder_Comb_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Volgorde\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Afleverplaats_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Niet_Verzamelen\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Afroeporder_Soort\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Web_Tonen\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Uitsluiten_Inkoopadvies\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Commissieperc_Factuur_Deb\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Commissieperc_Externe_Deb\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Commissie_Order\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Afleverland_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_LogOrders_niet_Gefact\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aanvraag_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Kopie_Order_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Email_Facturering\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Aantal_Picklijsten_In_Bew\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Monteur_Relatie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Web_Winkelwagen_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_LogOrders_Via_GenFact\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Aantal_LogOrders_Op_GenFact\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Project_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Scoringsjaar\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Scoringsmaand\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Incoterm_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Incoterm_Plaats\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Interne_Referentie\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Interne_Levering\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Deelreservering_Mogelijk\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Interne_Inkoop_Verwerkt\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"IMO_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Sticker_Tekst\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Verk_Omzet_KP_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Verk_Omzet_KD_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Fac_Alleen_Complete_Orders\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"EDI_Order\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Intercompany\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Afroeporder\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Contantfactuur_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Hele_Colli_Leveren\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Geldig_tot\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Credit_Kopie\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Externe_Transportsoort_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Sparefactuur_Order\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"EDI_Bevestiging\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"GLN_Afleveradres\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"GLN_Leverancier\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Spare_Termijnen_Auto_Genereren\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"SSCC_Via_Handheld\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Aantal_Orderregels_Niet_Geimp\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"EDI_Testorder\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Interc_Ordertype\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Zending_Vinkje1\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Zending_Vinkje2\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Zending_Vinkje3\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Aantal_Magazijninstructies\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Voorinvul_Magazijninstructies\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Klant_Leverdatum\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Identity_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"Levertijd_Van\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Levertijd_Tot\"",
+          "data_type": "date"
+        },
+        {
+          "column_name": "\"Picken_Per_Transporteenheid\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Wordt_Gemuteerd\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"Incoterm_ISO_Landcode_ID\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Order_Categorie_ID\"",
+          "data_type": "number"
+        },
+        {
+          "column_name": "\"SSCC_Homogeen\"",
+          "data_type": "boolean"
+        },
+        {
+          "column_name": "\"GLN_Afzender\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"GLN_Koper\"",
+          "data_type": "text"
+        },
+        {
+          "column_name": "\"Routecode\"",
+          "data_type": "text"
+        }
+      ]
+    }
+  ]
+}

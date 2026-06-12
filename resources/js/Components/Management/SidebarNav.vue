@@ -241,6 +241,20 @@ function operIconClass(routeName) {
                     Tools
                 </Link>
                 <Link
+                    v-if="$page.props.appDebug"
+                    :href="route('debug.peliqan.7t')"
+                    :class="operClasses('debug.peliqan.7t')"
+                    @click="onNavigate?.()"
+                >
+                    <span :class="iconWrap">
+                        <i
+                            class="pi pi-database"
+                            :class="operIconClass('debug.peliqan.7t')"
+                        />
+                    </span>
+                    7T Debug
+                </Link>
+                <Link
                     :href="route('operationeel.users')"
                     :class="operClasses('operationeel.users')"
                     @click="onNavigate?.()"

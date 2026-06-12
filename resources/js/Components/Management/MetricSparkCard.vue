@@ -37,7 +37,25 @@ const props = defineProps({
         default: 'sky',
         validator: (v) => ['sky', 'orange'].includes(v),
     },
+    clickable: {
+        type: Boolean,
+        default: false,
+    },
 });
+
+const emit = defineEmits(['click']);
+
+function onActivate() {
+    if (props.clickable) emit('click');
+}
+
+function onKeydown(e) {
+    if (!props.clickable) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        emit('click');
+    }
+}
 
 const brandBlue = '#1e3a5f';
 
@@ -87,7 +105,18 @@ const tagClass = computed(() => {
 </script>
 
 <template>
-    <Card :pt="cardPt">
+    <Card
+        :pt="cardPt"
+        :class="
+            clickable
+                ? 'cursor-pointer transition hover:border-[#ff7020]/40 hover:shadow-md focus-within:ring-2 focus-within:ring-[#ff7020]/30'
+                : ''
+        "
+        :role="clickable ? 'button' : undefined"
+        :tabindex="clickable ? 0 : undefined"
+        @click="onActivate"
+        @keydown="onKeydown"
+    >
         <template #content>
             <div class="flex items-start justify-between gap-2">
                 <div class="flex items-center gap-2 min-w-0">
@@ -98,6 +127,7 @@ const tagClass = computed(() => {
                         type="button"
                         class="shrink-0 text-gray-400 transition hover:text-gray-600"
                         aria-label="Info"
+                        @click.stop
                     >
                         <i class="pi pi-info-circle text-sm" />
                     </button>
@@ -129,12 +159,23 @@ const tagClass = computed(() => {
                 />
             </div>
 
-            <p
-                v-if="footer"
-                class="mt-auto border-t border-gray-100 pt-3 text-xs text-gray-500"
+            <div
+                class="mt-auto border-t border-gray-100 pt-3"
             >
-                {{ footer }}
-            </p>
+                <p
+                    v-if="footer"
+                    class="text-xs text-gray-500"
+                >
+                    {{ footer }}
+                </p>
+                <p
+                    v-if="clickable"
+                    class="mt-1 flex items-center gap-1 text-xs font-semibold text-[#ff7020]"
+                >
+                    Bekijk detail
+                    <i class="pi pi-arrow-right text-[10px]" />
+                </p>
+            </div>
         </template>
     </Card>
 </template>

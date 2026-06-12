@@ -5,7 +5,8 @@
 # Query params:
 #   bundle   = cashweb | hubspot | sprinter | all   (default: all)
 #   book_year = e.g. 2026                         (default: current calendar year)
-#   month    = 1-12 | all                         (default: all = whole year in Cashweb filter)
+#   month    = 1-12 | all                         (default: all = YTD for current book_year,
+#                                                 full 12 months for past book years)
 #   start_date / end_date = YYYY-MM-DD          (optional; HubSpot + Sprinter + deal date filters)
 #                                                 default: Jan 1 book_year → today
 #
@@ -55,6 +56,61 @@ def month_end(y, m):
     return date(y, m, calendar.monthrange(y, m)[1])
 
 
+def add_years(d, delta_years):
+    """Shift calendar date by years (handles Feb 29)."""
+    try:
+        return date(d.year + delta_years, d.month, d.day)
+    except ValueError:
+        return date(
+            d.year + delta_years,
+            d.month,
+            calendar.monthrange(d.year + delta_years, d.month)[1],
+        )
+
+
+def cashweb_months(book_year_int, month_raw, end_date):
+    """
+    Cashweb book_period months for YoY comparison.
+
+    - month = 1-12  → that month only
+    - month = all   → past book years: Jan–Dec
+                      current book year: YTD through end_date (or today)
+    """
+    mlow = str(month_raw).lower().strip()
+    if mlow not in ("", "all", "*"):
+        m = int(month_raw)
+        return [m], "month"
+
+    today = date.today()
+    if book_year_int < today.year:
+        return list(range(1, 13)), "full_year"
+    if book_year_int > today.year:
+        return list(range(1, 13)), "full_year"
+
+    if end_date.year == book_year_int:
+        anchor_month = end_date.month
+    elif today.year == book_year_int:
+        anchor_month = today.month
+    else:
+        anchor_month = 12
+
+    return list(range(1, anchor_month + 1)), "ytd"
+
+
+def period_label(book_year, maanden_filter, mode):
+    """Human-readable period for API filters (MT dashboard)."""
+    if not maanden_filter:
+        return str(book_year)
+    if mode == "month":
+        return f"{book_year} · periode {maanden_filter[0]:02d}"
+    if mode == "full_year":
+        return f"{book_year} · heel jaar (12 periodes)"
+    first, last = maanden_filter[0], maanden_filter[-1]
+    if first == last:
+        return f"{book_year} · YTD periode {first:02d}"
+    return f"{book_year} · YTD periodes {first:02d}–{last:02d}"
+
+
 def parse_query(request):
     """Flatten Peliqan request into a dict of query params."""
     out = {}
@@ -79,12 +135,26 @@ def parse_query(request):
 
 def build_params(q):
     book_year = str(q.get("book_year") or datetime.today().year)
-    month_raw = (q.get("month") or "all")
-    mlow = str(month_raw).lower().strip()
-    if mlow in ("", "all", "*"):
-        maanden_filter = list(range(1, 13))
+    book_year_int = int(book_year)
+    month_raw = q.get("month") or "all"
+
+    start_s = q.get("start_date")
+    end_s = q.get("end_date")
+    if start_s:
+        start_date = datetime.strptime(str(start_s)[:10], "%Y-%m-%d").date()
     else:
-        maanden_filter = [int(month_raw)]
+        start_date = date(book_year_int, 1, 1)
+    if end_s:
+        end_date = datetime.strptime(str(end_s)[:10], "%Y-%m-%d").date()
+    else:
+        end_date = date.today()
+
+    maanden_filter, comparison_mode = cashweb_months(
+        book_year_int, month_raw, end_date
+    )
+    if not maanden_filter:
+        maanden_filter = [1]
+        comparison_mode = "month"
 
     _yy = int(str(book_year)[-2:])
     book_periods = [_yy * 100 + m for m in maanden_filter]
@@ -92,26 +162,21 @@ def build_params(q):
     _yy_v = _yy - 1
     book_periods_v = [_yy_v * 100 + m for m in maanden_filter]
     bp_v_str = ", ".join(str(p) for p in book_periods_v)
-    boekjaar_v = str(int(book_year) - 1)
+    boekjaar_v = str(book_year_int - 1)
     laatste_m = maanden_filter[-1]
 
-    start_s = q.get("start_date")
-    end_s = q.get("end_date")
-    if start_s:
-        start_date = datetime.strptime(str(start_s)[:10], "%Y-%m-%d").date()
-    else:
-        start_date = date(int(book_year), 1, 1)
-    if end_s:
-        end_date = datetime.strptime(str(end_s)[:10], "%Y-%m-%d").date()
-    else:
-        end_date = date.today()
-
-    y_prev = int(book_year) - 1
-    d0_prev = date(y_prev, maanden_filter[0], 1)
-    d1_prev = month_end(y_prev, laatste_m)
+    # HubSpot / Sprinter: same calendar window, shifted one year back (like-for-like)
+    prev_start = add_years(start_date, -1)
+    prev_end = add_years(end_date, -1)
 
     cw_f = cw_periode_filter(book_year, bp_str)
     cw_f_v = cw_periode_filter(boekjaar_v, bp_v_str)
+
+    period_lbl = period_label(book_year, maanden_filter, comparison_mode)
+    yoy_lbl = (
+        f"{start_date.isoformat()} → {end_date.isoformat()} vs "
+        f"{prev_start.isoformat()} → {prev_end.isoformat()}"
+    )
 
     return {
         "book_year": book_year,
@@ -120,12 +185,15 @@ def build_params(q):
         "bp_str": bp_str,
         "bp_v_str": bp_v_str,
         "laatste_m": laatste_m,
+        "comparison_mode": comparison_mode,
+        "period_label": period_lbl,
+        "yoy_label": yoy_lbl,
         "start_date": start_date,
         "end_date": end_date,
         "start_iso": start_date.isoformat(),
         "end_iso": end_date.isoformat(),
-        "prev_start_iso": d0_prev.isoformat(),
-        "prev_end_iso": d1_prev.isoformat(),
+        "prev_start_iso": prev_start.isoformat(),
+        "prev_end_iso": prev_end.isoformat(),
         "cw_filter": cw_f,
         "cw_filter_v": cw_f_v,
     }
@@ -165,6 +233,88 @@ GROUP BY admin_code
         is_d=CW_IS_D, is_c=CW_IS_C, amt=CW_AMOUNT,
         periode=cw_f_v, dagboeken=CW_OMZET_DAGBOEKEN,
     )
+
+
+LOB_KEY = (
+    "COALESCE(NULLIF(TRIM(sub_administration), ''), "
+    "NULLIF(TRIM(admin_code), ''), '—')"
+)
+
+
+def sql_omzet_by_lob(cw_f):
+    return f"""
+SELECT
+    {LOB_KEY} AS lob,
+    MIN(admin_code) AS admin_code,
+    SUM(CASE WHEN {CW_IS_D} THEN {CW_AMOUNT} ELSE 0 END) AS omzet
+FROM cashweb.ledger_mutations
+WHERE {cw_f}
+  AND journal_code IN {CW_OMZET_DAGBOEKEN}
+GROUP BY {LOB_KEY}
+ORDER BY omzet DESC
+"""
+
+
+def sql_omzet_by_lob_v(cw_f_v):
+    return f"""
+SELECT
+    {LOB_KEY} AS lob,
+    MIN(admin_code) AS admin_code,
+    SUM(CASE WHEN {CW_IS_D} THEN {CW_AMOUNT} ELSE 0 END) AS omzet_vorig
+FROM cashweb.ledger_mutations
+WHERE {cw_f_v}
+  AND journal_code IN {CW_OMZET_DAGBOEKEN}
+GROUP BY {LOB_KEY}
+ORDER BY omzet_vorig DESC
+"""
+
+
+def build_revenue_per_lob(df_cur, df_v):
+    cur = {}
+    admin = {}
+    if df_cur is not None and not df_cur.empty:
+        for _, r in df_cur.iterrows():
+            lob = str(r.get("lob") or "—").strip() or "—"
+            cur[lob] = cur.get(lob, 0.0) + safe_float(r.get("omzet"))
+            if lob not in admin and r.get("admin_code"):
+                admin[lob] = str(r.get("admin_code"))
+
+    prev = {}
+    if df_v is not None and not df_v.empty:
+        for _, r in df_v.iterrows():
+            lob = str(r.get("lob") or "—").strip() or "—"
+            prev[lob] = prev.get(lob, 0.0) + safe_float(r.get("omzet_vorig"))
+
+    all_lobs = set(cur) | set(prev)
+    tot = sum(cur.values())
+    tot_v = sum(prev.values())
+    rows = []
+    for lob in sorted(all_lobs, key=lambda l: cur.get(l, 0.0), reverse=True):
+        o = cur.get(lob, 0.0)
+        o_v = prev.get(lob, 0.0)
+        delta = None
+        if o_v:
+            delta = round((o - o_v) / abs(o_v) * 100, 1)
+        rows.append({
+            "lob": lob,
+            "admin_code": admin.get(lob, ""),
+            "omzet": round(o, 2),
+            "omzet_vorig": round(o_v, 2),
+            "aandeel_pct": round(o / tot * 100, 1) if tot > 0 else 0.0,
+            "delta_pct": delta,
+        })
+
+    delta_totaal = None
+    if tot_v:
+        delta_totaal = round((tot - tot_v) / abs(tot_v) * 100, 1)
+
+    return {
+        "rows": rows,
+        "totaal": round(tot, 2),
+        "totaal_vorig": round(tot_v, 2),
+        "delta_totaal_pct": delta_totaal,
+        "lob_field": "sub_administration (fallback: admin_code)",
+    }
 
 
 def sql_ink(cw_f):
@@ -290,6 +440,9 @@ def bundle_cashweb(p):
     df_bal = fetch(sql_balances(p["book_year"]), "balances")
     df_triple = fetch(sql_triple_lob(p["book_year"]), "triple")
     df_sub = fetch(sql_sub_admin_dist(p["cw_filter"]), "subadm")
+    df_lob = fetch(sql_omzet_by_lob(p["cw_filter"]), "omzet_lob")
+    df_lob_v = fetch(sql_omzet_by_lob_v(p["cw_filter_v"]), "omzet_lob_v")
+    revenue_lob = build_revenue_per_lob(df_lob, df_lob_v)
 
     tot_omzet = df_omzet["debet"].apply(safe_float).sum() if not df_omzet.empty else 0.0
     tot_omzet_v = df_omzet_v["debet_v"].apply(safe_float).sum() if not df_omzet_v.empty else 0.0
@@ -317,6 +470,7 @@ def bundle_cashweb(p):
         "ledger_balances": df_records(df_bal),
         "triple_lob_customers": df_records(df_triple),
         "sub_administration_dist": df_records(df_sub),
+        "revenue_per_lob": revenue_lob,
     }
 
 
@@ -471,6 +625,10 @@ def handler(request):
             "book_year": p["book_year"],
             "month_filter": p["maanden_filter"],
             "book_periods": p["bp_str"],
+            "book_periods_prior": p["bp_v_str"],
+            "comparison_mode": p["comparison_mode"],
+            "period_label": p["period_label"],
+            "yoy_label": p["yoy_label"],
             "start_date": p["start_iso"],
             "end_date": p["end_iso"],
             "yoy_compare_window": {"start": p["prev_start_iso"], "end": p["prev_end_iso"]},

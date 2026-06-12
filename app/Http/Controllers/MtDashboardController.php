@@ -28,27 +28,32 @@ class MtDashboardController extends Controller
 
         $cacheKey = 'peliqan:mt:'.md5(json_encode($query));
 
-        $error = null;
-        $payload = null;
+        $token = (string) config('peliqan.token', '');
+        $url = (string) config('peliqan.mt_data_url', '');
 
-        try {
-            $token = (string) config('peliqan.token', '');
-            $url = (string) config('peliqan.mt_data_url', '');
-            if ($token === '' || $url === '') {
-                $error = 'Peliqan is niet geconfigureerd (PELIQAN_JWT / PELIQAN_MT_DATA_URL).';
-            } else {
+        $configError = ($token === '' || $url === '')
+            ? 'Peliqan is niet geconfigureerd (PELIQAN_JWT / PELIQAN_MT_DATA_URL).'
+            : null;
+
+        // Deferred prop: the page shell + filters render instantly; this slow
+        // Peliqan call streams in via a follow-up request (skeleton meanwhile).
+        $peliqanData = $configError !== null
+            ? null
+            : Inertia::defer(function () use ($peliqan, $query, $cacheKey) {
                 $ttl = (int) config('peliqan.cache_ttl', 120);
-                $payload = $ttl > 0
-                    ? Cache::remember($cacheKey, $ttl, fn () => $peliqan->fetchMt($query))
-                    : $peliqan->fetchMt($query);
-            }
-        } catch (PeliqanException $e) {
-            $error = $e->getMessage();
-        }
+
+                try {
+                    return $ttl > 0
+                        ? Cache::remember($cacheKey, $ttl, fn () => $peliqan->fetchMt($query))
+                        : $peliqan->fetchMt($query);
+                } catch (PeliqanException $e) {
+                    return ['error' => $e->getMessage()];
+                }
+            });
 
         return Inertia::render('MtDashboard', [
-            'peliqan' => $payload,
-            'peliqanError' => $error,
+            'peliqan' => $peliqanData,
+            'peliqanError' => $configError,
             'filters' => [
                 'book_year' => $bookYear,
                 'month' => $month,

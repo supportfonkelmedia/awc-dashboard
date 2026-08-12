@@ -6,9 +6,10 @@ import MtSectionCard from '@/Components/Management/MtSectionCard.vue';
 import RevenuePerLobPanel from '@/Components/Management/RevenuePerLobPanel.vue';
 import MetricSparkCard from '@/Components/Management/MetricSparkCard.vue';
 import { useMtKpiData } from '@/composables/useMtKpiData';
+import { useMtPeliqanLoader } from '@/composables/useMtPeliqanLoader';
 import { useMtWmsLoader } from '@/composables/useMtWmsLoader';
 import ManagementLayout from '@/Layouts/ManagementLayout.vue';
-import { Deferred, Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Chart from 'primevue/chart';
@@ -22,7 +23,6 @@ import Tag from 'primevue/tag';
 import { computed, ref, watch } from 'vue';
 
 const props = defineProps({
-    peliqan: { type: Object, default: null },
     peliqanError: { type: String, default: null },
     filters: {
         type: Object,
@@ -86,15 +86,39 @@ function applyFilters() {
     );
 }
 
-const dataError = computed(() => props.peliqan?.error ?? null);
+const filtersRef = computed(() => props.filters);
 
-const cw = computed(() => props.peliqan?.data?.cashweb ?? null);
-const hs = computed(() => props.peliqan?.data?.hubspot ?? null);
-const sp = computed(() => props.peliqan?.data?.sprinter ?? null);
+const {
+    peliqan,
+    peliqanLoading,
+    bundleErrors,
+    allBundlesFailed,
+} = useMtPeliqanLoader(filtersRef);
 
-const applied = computed(() => props.peliqan?.filters ?? null);
+const dataError = computed(() => {
+    if (allBundlesFailed()) {
+        const parts = ['cashweb', 'hubspot', 'sprinter']
+            .map((b) => bundleErrors.value[b])
+            .filter(Boolean);
+        return parts.join(' · ') || 'MT-data laden mislukt';
+    }
+    return null;
+});
 
-const peliqanRef = computed(() => props.peliqan);
+const partialBundleErrors = computed(() => {
+    const labels = { cashweb: 'Cashweb', hubspot: 'HubSpot', sprinter: 'Sprinter' };
+    return ['cashweb', 'hubspot', 'sprinter']
+        .filter((b) => bundleErrors.value[b] && peliqan.value?.data?.[b] == null)
+        .map((b) => `${labels[b]}: ${bundleErrors.value[b]}`);
+});
+
+const cw = computed(() => peliqan.value?.data?.cashweb ?? null);
+const hs = computed(() => peliqan.value?.data?.hubspot ?? null);
+const sp = computed(() => peliqan.value?.data?.sprinter ?? null);
+
+const applied = computed(() => peliqan.value?.filters ?? null);
+
+const peliqanRef = computed(() => peliqan.value);
 const appliedRef = computed(() => applied.value);
 
 const { wmsPeliqan, wmsLoading, wmsError } = useMtWmsLoader();
@@ -461,30 +485,50 @@ const labelClass =
                 </span>
             </Message>
 
-            <Deferred data="peliqan">
-                <template #fallback>
-                    <div class="mt-2 space-y-6">
-                        <div
-                            v-for="s in 3"
-                            :key="`mt-skel-${s}`"
-                            class="rounded-xl border border-gray-100 bg-white p-5 shadow-sm"
-                        >
-                            <div
-                                class="mb-4 h-5 w-56 animate-pulse rounded bg-gray-200"
-                            ></div>
-                            <div
-                                class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
-                            >
-                                <div
-                                    v-for="n in 4"
-                                    :key="`mt-skel-${s}-${n}`"
-                                    class="h-28 animate-pulse rounded-lg bg-gray-100"
-                                ></div>
-                            </div>
-                        </div>
-                    </div>
-                </template>
+            <Message
+                v-if="peliqan?.meta?.stale"
+                severity="warn"
+                class="mb-6"
+                :closable="false"
+            >
+                <span class="text-sm">
+                    Een deel van de MT-data toont gecachte waarden (Peliqan
+                    timeout) — waarden kunnen verouderd zijn.
+                </span>
+            </Message>
 
+            <Message
+                v-for="(msg, idx) in partialBundleErrors"
+                :key="`bundle-err-${idx}`"
+                severity="warn"
+                class="mb-6"
+                :closable="false"
+            >
+                <span class="text-sm">{{ msg }} — overige tabs blijven zichtbaar.</span>
+            </Message>
+
+            <div v-if="peliqanLoading" class="mt-2 space-y-6">
+                <div
+                    v-for="s in 3"
+                    :key="`mt-skel-${s}`"
+                    class="rounded-xl border border-gray-100 bg-white p-5 shadow-sm"
+                >
+                    <div
+                        class="mb-4 h-5 w-56 animate-pulse rounded bg-gray-200"
+                    ></div>
+                    <div
+                        class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+                    >
+                        <div
+                            v-for="n in 4"
+                            :key="`mt-skel-${s}-${n}`"
+                            class="h-28 animate-pulse rounded-lg bg-gray-100"
+                        ></div>
+                    </div>
+                </div>
+            </div>
+
+            <template v-else>
                 <Message
                     v-if="dataError"
                     severity="warn"
@@ -1104,7 +1148,7 @@ const labelClass =
                     </div>
                     </TabPanel>
                 </TabView>
-            </Deferred>
+            </template>
 
             <KpiExplainDrawer
                 v-model:visible="kpiDrawerOpen"

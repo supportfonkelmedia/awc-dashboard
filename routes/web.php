@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AwcDashboardController;
 use App\Http\Controllers\MtDashboardController;
+use App\Http\Controllers\MtPeliqanDataController;
 use App\Http\Controllers\MtWmsDataController;
 use App\Http\Controllers\Peliqan7tDataController;
 use App\Http\Controllers\Peliqan7tDebugController;
@@ -31,6 +32,10 @@ Route::get('/mt-dashboard', MtDashboardController::class)
 Route::get('/mt-dashboard/wms', MtWmsDataController::class)
     ->middleware(['auth', 'verified'])
     ->name('mt.wms');
+
+Route::get('/mt-dashboard/peliqan', MtPeliqanDataController::class)
+    ->middleware(['auth', 'verified'])
+    ->name('mt.peliqan');
 
 Route::get('/awc-dashboard', AwcDashboardController::class)
     ->middleware(['auth', 'verified'])

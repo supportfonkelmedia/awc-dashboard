@@ -35,6 +35,7 @@ const brandBlue = '#1e3a5f';
 const form = ref({
     book_year: props.filters.book_year,
     month: props.filters.month,
+    quarter: props.filters.quarter ?? 'all',
     start_date: props.filters.start_date,
     end_date: props.filters.end_date,
 });
@@ -45,6 +46,7 @@ watch(
         form.value = {
             book_year: f.book_year,
             month: f.month,
+            quarter: f.quarter ?? 'all',
             start_date: f.start_date,
             end_date: f.end_date,
         };
@@ -73,12 +75,21 @@ const monthOptions = [
     { label: 'December', value: '12' },
 ];
 
+const quarterOptions = [
+    { label: 'Heel jaar (winrate)', value: 'all' },
+    { label: 'Q1', value: '1' },
+    { label: 'Q2', value: '2' },
+    { label: 'Q3', value: '3' },
+    { label: 'Q4', value: '4' },
+];
+
 function applyFilters() {
     router.get(
         route('mt.dashboard'),
         {
             book_year: form.value.book_year,
             month: form.value.month,
+            quarter: form.value.quarter,
             start_date: form.value.start_date,
             end_date: form.value.end_date,
         },
@@ -132,6 +143,9 @@ const {
     financeDrawerRows,
     financePeriodLabel,
     revenuePerLobPanel,
+    winratePipelines,
+    winratePeriodLabel,
+    margePerLoonPanel,
 } = useMtKpiData(peliqanRef, appliedRef, wmsPeliqan, wmsLoading);
 
 const financeDrawerOpen = ref(false);
@@ -219,21 +233,32 @@ const tripleLob = computed(() => {
 });
 
 const deals = computed(() => hs.value?.deals ?? []);
-const dealsYoY = computed(() => hs.value?.deals_yoy_counts?.[0] ?? {});
 
 const dealKpis = computed(() => {
-    const d = deals.value;
-    const n = d.length;
-    const won = d.filter(
-        (x) =>
-            String(x.is_gesloten) === 'true' && Number(x.amount ?? 0) > 0,
-    ).length;
-    const wr = n ? Math.round((won / n) * 1000) / 10 : 0;
-    const nV = Number(dealsYoY.value?.n ?? 0);
-    const wonV = Number(dealsYoY.value?.won ?? 0);
-    const wrV = nV ? Math.round((wonV / nV) * 1000) / 10 : 0;
-    return { n, won, wr, nV, wonV, wrV };
+    const pipelines = winratePipelines.value;
+    if (pipelines.length) {
+        let won = 0;
+        let lost = 0;
+        let wonV = 0;
+        let lostV = 0;
+        for (const p of pipelines) {
+            won += Number(p.gewonnen ?? 0);
+            lost += Number(p.verloren ?? 0);
+            wonV += Number(p.prior?.gewonnen ?? 0);
+            lostV += Number(p.prior?.verloren ?? 0);
+        }
+        const n = won + lost;
+        const nV = wonV + lostV;
+        const wr = n ? Math.round((won / n) * 1000) / 10 : 0;
+        const wrV = nV ? Math.round((wonV / nV) * 1000) / 10 : 0;
+        return { n, won, lost, wr, nV, wonV, lostV, wrV, pipelines };
+    }
+    return { n: 0, won: 0, lost: 0, wr: 0, nV: 0, wonV: 0, lostV: 0, wrV: 0, pipelines: [] };
 });
+
+const winrateValidation = computed(
+    () => hs.value?.winrate_validation_full_history ?? [],
+);
 
 const tickets = computed(() => hs.value?.tickets ?? []);
 const ticketsYoY = computed(() =>
@@ -420,6 +445,16 @@ const labelClass =
                             <Dropdown
                                 v-model="form.month"
                                 :options="monthOptions"
+                                option-label="label"
+                                option-value="value"
+                                class="w-full min-w-[10rem]"
+                            />
+                        </div>
+                        <div :class="filterClass">
+                            <span :class="labelClass">Winrate-kwartaal</span>
+                            <Dropdown
+                                v-model="form.quarter"
+                                :options="quarterOptions"
                                 option-label="label"
                                 option-value="value"
                                 class="w-full min-w-[10rem]"
@@ -707,6 +742,159 @@ const labelClass =
                 <TabPanel header="Financieel">
                     <div class="space-y-6">
                         <MtSectionCard
+                            title="Bruto marge per loonkosten"
+                            :subtitle="`Brief Fonkel · ${margePerLoonPanel.periodLabel || '—'}`"
+                        >
+                            <div
+                                v-if="margePerLoonPanel.totals"
+                                class="mb-4 grid gap-4 sm:grid-cols-3"
+                            >
+                                <Card :pt="cardPt">
+                                    <template #title>Totaal KPI</template>
+                                    <template #content>
+                                        <p class="text-3xl font-bold">
+                                            {{ margePerLoonPanel.totals.kpi_fmt }}
+                                        </p>
+                                        <p class="text-sm text-gray-500">
+                                            Brutomarge /
+                                            {{ margePerLoonPanel.totals.loonkosten_fmt }}
+                                        </p>
+                                    </template>
+                                </Card>
+                                <Card
+                                    v-for="ent in margePerLoonPanel.entities"
+                                    :key="ent.admin_code"
+                                    :pt="cardPt"
+                                >
+                                    <template #title>{{ ent.label }}</template>
+                                    <template #content>
+                                        <p class="text-3xl font-bold">
+                                            {{ ent.kpi_fmt }}
+                                        </p>
+                                        <p class="text-sm text-gray-500">
+                                            {{ ent.bruto_marge_fmt }} /
+                                            {{ ent.loonkosten_fmt }}
+                                        </p>
+                                    </template>
+                                </Card>
+                            </div>
+                            <Message
+                                v-else
+                                severity="info"
+                                :closable="false"
+                                class="!mb-4"
+                            >
+                                <span class="text-sm">
+                                    Wacht op Peliqan deploy (marge_per_loon).
+                                </span>
+                            </Message>
+
+                            <DataTable
+                                v-for="ent in margePerLoonPanel.entities.filter(
+                                    (e) => (e.months ?? []).length,
+                                )"
+                                :key="'mpl-' + ent.admin_code"
+                                :value="ent.months"
+                                striped-rows
+                                show-gridlines
+                                class="mb-6 p-datatable-sm text-sm"
+                                :empty-message="'Geen maanden.'"
+                            >
+                                <template #header>
+                                    <span class="font-semibold">
+                                        {{ ent.label }} — maandoverzicht
+                                        (alleen definitieve maanden in jaartotalen)
+                                    </span>
+                                </template>
+                                <Column field="month" header="Maand" />
+                                <Column
+                                    field="bruto_marge_fmt"
+                                    header="Brutomarge"
+                                />
+                                <Column
+                                    field="loonkosten_fmt"
+                                    header="Loonkosten"
+                                />
+                                <Column field="kpi_fmt" header="KPI" />
+                                <Column header="Status">
+                                    <template #body="{ data }">
+                                        <Tag
+                                            :severity="
+                                                data.definitief
+                                                    ? 'success'
+                                                    : 'warn'
+                                            "
+                                            :value="
+                                                data.definitief
+                                                    ? 'Definitief'
+                                                    : 'Voorlopig'
+                                            "
+                                        />
+                                    </template>
+                                </Column>
+                            </DataTable>
+
+                            <div
+                                v-if="
+                                    margePerLoonPanel.entities.some(
+                                        (e) =>
+                                            ['pgl1', 'acco'].includes(
+                                                e.admin_code,
+                                            ) &&
+                                            Object.values(
+                                                e.partial_wage ?? {},
+                                            ).some((v) => v > 0),
+                                    )
+                                "
+                                class="mt-6 rounded-lg border border-gray-100 bg-gray-50/60 p-4"
+                            >
+                                <h3
+                                    class="mb-3 text-sm font-semibold text-gray-800"
+                                >
+                                    Gedeeltelijke loonrekeningen (4130 / 4512)
+                                </h3>
+                                <p class="mb-3 text-xs text-gray-500">
+                                    AFC & ACC — pensioenlasten en reis/verblijf
+                                </p>
+                                <div class="grid gap-4 sm:grid-cols-2">
+                                    <Card
+                                        v-for="ent in margePerLoonPanel.entities.filter(
+                                            (e) =>
+                                                ['pgl1', 'acco'].includes(
+                                                    e.admin_code,
+                                                ),
+                                        )"
+                                        :key="'pw-' + ent.admin_code"
+                                        :pt="cardPt"
+                                    >
+                                        <template #title>{{
+                                            ent.label
+                                        }}</template>
+                                        <template #content>
+                                            <ul
+                                                class="space-y-1 text-sm text-gray-700"
+                                            >
+                                                <li
+                                                    v-for="acct in margePerLoonPanel.partialAccounts"
+                                                    :key="acct"
+                                                >
+                                                    Rekening {{ acct }}:
+                                                    <strong>{{
+                                                        fmtEur(
+                                                            ent.partial_wage?.[
+                                                                acct
+                                                            ],
+                                                        )
+                                                    }}</strong>
+                                                </li>
+                                            </ul>
+                                        </template>
+                                    </Card>
+                                </div>
+                            </div>
+                        </MtSectionCard>
+
+                        <MtSectionCard
                             title="Revenue per Line of Business"
                             subtitle="Strategische KPI — omzet per business line (sub_administration)"
                         >
@@ -770,61 +958,114 @@ const labelClass =
                 <TabPanel header="Commercieel">
                     <div class="space-y-6">
                         <MtSectionCard
+                            title="Winrate per pijplijn"
+                            :subtitle="`${winratePeriodLabel || '—'} · closedate · hs_is_closed_won/lost`"
+                        >
+                            <div
+                                v-if="winratePipelines.length"
+                                class="grid gap-4 sm:grid-cols-2"
+                            >
+                                <Card
+                                    v-for="p in winratePipelines"
+                                    :key="p.pipeline_id ?? p.pipeline_label"
+                                    :pt="cardPt"
+                                >
+                                    <template #title>{{
+                                        p.pipeline_label
+                                    }}</template>
+                                    <template #content>
+                                        <p class="text-3xl font-bold">
+                                            {{
+                                                p.winrate_pct != null
+                                                    ? `${p.winrate_pct}%`
+                                                    : '—'
+                                            }}
+                                        </p>
+                                        <p class="text-sm text-gray-500">
+                                            {{ p.gewonnen }} gewonnen /
+                                            {{ p.verloren }} verloren
+                                        </p>
+                                        <p
+                                            v-if="p.prior?.winrate_pct != null"
+                                            class="mt-1 text-sm text-gray-500"
+                                        >
+                                            Vorig jaar:
+                                            {{ p.prior.winrate_pct }}%
+                                            ({{
+                                                deltaTxt(
+                                                    p.winrate_pct,
+                                                    p.prior.winrate_pct,
+                                                )
+                                            }})
+                                        </p>
+                                    </template>
+                                </Card>
+                            </div>
+                            <Message
+                                v-else
+                                severity="info"
+                                :closable="false"
+                            >
+                                <span class="text-sm">
+                                    Geen winrate-data — deploy Peliqan-handler
+                                    of kies een ander kwartaal.
+                                </span>
+                            </Message>
+
+                            <div
+                                v-if="winrateValidation.length"
+                                class="mt-4 rounded border border-dashed border-gray-200 bg-gray-50/80 p-3 text-xs text-gray-600"
+                            >
+                                <p class="mb-1 font-semibold text-gray-700">
+                                    Validatie (volledige historie)
+                                </p>
+                                <p
+                                    v-for="v in winrateValidation"
+                                    :key="v.pipeline_label"
+                                >
+                                    {{ v.pipeline_label }}:
+                                    {{ v.gewonnen }} / {{ v.verloren }} =
+                                    {{ v.winrate_pct }}%
+                                </p>
+                            </div>
+                        </MtSectionCard>
+
+                        <MtSectionCard
                             title="Pipeline KPI's"
-                            subtitle="HubSpot deals in geselecteerde periode"
+                            subtitle="Gesloten deals in winrate-periode"
+                            :accent="false"
                         >
                             <div class="grid gap-4 sm:grid-cols-3">
                                 <Card :pt="cardPt">
-                                    <template #title>Nieuwe deals</template>
+                                    <template #title>Gesloten deals</template>
                                     <template #content>
                                         <p class="text-3xl font-bold">
                                             {{ dealKpis.n }}
                                         </p>
                                         <p class="text-sm text-gray-500">
-                                            YoY zelfde venster:
-                                            {{ dealKpis.nV }}
-                                            <span
-                                                v-if="dealKpis.nV"
-                                                class="font-medium text-gray-700"
-                                                >({{
-                                                    deltaTxt(
-                                                        dealKpis.n,
-                                                        dealKpis.nV,
-                                                    )
-                                                }})</span
-                                            >
+                                            Gewonnen + verloren
                                         </p>
                                     </template>
                                 </Card>
                                 <Card :pt="cardPt">
-                                    <template #title>Gewonnen deals</template>
+                                    <template #title>Gewonnen</template>
                                     <template #content>
                                         <p class="text-3xl font-bold">
                                             {{ dealKpis.won }}
                                         </p>
                                         <p class="text-sm text-gray-500">
-                                            Proxy: gesloten + amount &gt; 0
+                                            hs_is_closed_won
                                         </p>
                                     </template>
                                 </Card>
                                 <Card :pt="cardPt">
-                                    <template #title>Win rate</template>
+                                    <template #title>Verloren</template>
                                     <template #content>
                                         <p class="text-3xl font-bold">
-                                            {{ dealKpis.wr }}%
+                                            {{ dealKpis.lost }}
                                         </p>
                                         <p class="text-sm text-gray-500">
-                                            Vorig: {{ dealKpis.wrV }}%
-                                            <span
-                                                v-if="dealKpis.wrV"
-                                                class="font-medium"
-                                                >({{
-                                                    deltaTxt(
-                                                        dealKpis.wr,
-                                                        dealKpis.wrV,
-                                                    )
-                                                }})</span
-                                            >
+                                            hs_is_closed_lost
                                         </p>
                                     </template>
                                 </Card>
@@ -853,12 +1094,16 @@ const labelClass =
                                 scrollable
                                 scroll-height="320px"
                                 class="p-datatable-sm text-sm"
-                                :empty-message="'Geen deals in periode.'"
+                                :empty-message="'Geen gesloten deals in periode.'"
                             >
                                 <Column field="dealname" header="Deal" />
+                                <Column
+                                    field="pipeline_label"
+                                    header="Pijplijn"
+                                />
                                 <Column field="stage_label" header="Stage" />
                                 <Column field="amount" header="Amount" />
-                                <Column field="createdat" header="Aangemaakt" />
+                                <Column field="closedate" header="Sluitdatum" />
                             </DataTable>
                         </MtSectionCard>
 
@@ -997,14 +1242,41 @@ const labelClass =
                     <div class="space-y-6">
                         <Message severity="info" :closable="false" class="!mb-0">
                             <span class="text-sm text-gray-700">
-                                FTE-proxy via Cashweb SAL-dagboek (Hooray nog
-                                niet gekoppeld).
+                                Loonkosten via grootboekrekeningen (Brief
+                                Fonkel). FTE/Hooray nog niet gekoppeld.
                             </span>
                         </Message>
 
                         <MtSectionCard
-                            title="Loonkosten (SAL-proxy)"
-                            subtitle="Cashweb dagboek SAL — debet som"
+                            title="Bruto marge per loonkosten"
+                            :subtitle="margePerLoonPanel.periodLabel || 'Cashweb'"
+                        >
+                            <div
+                                class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+                            >
+                                <Card
+                                    v-for="ent in margePerLoonPanel.entities"
+                                    :key="'hr-' + ent.admin_code"
+                                    :pt="cardPt"
+                                >
+                                    <template #title>{{ ent.label }}</template>
+                                    <template #content>
+                                        <p class="text-2xl font-bold">
+                                            {{ ent.kpi_fmt }}
+                                        </p>
+                                        <p class="text-sm text-gray-500">
+                                            Loon:
+                                            {{ ent.loonkosten_fmt }}
+                                        </p>
+                                    </template>
+                                </Card>
+                            </div>
+                        </MtSectionCard>
+
+                        <MtSectionCard
+                            title="Loonkosten detail (SAL-dagboek)"
+                            subtitle="Legacy-weergave — KPI gebruikt loonrekeningen"
+                            :accent="false"
                         >
                             <Card :pt="cardPt" class="mb-4">
                                 <template #title

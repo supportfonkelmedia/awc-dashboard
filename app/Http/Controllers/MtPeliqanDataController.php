@@ -34,18 +34,23 @@ class MtPeliqanDataController extends Controller
 
         $bookYear = (string) $request->query('book_year', (string) now()->year);
         $month = (string) $request->query('month', 'all');
+        $quarter = (string) $request->query('quarter', 'all');
         $startDate = (string) $request->query('start_date', sprintf('%s-01-01', $bookYear));
         $endDate = (string) $request->query('end_date', now()->format('Y-m-d'));
+
+        $wageAccounts = config('mt_kpi.wage_accounts', []);
 
         $query = array_filter([
             'bundle' => $bundle,
             'book_year' => $bookYear,
             'month' => $month,
+            'quarter' => $quarter,
             'start_date' => $startDate,
             'end_date' => $endDate,
+            'wage_accounts' => $wageAccounts !== [] ? json_encode($wageAccounts) : null,
         ], fn ($v) => $v !== null && $v !== '');
 
-        $cacheKey = 'peliqan:mt:'.$bundle.':v1:'.md5(json_encode($query));
+        $cacheKey = 'peliqan:mt:'.$bundle.':v2:'.md5(json_encode($query));
         $ttl = (int) config('peliqan.cache_ttl', 120);
         $timeout = (int) config('peliqan.timeout', 60);
 

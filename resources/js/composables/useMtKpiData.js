@@ -254,6 +254,10 @@ export function useMtKpiData(peliqanRef, appliedRef, wmsPeliqanRef = null, wmsLo
     });
 
     const loonTotaal = computed(() => {
+        const mpl = cw.value?.marge_per_loon;
+        if (mpl?.totals?.loonkosten != null) {
+            return Number(mpl.totals.loonkosten);
+        }
         let s = 0;
         for (const r of cw.value?.salarissen_SAL ?? []) {
             s += Number(r.loon_debet ?? 0);
@@ -261,19 +265,109 @@ export function useMtKpiData(peliqanRef, appliedRef, wmsPeliqanRef = null, wmsLo
         return s;
     });
 
+    const winratePipelines = computed(() => {
+        const current = hs.value?.winrate_by_pipeline ?? [];
+        const prior = hs.value?.winrate_by_pipeline_prior ?? [];
+        const priorMap = Object.fromEntries(
+            prior.map((r) => [r.pipeline_label, r]),
+        );
+        return current.map((r) => ({
+            ...r,
+            prior: priorMap[r.pipeline_label] ?? null,
+        }));
+    });
+
+    const winratePeriodLabel = computed(
+        () =>
+            hs.value?.winrate_period_label ??
+            applied.value?.winrate_period_label ??
+            '',
+    );
+
+    const margePerLoonPanel = computed(() => {
+        const mpl = cw.value?.marge_per_loon;
+        if (!mpl?.entities?.length) {
+            return {
+                status: KPI_STATUS.IN_DEVELOPMENT,
+                periodLabel: applied.value?.period_label ?? '',
+                entities: [],
+                totals: null,
+                partialAccounts: [],
+            };
+        }
+        const partial = mpl.partial_wage_accounts ?? ['4130', '4512'];
+        return {
+            status: KPI_STATUS.LIVE,
+            periodLabel: applied.value?.period_label ?? '',
+            entities: mpl.entities.map((e) => ({
+                ...e,
+                kpi_fmt:
+                    e.kpi != null
+                        ? `${Number(e.kpi).toFixed(2).replace('.', ',')}×`
+                        : '—',
+                bruto_marge_fmt: fmtEurDisplay(e.bruto_marge),
+                loonkosten_fmt: fmtEurDisplay(e.loonkosten),
+                months: (e.months ?? []).map((m) => ({
+                    ...m,
+                    omzet_fmt: fmtEurDisplay(m.omzet),
+                    inkoop_fmt: fmtEurDisplay(m.inkoop),
+                    bruto_marge_fmt: fmtEurDisplay(m.bruto_marge),
+                    loonkosten_fmt: fmtEurDisplay(m.loonkosten),
+                    kpi_fmt:
+                        m.kpi != null
+                            ? `${Number(m.kpi).toFixed(2).replace('.', ',')}×`
+                            : '—',
+                })),
+            })),
+            totals: mpl.totals
+                ? {
+                      ...mpl.totals,
+                      kpi_fmt:
+                          mpl.totals.kpi != null
+                              ? `${Number(mpl.totals.kpi).toFixed(2).replace('.', ',')}×`
+                              : '—',
+                      bruto_marge_fmt: fmtEurDisplay(mpl.totals.bruto_marge),
+                      loonkosten_fmt: fmtEurDisplay(mpl.totals.loonkosten),
+                  }
+                : null,
+            partialAccounts: partial,
+        };
+    });
+
     const dealKpis = computed(() => {
+        const pipelines = winratePipelines.value;
+        if (pipelines.length) {
+            let won = 0;
+            let lost = 0;
+            let wonV = 0;
+            let lostV = 0;
+            for (const p of pipelines) {
+                won += Number(p.gewonnen ?? 0);
+                lost += Number(p.verloren ?? 0);
+                wonV += Number(p.prior?.gewonnen ?? 0);
+                lostV += Number(p.prior?.verloren ?? 0);
+            }
+            const n = won + lost;
+            const nV = wonV + lostV;
+            const wr = n ? Math.round((won / n) * 1000) / 10 : 0;
+            const wrV = nV ? Math.round((wonV / nV) * 1000) / 10 : 0;
+            return { n, won, lost, wr, nV, wonV, lostV, wrV, pipelines };
+        }
         const d = hs.value?.deals ?? [];
         const n = d.length;
         const won = d.filter(
-            (x) =>
-                String(x.is_gesloten) === 'true' && Number(x.amount ?? 0) > 0,
+            (x) => String(x.hs_is_closed_won) === 'true',
+        ).length;
+        const lost = d.filter(
+            (x) => String(x.hs_is_closed_lost) === 'true',
         ).length;
         const wr = n ? Math.round((won / n) * 1000) / 10 : 0;
         const dealsYoY = hs.value?.deals_yoy_counts?.[0] ?? {};
-        const nV = Number(dealsYoY?.n ?? 0);
+        const nV = Number(dealsYoY?.won ?? 0) + Number(dealsYoY?.lost ?? 0);
         const wonV = Number(dealsYoY?.won ?? 0);
+        const lostV = Number(dealsYoY?.lost ?? 0);
         const wrV = nV ? Math.round((wonV / nV) * 1000) / 10 : 0;
-        return { n, won, wr, nV, wonV, wrV };
+        return { n, won, lost, wr, nV, wonV, lostV, wrV, pipelines: [] };
     });
 
     const ticketsYoY = computed(() =>
@@ -309,15 +403,24 @@ export function useMtKpiData(peliqanRef, appliedRef, wmsPeliqanRef = null, wmsLo
     const strategicCards = computed(() => {
         const a = aggregates.value;
         const tl = tripleLob.value;
-        const loon = loonTotaal.value;
+        const mpl = margePerLoonPanel.value;
         const period = applied.value?.book_periods ?? '';
 
         const margePerLoonRatio =
-            a && loon > 0 ? Number(a.brutomarge) / loon : null;
+            mpl.totals?.kpi != null
+                ? Number(mpl.totals.kpi)
+                : a && loonTotaal.value > 0
+                  ? Number(a.brutomarge) / loonTotaal.value
+                  : null;
         const margePerLoon =
             margePerLoonRatio != null
                 ? `${margePerLoonRatio.toFixed(2).replace('.', ',')}×`
                 : null;
+        const margeFooter = mpl.totals
+            ? `Brutomarge ${mpl.totals.bruto_marge_fmt} / loon ${mpl.totals.loonkosten_fmt} · ${period}`
+            : a && loonTotaal.value > 0
+              ? `Brutomarge ${fmtEur(a.brutomarge)} / loon ${fmtEur(loonTotaal.value)} · ${period}`
+              : period;
 
         return STRATEGIC_KPI_ORDER.filter(
             (id) => id !== 'revenue_per_lob',
@@ -343,13 +446,17 @@ export function useMtKpiData(peliqanRef, appliedRef, wmsPeliqanRef = null, wmsLo
                         footer: def.source,
                     });
                 case 'marge_per_loon':
-                    if (a && loon > 0 && margePerLoon != null) {
+                    if (margePerLoon != null) {
                         return kpi(def, {
-                            status: KPI_STATUS.LIVE,
+                            status: mpl.status === KPI_STATUS.LIVE
+                                ? KPI_STATUS.LIVE
+                                : KPI_STATUS.IN_DEVELOPMENT,
                             value: margePerLoon,
                             delta: '',
-                            footer: `Brutomarge ${fmtEur(a.brutomarge)} / loon ${fmtEur(loon)} · ${period}`,
-                            note: 'Proxy: geen FTE in bronnen.',
+                            footer: margeFooter,
+                            note: mpl.totals
+                                ? 'Rekening 8/6 + loonrekeningen (Brief Fonkel).'
+                                : 'Wacht op Peliqan deploy marge_per_loon.',
                         });
                     }
                     return kpi(def, {
@@ -403,20 +510,52 @@ export function useMtKpiData(peliqanRef, appliedRef, wmsPeliqanRef = null, wmsLo
                     status: KPI_STATUS.NOT_MEASURED,
                     footer: def.source,
                 });
-            case 'winrate':
-                if (dk.n > 0) {
+            case 'winrate': {
+                const pipelines = dk.pipelines ?? [];
+                if (pipelines.length === 1) {
+                    const p = pipelines[0];
                     return kpi(def, {
                         status: KPI_STATUS.LIVE,
+                        value:
+                            p.winrate_pct != null
+                                ? `${p.winrate_pct}%`
+                                : '—',
+                        delta:
+                            p.prior?.winrate_pct != null &&
+                            p.winrate_pct != null
+                                ? deltaTxt(p.winrate_pct, p.prior.winrate_pct)
+                                : '',
+                        deltaPositive: deltaPositive(
+                            p.winrate_pct,
+                            p.prior?.winrate_pct,
+                        ),
+                        footer: `${p.gewonnen} gewonnen / ${p.gewonnen + p.verloren} gesloten · ${winratePeriodLabel.value}`,
+                    });
+                }
+                if (pipelines.length > 1) {
+                    const parts = pipelines
+                        .filter((p) => p.winrate_pct != null)
+                        .map((p) => `${p.pipeline_label}: ${p.winrate_pct}%`);
+                    return kpi(def, {
+                        status: KPI_STATUS.LIVE,
+                        value: parts[0] ?? '—',
+                        note: parts.slice(1).join(' · ') || null,
+                        footer: `${winratePeriodLabel.value} · per pijplijn`,
+                    });
+                }
+                if (dk.n > 0) {
+                    return kpi(def, {
+                        status: KPI_STATUS.IN_DEVELOPMENT,
                         value: `${dk.wr}%`,
-                        delta: dk.nV ? deltaTxt(dk.wr, dk.wrV) : '',
-                        deltaPositive: deltaPositive(dk.wr, dk.wrV),
-                        footer: `${dk.won} gewonnen / ${dk.n} deals`,
+                        footer: `${dk.won} gewonnen / ${dk.n} gesloten`,
+                        note: 'Deploy Peliqan-handler voor winrate per pijplijn.',
                     });
                 }
                 return kpi(def, {
                     status: KPI_STATUS.NOT_MEASURED,
                     footer: def.source,
                 });
+            }
             case 'time_to_onboarding':
                 return kpi(def, {
                     status:
@@ -808,6 +947,9 @@ export function useMtKpiData(peliqanRef, appliedRef, wmsPeliqanRef = null, wmsLo
         financeDrawerRows,
         financePeriodLabel,
         revenuePerLobPanel,
+        winratePipelines,
+        winratePeriodLabel,
+        margePerLoonPanel,
         wmsAvailable,
         occupancy,
         storageLeadTime,

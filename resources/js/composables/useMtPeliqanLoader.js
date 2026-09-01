@@ -13,6 +13,7 @@ async function fetchBundle(bundle, filters) {
         bundle,
         book_year: filters.book_year,
         month: filters.month,
+        quarter: filters.quarter ?? 'all',
         start_date: filters.start_date,
         end_date: filters.end_date,
     });

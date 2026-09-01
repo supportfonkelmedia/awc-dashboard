@@ -55,8 +55,8 @@ export const STRATEGIC_KPIS = {
         label: 'Bruto marge per loonkosten',
         theme: 'Efficiëntie',
         defaultStatus: KPI_STATUS.IN_DEVELOPMENT,
-        source: 'Cashweb (SAL-proxy)',
-        note: 'Vervanger voor marge per FTE zolang uren ontbreken.',
+        source: 'Cashweb',
+        note: 'Omzet (8*) − inkoop (6*) gedeeld door loonrekeningen per entiteit.',
     },
     revenue_per_lob: {
         id: 'revenue_per_lob',
@@ -350,7 +350,8 @@ export const KPI_EXPLAIN = {
     marge_per_loon: {
         description:
             'Hoeveel brutomarge er tegenover elke euro loonkosten staat — efficiëntie-proxy zolang FTE-uren ontbreken.',
-        method: 'Brutomarge (omzet − inkoop) gedeeld door loonkosten uit het Cashweb SAL-dagboek (debet).',
+        method:
+            'Brutomarge (omzet 8* − inkoop 6*) gedeeld door som loonrekeningen per entiteit (Cashweb ledger_mutations).',
     },
     revenue_per_lob: {
         description: 'Omzet uitgesplitst per business line / sub-administratie.',
@@ -368,8 +369,10 @@ export const KPI_EXPLAIN = {
         method: 'HubSpot. Nog niet gemeten.',
     },
     winrate: {
-        description: 'Aandeel gewonnen deals ten opzichte van alle deals in de periode.',
-        method: 'Gewonnen deals (gesloten én amount > 0) gedeeld door het totaal aantal deals (HubSpot).',
+        description:
+            'Aandeel gewonnen deals ten opzichte van gewonnen + verloren (open deals tellen niet mee).',
+        method:
+            'HubSpot hs_is_closed_won / (won + lost), per pijplijn, kwartaal op closedate.',
     },
     time_to_onboarding: {
         description: 'Doorlooptijd van een gewonnen deal tot een actieve, onboarded klant.',

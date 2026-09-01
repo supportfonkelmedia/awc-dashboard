@@ -12,6 +12,7 @@ class MtDashboardController extends Controller
     {
         $bookYear = (string) $request->query('book_year', (string) now()->year);
         $month = (string) $request->query('month', 'all');
+        $quarter = (string) $request->query('quarter', 'all');
         $startDate = (string) $request->query('start_date', sprintf('%s-01-01', $bookYear));
         $endDate = (string) $request->query('end_date', now()->format('Y-m-d'));
 
@@ -27,6 +28,7 @@ class MtDashboardController extends Controller
             'filters' => [
                 'book_year' => $bookYear,
                 'month' => $month,
+                'quarter' => $quarter,
                 'start_date' => $startDate,
                 'end_date' => $endDate,
             ],

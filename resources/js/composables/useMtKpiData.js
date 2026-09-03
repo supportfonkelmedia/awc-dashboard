@@ -456,7 +456,7 @@ export function useMtKpiData(peliqanRef, appliedRef, wmsPeliqanRef = null, wmsLo
                             footer: margeFooter,
                             note: mpl.totals
                                 ? 'Rekening 8/6 + loonrekeningen (Brief Fonkel).'
-                                : 'Wacht op Peliqan deploy marge_per_loon.',
+                                : 'Geen loon- of marge-data in geselecteerde periode.',
                         });
                     }
                     return kpi(def, {

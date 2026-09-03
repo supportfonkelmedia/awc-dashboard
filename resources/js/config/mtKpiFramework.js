@@ -54,7 +54,7 @@ export const STRATEGIC_KPIS = {
         id: 'marge_per_loon',
         label: 'Bruto marge per loonkosten',
         theme: 'Efficiëntie',
-        defaultStatus: KPI_STATUS.IN_DEVELOPMENT,
+        defaultStatus: KPI_STATUS.LIVE,
         source: 'Cashweb',
         note: 'Omzet (8*) − inkoop (6*) gedeeld door loonrekeningen per entiteit.',
     },

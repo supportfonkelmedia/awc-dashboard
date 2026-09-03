@@ -4,6 +4,7 @@ import KpiExplainDrawer from '@/Components/Management/KpiExplainDrawer.vue';
 import MtKpiCard from '@/Components/Management/MtKpiCard.vue';
 import MtSectionCard from '@/Components/Management/MtSectionCard.vue';
 import RevenuePerLobPanel from '@/Components/Management/RevenuePerLobPanel.vue';
+import MargePerLoonPanel from '@/Components/Management/MargePerLoonPanel.vue';
 import MetricSparkCard from '@/Components/Management/MetricSparkCard.vue';
 import { useMtKpiData } from '@/composables/useMtKpiData';
 import { useMtPeliqanLoader } from '@/composables/useMtPeliqanLoader';
@@ -745,153 +746,7 @@ const labelClass =
                             title="Bruto marge per loonkosten"
                             :subtitle="`Brief Fonkel · ${margePerLoonPanel.periodLabel || '—'}`"
                         >
-                            <div
-                                v-if="margePerLoonPanel.totals"
-                                class="mb-4 grid gap-4 sm:grid-cols-3"
-                            >
-                                <Card :pt="cardPt">
-                                    <template #title>Totaal KPI</template>
-                                    <template #content>
-                                        <p class="text-3xl font-bold">
-                                            {{ margePerLoonPanel.totals.kpi_fmt }}
-                                        </p>
-                                        <p class="text-sm text-gray-500">
-                                            Brutomarge /
-                                            {{ margePerLoonPanel.totals.loonkosten_fmt }}
-                                        </p>
-                                    </template>
-                                </Card>
-                                <Card
-                                    v-for="ent in margePerLoonPanel.entities"
-                                    :key="ent.admin_code"
-                                    :pt="cardPt"
-                                >
-                                    <template #title>{{ ent.label }}</template>
-                                    <template #content>
-                                        <p class="text-3xl font-bold">
-                                            {{ ent.kpi_fmt }}
-                                        </p>
-                                        <p class="text-sm text-gray-500">
-                                            {{ ent.bruto_marge_fmt }} /
-                                            {{ ent.loonkosten_fmt }}
-                                        </p>
-                                    </template>
-                                </Card>
-                            </div>
-                            <Message
-                                v-else
-                                severity="info"
-                                :closable="false"
-                                class="!mb-4"
-                            >
-                                <span class="text-sm">
-                                    Wacht op Peliqan deploy (marge_per_loon).
-                                </span>
-                            </Message>
-
-                            <DataTable
-                                v-for="ent in margePerLoonPanel.entities.filter(
-                                    (e) => (e.months ?? []).length,
-                                )"
-                                :key="'mpl-' + ent.admin_code"
-                                :value="ent.months"
-                                striped-rows
-                                show-gridlines
-                                class="mb-6 p-datatable-sm text-sm"
-                                :empty-message="'Geen maanden.'"
-                            >
-                                <template #header>
-                                    <span class="font-semibold">
-                                        {{ ent.label }} — maandoverzicht
-                                        (alleen definitieve maanden in jaartotalen)
-                                    </span>
-                                </template>
-                                <Column field="month" header="Maand" />
-                                <Column
-                                    field="bruto_marge_fmt"
-                                    header="Brutomarge"
-                                />
-                                <Column
-                                    field="loonkosten_fmt"
-                                    header="Loonkosten"
-                                />
-                                <Column field="kpi_fmt" header="KPI" />
-                                <Column header="Status">
-                                    <template #body="{ data }">
-                                        <Tag
-                                            :severity="
-                                                data.definitief
-                                                    ? 'success'
-                                                    : 'warn'
-                                            "
-                                            :value="
-                                                data.definitief
-                                                    ? 'Definitief'
-                                                    : 'Voorlopig'
-                                            "
-                                        />
-                                    </template>
-                                </Column>
-                            </DataTable>
-
-                            <div
-                                v-if="
-                                    margePerLoonPanel.entities.some(
-                                        (e) =>
-                                            ['pgl1', 'acco'].includes(
-                                                e.admin_code,
-                                            ) &&
-                                            Object.values(
-                                                e.partial_wage ?? {},
-                                            ).some((v) => v > 0),
-                                    )
-                                "
-                                class="mt-6 rounded-lg border border-gray-100 bg-gray-50/60 p-4"
-                            >
-                                <h3
-                                    class="mb-3 text-sm font-semibold text-gray-800"
-                                >
-                                    Gedeeltelijke loonrekeningen (4130 / 4512)
-                                </h3>
-                                <p class="mb-3 text-xs text-gray-500">
-                                    AFC & ACC — pensioenlasten en reis/verblijf
-                                </p>
-                                <div class="grid gap-4 sm:grid-cols-2">
-                                    <Card
-                                        v-for="ent in margePerLoonPanel.entities.filter(
-                                            (e) =>
-                                                ['pgl1', 'acco'].includes(
-                                                    e.admin_code,
-                                                ),
-                                        )"
-                                        :key="'pw-' + ent.admin_code"
-                                        :pt="cardPt"
-                                    >
-                                        <template #title>{{
-                                            ent.label
-                                        }}</template>
-                                        <template #content>
-                                            <ul
-                                                class="space-y-1 text-sm text-gray-700"
-                                            >
-                                                <li
-                                                    v-for="acct in margePerLoonPanel.partialAccounts"
-                                                    :key="acct"
-                                                >
-                                                    Rekening {{ acct }}:
-                                                    <strong>{{
-                                                        fmtEur(
-                                                            ent.partial_wage?.[
-                                                                acct
-                                                            ],
-                                                        )
-                                                    }}</strong>
-                                                </li>
-                                            </ul>
-                                        </template>
-                                    </Card>
-                                </div>
-                            </div>
+                            <MargePerLoonPanel :panel="margePerLoonPanel" />
                         </MtSectionCard>
 
                         <MtSectionCard
@@ -1251,26 +1106,11 @@ const labelClass =
                             title="Bruto marge per loonkosten"
                             :subtitle="margePerLoonPanel.periodLabel || 'Cashweb'"
                         >
-                            <div
-                                class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
-                            >
-                                <Card
-                                    v-for="ent in margePerLoonPanel.entities"
-                                    :key="'hr-' + ent.admin_code"
-                                    :pt="cardPt"
-                                >
-                                    <template #title>{{ ent.label }}</template>
-                                    <template #content>
-                                        <p class="text-2xl font-bold">
-                                            {{ ent.kpi_fmt }}
-                                        </p>
-                                        <p class="text-sm text-gray-500">
-                                            Loon:
-                                            {{ ent.loonkosten_fmt }}
-                                        </p>
-                                    </template>
-                                </Card>
-                            </div>
+                            <MargePerLoonPanel
+                                :panel="margePerLoonPanel"
+                                compact
+                                :show-partial-wage="false"
+                            />
                         </MtSectionCard>
 
                         <MtSectionCard

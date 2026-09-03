@@ -31,6 +31,7 @@ CW_AMOUNT = """CAST(
 )"""
 CW_IS_D = "UPPER(TRIM(COALESCE(debit_credit, ''))) IN ('D', 'DEBET', 'DEBIT')"
 CW_IS_C = "UPPER(TRIM(COALESCE(debit_credit, ''))) IN ('C', 'CREDIT')"
+CW_IS_NULL = "NULLIF(TRIM(COALESCE(debit_credit, '')), '') IS NULL"
 CW_OMZET_DAGBOEKEN = "('50', 'VERK')"
 
 # Brief Fonkel deel 1 — keep in sync with config/mt_kpi.php
@@ -280,7 +281,8 @@ def sql_marge_per_loon_monthly(book_year, wage_accounts):
         wage_case_parts.append(
             f"WHEN admin_code = '{admin}' "
             f"AND TRIM(COALESCE(account_number, '')) IN ({acct_in}) "
-            f"AND {CW_IS_D} THEN {CW_AMOUNT}"
+            f"AND ({CW_IS_D} OR {CW_IS_NULL}) THEN "
+            f"CASE WHEN {CW_IS_D} THEN {CW_AMOUNT} ELSE {CW_AMOUNT} END"
         )
     wage_case = (
         "SUM(CASE " + " ".join(wage_case_parts) + " ELSE 0 END)"
@@ -292,7 +294,9 @@ def sql_marge_per_loon_monthly(book_year, wage_accounts):
     for acct in partial:
         partial_cols.append(
             f"SUM(CASE WHEN TRIM(COALESCE(account_number, '')) = '{acct}' "
-            f"AND {CW_IS_D} THEN {CW_AMOUNT} ELSE 0 END) AS acct_{acct}"
+            f"AND ({CW_IS_D} OR {CW_IS_NULL}) THEN "
+            f"CASE WHEN {CW_IS_D} THEN {CW_AMOUNT} ELSE {CW_AMOUNT} END "
+            f"ELSE 0 END) AS acct_{acct}"
         )
     partial_sql = ",\n        ".join(partial_cols) if partial_cols else ""
 
@@ -301,9 +305,13 @@ def sql_marge_per_loon_monthly(book_year, wage_accounts):
         admin_code,
         CAST(book_period AS INTEGER) AS book_period,
         SUM(CASE WHEN TRIM(COALESCE(account_number, '')) LIKE '8%'
-                      AND {CW_IS_C} THEN {CW_AMOUNT} ELSE 0 END) AS omzet,
+                      AND ({CW_IS_C} OR {CW_IS_NULL}) THEN
+            CASE WHEN {CW_IS_C} THEN {CW_AMOUNT} ELSE -({CW_AMOUNT}) END
+            ELSE 0 END) AS omzet,
         SUM(CASE WHEN TRIM(COALESCE(account_number, '')) LIKE '6%'
-                      AND {CW_IS_D} THEN {CW_AMOUNT} ELSE 0 END) AS inkoop,
+                      AND ({CW_IS_D} OR {CW_IS_NULL}) THEN
+            CASE WHEN {CW_IS_D} THEN {CW_AMOUNT} ELSE {CW_AMOUNT} END
+            ELSE 0 END) AS inkoop,
         {wage_case} AS loonkosten
         {',' if partial_sql else ''}
         {partial_sql}

@@ -11,6 +11,7 @@ import { computed } from 'vue';
 const props = defineProps({
     panel: { type: Object, required: true },
     compact: { type: Boolean, default: false },
+    embedded: { type: Boolean, default: false },
     showPartialWage: { type: Boolean, default: true },
 });
 
@@ -238,7 +239,31 @@ const showPartialBlock = computed(
 <template>
     <div>
         <div
-            v-if="!compact"
+            v-if="embedded"
+            class="flex flex-wrap items-start justify-between gap-3"
+        >
+            <div>
+                <p
+                    class="text-[10px] font-semibold uppercase tracking-wider text-[#ff7020]"
+                >
+                    Efficiëntie
+                </p>
+                <h4 class="text-sm font-semibold text-gray-800">
+                    Bruto marge per loonkosten
+                </h4>
+                <p v-if="panel.periodLabel" class="mt-0.5 text-xs text-gray-500">
+                    {{ panel.periodLabel }}
+                </p>
+            </div>
+            <Tag
+                :value="statusLabel"
+                :severity="statusSeverity"
+                class="shrink-0 !text-[10px]"
+            />
+        </div>
+
+        <div
+            v-else-if="!compact"
             class="mb-4 flex flex-wrap items-start justify-between gap-3"
         >
             <Tag
@@ -249,7 +274,7 @@ const showPartialBlock = computed(
         </div>
 
         <div
-            v-if="hasSummary || panel.totals"
+            v-if="!embedded && (hasSummary || panel.totals)"
             class="mb-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
         >
             <Card v-if="panel.totals" :pt="cardPt">
@@ -279,7 +304,7 @@ const showPartialBlock = computed(
         </div>
 
         <Message
-            v-else
+            v-else-if="!embedded"
             severity="info"
             :closable="false"
             class="!mb-4"
@@ -291,12 +316,19 @@ const showPartialBlock = computed(
 
         <template v-if="isLive && entitiesWithMonths.length">
             <div
-                class="mb-6 rounded-lg border border-gray-100 bg-white p-4"
+                :class="
+                    embedded
+                        ? 'mt-4 h-52 min-h-[12rem]'
+                        : 'mb-6 rounded-lg border border-gray-100 bg-white p-4'
+                "
             >
-                <h3 class="mb-3 text-sm font-semibold text-gray-800">
+                <h3
+                    v-if="!embedded"
+                    class="mb-3 text-sm font-semibold text-gray-800"
+                >
                     KPI maandtrend per entiteit
                 </h3>
-                <div class="h-56 min-h-[14rem]">
+                <div :class="embedded ? 'h-full' : 'h-56 min-h-[14rem]'">
                     <Chart
                         type="line"
                         :data="kpiTrendChart"
@@ -306,6 +338,7 @@ const showPartialBlock = computed(
                 </div>
             </div>
 
+            <template v-if="!embedded">
             <div
                 v-for="ent in entitiesWithMonths"
                 :key="'mpl-chart-' + ent.admin_code"
@@ -362,10 +395,23 @@ const showPartialBlock = computed(
                     </Column>
                 </DataTable>
             </div>
+            </template>
         </template>
 
         <div
-            v-if="showPartialBlock"
+            v-else-if="embedded"
+            class="mt-4 rounded-md border border-dashed border-gray-200 bg-gray-50/80 px-4 py-6 text-center"
+        >
+            <p class="text-sm font-medium text-gray-500">
+                Geen maandtrend beschikbaar
+            </p>
+            <p class="mt-1 text-xs text-gray-500">
+                Bruto marge per loonkosten — Cashweb
+            </p>
+        </div>
+
+        <div
+            v-if="showPartialBlock && !embedded"
             class="mt-6 rounded-lg border border-gray-100 bg-gray-50/60 p-4"
         >
             <h3 class="mb-3 text-sm font-semibold text-gray-800">

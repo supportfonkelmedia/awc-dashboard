@@ -616,8 +616,12 @@ const labelClass =
                                 />
                             </div>
                             <div
-                                class="mt-6 border-t border-gray-100 pt-6"
+                                class="mt-6 space-y-6 border-t border-gray-100 pt-6"
                             >
+                                <MargePerLoonPanel
+                                    :panel="margePerLoonPanel"
+                                    embedded
+                                />
                                 <RevenuePerLobPanel
                                     :panel="revenuePerLobPanel"
                                     embedded

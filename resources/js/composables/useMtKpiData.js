@@ -177,6 +177,19 @@ export function useMtKpiData(peliqanRef, appliedRef, wmsPeliqanRef = null, wmsLo
         };
     }
 
+    function formatMonthlyByLob(entries) {
+        return (entries ?? [])
+            .map((e) => ({
+                lob: e.lob,
+                admin_code: e.admin_code ?? '',
+                months: (e.months ?? []).map((m) => ({
+                    ...m,
+                    omzet_fmt: fmtEurDisplay(m.omzet),
+                })),
+            }))
+            .filter((e) => e.months.length > 0);
+    }
+
     const revenuePerLobPanel = computed(() => {
         const def = STRATEGIC_KPIS.revenue_per_lob;
         const period =
@@ -217,6 +230,7 @@ export function useMtKpiData(peliqanRef, appliedRef, wmsPeliqanRef = null, wmsLo
                         totV,
                     ),
                 ),
+                monthlyByLob: formatMonthlyByLob(api.monthly_by_lob),
                 note: null,
             };
         }
@@ -236,6 +250,7 @@ export function useMtKpiData(peliqanRef, appliedRef, wmsPeliqanRef = null, wmsLo
                 rows: built.map((r) =>
                     formatLobPanelRow(r, tot, 0),
                 ),
+                monthlyByLob: [],
                 note: 'Huidige periode alleen; deploy peliqan_mt_api_handler voor YoY per LOB.',
             };
         }
@@ -249,6 +264,7 @@ export function useMtKpiData(peliqanRef, appliedRef, wmsPeliqanRef = null, wmsLo
             deltaTotaalFmt: '',
             deltaTotaalPositive: true,
             rows: [],
+            monthlyByLob: [],
             note: 'Geen omzet in geselecteerde Cashweb-periode.',
         };
     });

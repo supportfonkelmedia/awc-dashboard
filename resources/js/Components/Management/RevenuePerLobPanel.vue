@@ -10,6 +10,7 @@ import { computed } from 'vue';
 const props = defineProps({
     panel: { type: Object, required: true },
     embedded: { type: Boolean, default: false },
+    trendOnly: { type: Boolean, default: false },
     showTitle: { type: Boolean, default: true },
 });
 
@@ -18,6 +19,33 @@ const lobColors = {
     AFC: '#ff7020',
     ACC: '#6366f1',
 };
+
+const extraColors = [
+    '#10b981',
+    '#f59e0b',
+    '#ec4899',
+    '#8b5cf6',
+    '#14b8a6',
+    '#f97316',
+    '#64748b',
+    '#84cc16',
+];
+
+const monthNames = [
+    '',
+    'Jan',
+    'Feb',
+    'Mrt',
+    'Apr',
+    'Mei',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Okt',
+    'Nov',
+    'Dec',
+];
 
 const isLive = computed(() => props.panel.status === KPI_STATUS.LIVE);
 
@@ -34,10 +62,132 @@ const cardPt = {
     content: { class: '!p-5' },
 };
 
-function barColor(lob) {
+function barColor(lob, index = 0) {
     const key = String(lob ?? '').toUpperCase();
-    return lobColors[key] ?? '#1e3a5f';
+    if (lobColors[key]) return lobColors[key];
+    return extraColors[index % extraColors.length];
 }
+
+function monthLabel(row) {
+    const m = Number(row?.month);
+    if (m >= 1 && m <= 12) {
+        return monthNames[m];
+    }
+    const bp = String(row?.book_period ?? '');
+    if (bp.length >= 2) {
+        const tail = Number(bp.slice(-2));
+        if (tail >= 1 && tail <= 12) {
+            return monthNames[tail];
+        }
+    }
+    return bp || '—';
+}
+
+function sortedMonths(months) {
+    return [...(months ?? [])].sort(
+        (a, b) => Number(a.book_period) - Number(b.book_period),
+    );
+}
+
+const monthlySeries = computed(() => {
+    const entries = props.panel.monthlyByLob ?? [];
+    return entries
+        .map((e) => ({
+            ...e,
+            total: (e.months ?? []).reduce(
+                (s, m) => s + Number(m.omzet ?? 0),
+                0,
+            ),
+        }))
+        .filter((e) => e.total > 0)
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 10);
+});
+
+const hasMonthlyTrend = computed(() => monthlySeries.value.length > 0);
+
+const allMonthLabels = computed(() => {
+    const labels = new Set();
+    for (const ent of monthlySeries.value) {
+        for (const row of sortedMonths(ent.months)) {
+            labels.add(monthLabel(row));
+        }
+    }
+    const order = monthNames.filter(Boolean);
+    return [...labels].sort(
+        (a, b) => order.indexOf(a) - order.indexOf(b),
+    );
+});
+
+const monthlyTrendChart = computed(() => {
+    const labels = allMonthLabels.value;
+    const datasets = monthlySeries.value.map((ent, i) => {
+        const byLabel = Object.fromEntries(
+            sortedMonths(ent.months).map((m) => [
+                monthLabel(m),
+                Number(m.omzet ?? 0),
+            ]),
+        );
+        const color = barColor(ent.lob, i);
+        return {
+            label: ent.lob,
+            data: labels.map((l) => byLabel[l] ?? null),
+            borderColor: color,
+            backgroundColor: color,
+            tension: 0.35,
+            fill: false,
+            spanGaps: true,
+        };
+    });
+
+    return {
+        labels: labels.length ? labels : ['—'],
+        datasets: datasets.length
+            ? datasets
+            : [{ label: 'Omzet', data: [0], borderColor: '#1e3a5f' }],
+    };
+});
+
+const monthlyTrendOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: { position: 'bottom' },
+        tooltip: {
+            callbacks: {
+                label(ctx) {
+                    const v = ctx.parsed.y;
+                    if (v == null || Number.isNaN(v)) {
+                        return `${ctx.dataset.label}: —`;
+                    }
+                    if (Math.abs(v) >= 1_000_000) {
+                        return `${ctx.dataset.label}: €${(v / 1_000_000).toFixed(2)}M`;
+                    }
+                    if (Math.abs(v) >= 1_000) {
+                        return `${ctx.dataset.label}: €${Math.round(v / 1_000)}K`;
+                    }
+                    return `${ctx.dataset.label}: €${Math.round(v).toLocaleString('nl-NL')}`;
+                },
+            },
+        },
+    },
+    scales: {
+        y: {
+            beginAtZero: true,
+            ticks: {
+                callback(v) {
+                    if (Math.abs(v) >= 1_000_000) {
+                        return `€${(v / 1_000_000).toFixed(1)}M`;
+                    }
+                    if (Math.abs(v) >= 1_000) {
+                        return `€${Math.round(v / 1_000)}K`;
+                    }
+                    return `€${v}`;
+                },
+            },
+        },
+    },
+};
 
 const chartData = computed(() => {
     const rows = props.panel.rows ?? [];
@@ -47,7 +197,7 @@ const chartData = computed(() => {
             {
                 label: 'Omzet',
                 data: rows.map((r) => r.omzet),
-                backgroundColor: rows.map((r) => barColor(r.lob)),
+                backgroundColor: rows.map((r, i) => barColor(r.lob, i)),
                 borderRadius: 4,
                 barThickness: 22,
             },
@@ -92,6 +242,17 @@ const chartOptions = {
         y: { grid: { display: false } },
     },
 };
+
+const hasPeriodData = computed(
+    () => isLive.value && (props.panel.rows?.length ?? 0) > 0,
+);
+
+const showContent = computed(() => {
+    if (props.trendOnly) {
+        return hasMonthlyTrend.value;
+    }
+    return hasPeriodData.value || hasMonthlyTrend.value;
+});
 </script>
 
 <template>
@@ -123,8 +284,9 @@ const chartOptions = {
                 />
             </div>
 
-            <template v-if="isLive && panel.rows?.length">
+            <template v-if="showContent">
                 <div
+                    v-if="hasPeriodData && !trendOnly"
                     class="mb-4 flex flex-wrap items-baseline gap-x-6 gap-y-1 border-b border-gray-100 pb-4"
                 >
                     <div>
@@ -149,7 +311,27 @@ const chartOptions = {
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div
+                    v-if="hasMonthlyTrend"
+                    class="mb-6 rounded-lg border border-gray-100 bg-white p-4"
+                >
+                    <h3 class="mb-3 text-sm font-semibold text-gray-800">
+                        Omzet maandtrend per LOB
+                    </h3>
+                    <div class="h-56 min-h-[14rem]">
+                        <Chart
+                            type="line"
+                            :data="monthlyTrendChart"
+                            :options="monthlyTrendOptions"
+                            class="h-full w-full"
+                        />
+                    </div>
+                </div>
+
+                <div
+                    v-if="hasPeriodData && !trendOnly"
+                    class="grid grid-cols-1 gap-6 lg:grid-cols-2"
+                >
                     <div class="h-52 min-h-[12rem] lg:min-h-[14rem]">
                         <Chart
                             type="bar"
@@ -208,10 +390,20 @@ const chartOptions = {
                 class="rounded-md border border-dashed border-gray-200 bg-gray-50/80 px-4 py-6 text-center"
             >
                 <p class="text-sm font-medium text-gray-500">
-                    Geen LOB-uitsplitsing beschikbaar
+                    {{
+                        trendOnly
+                            ? 'Geen maandtrend beschikbaar'
+                            : 'Geen LOB-uitsplitsing beschikbaar'
+                    }}
                 </p>
                 <p v-if="panel.note" class="mt-1 text-xs text-gray-500">
                     {{ panel.note }}
+                </p>
+                <p
+                    v-else-if="trendOnly && hasPeriodData"
+                    class="mt-1 text-xs text-gray-500"
+                >
+                    Deploy peliqan_mt_api_handler voor omzet maandtrend per LOB.
                 </p>
             </div>
         </template>
@@ -223,11 +415,19 @@ const chartOptions = {
             :class="showTitle ? 'mb-4' : 'mb-3'"
         >
             <div v-if="showTitle">
+                <p
+                    class="text-[10px] font-semibold uppercase tracking-wider text-[#ff7020]"
+                >
+                    Groei
+                </p>
                 <h4 class="text-sm font-semibold text-gray-800">
                     Revenue per Line of Business
                 </h4>
                 <p class="mt-0.5 text-xs text-gray-500">
                     {{ panel.lobField }}
+                    <span v-if="panel.periodLabel">
+                        · {{ panel.periodLabel }}</span
+                    >
                 </p>
             </div>
             <Tag
@@ -237,8 +437,9 @@ const chartOptions = {
             />
         </div>
 
-        <template v-if="isLive && panel.rows?.length">
+        <template v-if="showContent">
             <div
+                v-if="hasPeriodData && !trendOnly"
                 class="mb-4 flex flex-wrap items-baseline gap-x-6 gap-y-1 border-b border-gray-100 pb-4"
             >
                 <div>
@@ -263,7 +464,34 @@ const chartOptions = {
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div
+                v-if="hasMonthlyTrend"
+                :class="
+                    trendOnly
+                        ? 'mt-4 h-52 min-h-[12rem]'
+                        : 'mb-6 rounded-lg border border-gray-100 bg-white p-4'
+                "
+            >
+                <h3
+                    v-if="!trendOnly"
+                    class="mb-3 text-sm font-semibold text-gray-800"
+                >
+                    Omzet maandtrend per LOB
+                </h3>
+                <div :class="trendOnly ? 'h-full' : 'h-56 min-h-[14rem]'">
+                    <Chart
+                        type="line"
+                        :data="monthlyTrendChart"
+                        :options="monthlyTrendOptions"
+                        class="h-full w-full"
+                    />
+                </div>
+            </div>
+
+            <div
+                v-if="hasPeriodData && !trendOnly"
+                class="grid grid-cols-1 gap-6 lg:grid-cols-2"
+            >
                 <div class="h-52 min-h-[12rem] lg:min-h-[14rem]">
                     <Chart
                         type="bar"
@@ -322,10 +550,20 @@ const chartOptions = {
             class="rounded-md border border-dashed border-gray-200 bg-gray-50/80 px-4 py-6 text-center"
         >
             <p class="text-sm font-medium text-gray-500">
-                Geen LOB-uitsplitsing beschikbaar
+                {{
+                    trendOnly
+                        ? 'Geen maandtrend beschikbaar'
+                        : 'Geen LOB-uitsplitsing beschikbaar'
+                }}
             </p>
             <p v-if="panel.note" class="mt-1 text-xs text-gray-500">
                 {{ panel.note }}
+            </p>
+            <p
+                v-else-if="trendOnly && hasPeriodData"
+                class="mt-1 text-xs text-gray-500"
+            >
+                Deploy peliqan_mt_api_handler voor omzet maandtrend per LOB.
             </p>
         </div>
     </div>

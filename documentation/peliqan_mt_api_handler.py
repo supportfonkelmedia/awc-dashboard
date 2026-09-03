@@ -602,6 +602,48 @@ def build_revenue_per_lob(df_cur, df_v):
     }
 
 
+def build_revenue_per_lob_monthly(df):
+    by_lob = {}
+    if df is not None and not df.empty:
+        for _, r in df.iterrows():
+            lob = str(r.get("lob") or "—").strip() or "—"
+            bp = int(safe_float(r.get("book_period")))
+            omzet = safe_float(r.get("omzet"))
+            entry = by_lob.setdefault(
+                lob,
+                {"lob": lob, "admin_code": "", "months": []},
+            )
+            if not entry["admin_code"] and r.get("admin_code"):
+                entry["admin_code"] = str(r.get("admin_code"))
+            entry["months"].append({
+                "book_period": bp,
+                "month": period_month_from_bp(bp),
+                "omzet": round(omzet, 2),
+            })
+    for entry in by_lob.values():
+        entry["months"].sort(key=lambda m: m["book_period"])
+    return sorted(
+        by_lob.values(),
+        key=lambda e: sum(m["omzet"] for m in e["months"]),
+        reverse=True,
+    )
+
+
+def sql_omzet_by_lob_monthly(book_year):
+    return f"""
+SELECT
+    {LOB_KEY} AS lob,
+    MIN(admin_code) AS admin_code,
+    CAST(book_period AS INTEGER) AS book_period,
+    SUM(CASE WHEN {CW_IS_D} THEN {CW_AMOUNT} ELSE 0 END) AS omzet
+FROM cashweb.ledger_mutations
+WHERE book_year = '{book_year}'
+  AND journal_code IN {CW_OMZET_DAGBOEKEN}
+GROUP BY {LOB_KEY}, CAST(book_period AS INTEGER)
+ORDER BY lob, book_period
+"""
+
+
 def sql_ink(cw_f):
     return """
 SELECT
@@ -727,7 +769,9 @@ def bundle_cashweb(p):
     df_sub = fetch(sql_sub_admin_dist(p["cw_filter"]), "subadm")
     df_lob = fetch(sql_omzet_by_lob(p["cw_filter"]), "omzet_lob")
     df_lob_v = fetch(sql_omzet_by_lob_v(p["cw_filter_v"]), "omzet_lob_v")
+    df_lob_m = fetch(sql_omzet_by_lob_monthly(p["book_year"]), "omzet_lob_m")
     revenue_lob = build_revenue_per_lob(df_lob, df_lob_v)
+    revenue_lob["monthly_by_lob"] = build_revenue_per_lob_monthly(df_lob_m)
 
     df_mpl = fetch(
         sql_marge_per_loon_monthly(p["book_year"], p["wage_accounts"]),

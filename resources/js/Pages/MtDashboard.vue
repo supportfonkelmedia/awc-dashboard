@@ -625,6 +625,7 @@ const labelClass =
                                 <RevenuePerLobPanel
                                     :panel="revenuePerLobPanel"
                                     embedded
+                                    trend-only
                                 />
                             </div>
                         </MtSectionCard>
@@ -757,10 +758,7 @@ const labelClass =
                             title="Revenue per Line of Business"
                             subtitle="Strategische KPI — omzet per business line (sub_administration)"
                         >
-                            <RevenuePerLobPanel
-                                :panel="revenuePerLobPanel"
-                                embedded
-                            />
+                            <RevenuePerLobPanel :panel="revenuePerLobPanel" />
                         </MtSectionCard>
 
                         <MtSectionCard

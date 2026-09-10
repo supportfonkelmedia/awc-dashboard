@@ -14,8 +14,12 @@ import {
     computeOccupancy,
     computeOntvangstenCount,
     computeStorageLeadTime,
+    dockToStockFromWms,
+    dockToStockMonthlyChartRows,
     fmtDays,
+    fmtHours,
     fmtPct,
+    resolveDockToStockForPeriod,
     wmsAvailableFromPeliqan,
     wmsFromPeliqan,
 } from '@/composables/useWms7tMetrics';
@@ -64,7 +68,13 @@ function kpi(def, overrides = {}) {
     };
 }
 
-export function useMtKpiData(peliqanRef, appliedRef, wmsPeliqanRef = null, wmsLoadingRef = null) {
+export function useMtKpiData(
+    peliqanRef,
+    appliedRef,
+    wmsPeliqanRef = null,
+    wmsLoadingRef = null,
+    dashboardFiltersRef = null,
+) {
     const cw = computed(() => peliqanRef.value?.data?.cashweb ?? null);
     const hs = computed(() => peliqanRef.value?.data?.hubspot ?? null);
     const sp = computed(() => peliqanRef.value?.data?.sprinter ?? null);
@@ -90,7 +100,74 @@ export function useMtKpiData(peliqanRef, appliedRef, wmsPeliqanRef = null, wmsLo
     const inventoryAccuracy = computed(() =>
         computeInventoryAccuracy(wms.value),
     );
+    const dockToStockRaw = computed(() => dockToStockFromWms(wms.value));
     const applied = computed(() => appliedRef.value ?? null);
+    const periodFilters = computed(() => ({
+        ...(applied.value ?? {}),
+        book_year:
+            dashboardFiltersRef?.value?.book_year ??
+            applied.value?.book_year,
+        month:
+            dashboardFiltersRef?.value?.month ?? applied.value?.month,
+    }));
+
+    const dockToStockPanel = computed(() => {
+        const d2s = dockToStockRaw.value;
+        const filters = periodFilters.value;
+        const period = resolveDockToStockForPeriod(d2s, filters);
+        const year = filters?.book_year ?? d2s?.year ?? '';
+
+        if (wmsLoading.value) {
+            return {
+                status: KPI_STATUS.IN_DEVELOPMENT,
+                year,
+                periodLabel: year ? String(year) : '—',
+                note: '7T WMS laden…',
+                monthly: [],
+            };
+        }
+
+        if (!wmsAvailable.value) {
+            return {
+                status: KPI_STATUS.NOT_MEASURED,
+                year,
+                periodLabel: year ? String(year) : '—',
+                note: '7T WMS niet bereikbaar.',
+                monthly: [],
+            };
+        }
+
+        if (!d2s?.measurable_orders) {
+            const d2sErr = wms.value?.errors?.dock_to_stock;
+            return {
+                status: KPI_STATUS.IN_DEVELOPMENT,
+                year,
+                periodLabel: year ? String(year) : '—',
+                note:
+                    d2sErr ??
+                    'Deploy peliqan_7t_api_handler (Brief Fonkel deel 3).',
+                monthly: [],
+            };
+        }
+
+        return {
+            status: KPI_STATUS.LIVE,
+            year,
+            periodLabel: period?.periodLabel ?? String(year),
+            pctWithin24h: period?.pct_within_24h ?? d2s.pct_within_24h,
+            within24h: period?.within_24h ?? d2s.within_24h,
+            measurableOrders:
+                period?.measurable_orders ?? d2s.measurable_orders,
+            medianHours: period?.median_hours ?? d2s.median_hours,
+            coveragePct: period?.coverage_pct ?? d2s.coverage_pct,
+            totalUnloaded: period?.total_unloaded ?? d2s.total_unloaded,
+            normHours: d2s.norm_hours ?? 24,
+            preliminary: period?.preliminary ?? false,
+            monthly: dockToStockMonthlyChartRows(d2s, filters),
+            method:
+                'Brief Fonkel deel 3: Los_Datum → eerste Voorraad_Verplaatsingen status 30.',
+        };
+    });
 
     const aggregates = computed(() => cw.value?.aggregates ?? null);
 
@@ -767,6 +844,37 @@ export function useMtKpiData(peliqanRef, appliedRef, wmsPeliqanRef = null, wmsLo
                 });
             }
             switch (def.id) {
+                case 'dock_to_stock': {
+                    const panel = dockToStockPanel.value;
+                    if (panel.status === KPI_STATUS.LIVE && panel.pctWithin24h != null) {
+                        const cov =
+                            panel.coveragePct != null
+                                ? ` · gemeten over ${fmtPct(panel.coveragePct)} van inbounds`
+                                : '';
+                        const med =
+                            panel.medianHours != null &&
+                            (periodFilters.value?.month === 'all' ||
+                                periodFilters.value?.month == null)
+                                ? ` · mediaan ${fmtHours(panel.medianHours)}`
+                                : '';
+                        return kpi(def, {
+                            status: KPI_STATUS.LIVE,
+                            value: fmtPct(panel.pctWithin24h),
+                            note: panel.preliminary
+                                ? 'Voorlopig — lopende maand nog niet afgerond'
+                                : `${panel.within24h}/${panel.measurableOrders} binnen ${panel.normHours ?? 24}u${cov}`,
+                            footer: `${panel.periodLabel} · ${entity.source}${med}`,
+                        });
+                    }
+                    if (panel.note) {
+                        return kpi(def, {
+                            status: panel.status,
+                            note: panel.note,
+                            footer: entity.source,
+                        });
+                    }
+                    break;
+                }
                 case 'inventory_accuracy': {
                     const acc = inventoryAccuracy.value;
                     if (wmsAvailable.value && acc != null) {
@@ -1024,6 +1132,7 @@ export function useMtKpiData(peliqanRef, appliedRef, wmsPeliqanRef = null, wmsLo
         winratePeriodLabel,
         margePerLoonPanel,
         tripleLobPanel,
+        dockToStockPanel,
         wmsAvailable,
         occupancy,
         storageLeadTime,

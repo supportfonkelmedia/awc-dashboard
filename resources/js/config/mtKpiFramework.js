@@ -425,8 +425,10 @@ export const KPI_EXPLAIN = {
 
     // Entiteit — AWC (7T)
     dock_to_stock: {
-        description: 'Tijd van goederenontvangst tot beschikbaar in de voorraad.',
-        method: '7T: ontvangst → putaway-timestamp. Brondata ontbreekt in deze 7T-export.',
+        description:
+            'Hoe snel binnengekomen goederen in voorraad liggen: van lossen tot verwerkt (norm: binnen 24 uur).',
+        method:
+            'Brief Fonkel deel 3: Los_Datum (Spare_Orders) → eerste Voorraad_Verplaatsingen met status 30. KPI alleen over orders mét verplaatsing; dekking zichtbaar in tegel.',
     },
     perfect_order_rate: {
         description: 'Aandeel orders dat compleet, op tijd én onbeschadigd is geleverd.',

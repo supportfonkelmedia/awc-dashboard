@@ -6,12 +6,13 @@ use App\Services\Peliqan\PeliqanClient;
 use App\Services\Peliqan\PeliqanException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class MtWmsDataController extends Controller
 {
-    public function __invoke(PeliqanClient $peliqan): JsonResponse
+    public function __invoke(Request $request, PeliqanClient $peliqan): JsonResponse
     {
         $token = (string) config('peliqan.token', '');
         $url = (string) config('peliqan.awc_7t_url', '');
@@ -23,14 +24,19 @@ class MtWmsDataController extends Controller
         }
 
         // Bump key when handler logic changes so stale SQL-error payloads are not reused.
-        $cacheKey = 'peliqan:awc:7t:summary:v1';
+        $year = (int) ($request->query('year') ?: date('Y'));
+        if ($year < 2000 || $year > 2100) {
+            $year = (int) date('Y');
+        }
+        $query = ['year' => (string) $year];
+        $cacheKey = "peliqan:awc:7t:summary:v2:{$year}";
         $ttl = (int) config('peliqan.wms_cache_ttl', 600);
         $timeout = (int) config('peliqan.wms_timeout', 120);
 
         try {
             $payload = $ttl > 0
-                ? Cache::remember($cacheKey, $ttl, fn () => $peliqan->fetch7tWms())
-                : $peliqan->fetch7tWms();
+                ? Cache::remember($cacheKey, $ttl, fn () => $peliqan->fetch7tWms($query))
+                : $peliqan->fetch7tWms($query);
 
             return response()->json($payload);
         } catch (ConnectionException $e) {

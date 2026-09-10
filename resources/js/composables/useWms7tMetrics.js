@@ -109,3 +109,86 @@ export function computeOntvangstenCount(wms) {
     }
     return (wms?.ontvangsten ?? []).length;
 }
+
+/** Dock-to-Stock payload from 7T handler (Brief Fonkel deel 3). */
+export function dockToStockFromWms(wms) {
+    return wms?.dock_to_stock ?? null;
+}
+
+export function fmtHours(v) {
+    if (v == null || Number.isNaN(Number(v))) return null;
+    return `${Number(v).toLocaleString('nl-NL', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 1,
+    })} uur`;
+}
+
+/**
+ * Resolve Dock-to-Stock summary for the MT filter (year / optional month).
+ * Falls back to API YTD summary when month = all.
+ */
+export function resolveDockToStockForPeriod(d2s, applied) {
+    if (!d2s) return null;
+
+    const year = Number(applied?.book_year ?? d2s.year);
+    const monthRaw = applied?.month;
+    const month =
+        monthRaw != null && monthRaw !== '' && monthRaw !== 'all'
+            ? Number(monthRaw)
+            : null;
+
+    if (month >= 1 && month <= 12) {
+        const row = (d2s.monthly ?? []).find(
+            (m) => Number(m.month) === month && Number(m.year ?? year) === year,
+        );
+        if (row) {
+            return {
+                pct_within_24h: row.pct_within_24h,
+                within_24h: row.within_24h,
+                measurable_orders: row.orders,
+                median_hours: null,
+                coverage_pct: d2s.coverage_pct,
+                total_unloaded: d2s.total_unloaded,
+                periodLabel: `${year} · ${String(month).padStart(2, '0')}`,
+                preliminary: isCurrentMonthPreliminary(year, month),
+            };
+        }
+    }
+
+    return {
+        pct_within_24h: d2s.pct_within_24h,
+        within_24h: d2s.within_24h,
+        measurable_orders: d2s.measurable_orders,
+        median_hours: d2s.median_hours,
+        coverage_pct: d2s.coverage_pct,
+        total_unloaded: d2s.total_unloaded,
+        periodLabel: String(year),
+        preliminary: false,
+    };
+}
+
+function isCurrentMonthPreliminary(year, month) {
+    const now = new Date();
+    return (
+        Number(year) === now.getFullYear() &&
+        Number(month) === now.getMonth() + 1
+    );
+}
+
+export function dockToStockMonthlyChartRows(d2s, applied) {
+    if (!d2s?.monthly?.length) return [];
+    const year = Number(applied?.book_year ?? d2s.year);
+    const now = new Date();
+    const curYear = now.getFullYear();
+    const curMonth = now.getMonth() + 1;
+
+    return [...d2s.monthly]
+        .filter((m) => Number(m.year ?? year) === year)
+        .sort((a, b) => Number(a.month) - Number(b.month))
+        .map((m) => ({
+            ...m,
+            preliminary:
+                Number(m.year ?? year) === curYear &&
+                Number(m.month) === curMonth,
+        }));
+}

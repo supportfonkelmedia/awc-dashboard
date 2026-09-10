@@ -5,6 +5,7 @@ import MtKpiCard from '@/Components/Management/MtKpiCard.vue';
 import MtSectionCard from '@/Components/Management/MtSectionCard.vue';
 import RevenuePerLobPanel from '@/Components/Management/RevenuePerLobPanel.vue';
 import MargePerLoonPanel from '@/Components/Management/MargePerLoonPanel.vue';
+import DockToStockPanel from '@/Components/Management/DockToStockPanel.vue';
 import MetricSparkCard from '@/Components/Management/MetricSparkCard.vue';
 import { useMtKpiData } from '@/composables/useMtKpiData';
 import { useMtPeliqanLoader } from '@/composables/useMtPeliqanLoader';
@@ -133,7 +134,7 @@ const applied = computed(() => peliqan.value?.filters ?? null);
 const peliqanRef = computed(() => peliqan.value);
 const appliedRef = computed(() => applied.value);
 
-const { wmsPeliqan, wmsLoading, wmsError } = useMtWmsLoader();
+const { wmsPeliqan, wmsLoading, wmsError } = useMtWmsLoader(filtersRef);
 
 const {
     strategicCards,
@@ -148,7 +149,14 @@ const {
     winratePeriodLabel,
     margePerLoonPanel,
     tripleLobPanel,
-} = useMtKpiData(peliqanRef, appliedRef, wmsPeliqan, wmsLoading);
+    dockToStockPanel,
+} = useMtKpiData(
+    peliqanRef,
+    appliedRef,
+    wmsPeliqan,
+    wmsLoading,
+    filtersRef,
+);
 
 const financeDrawerOpen = ref(false);
 const selectedFinanceKpi = ref(null);
@@ -716,6 +724,14 @@ const labelClass =
                                             compact
                                             explainable
                                             @explain="openKpiDrawer(c)"
+                                        />
+                                    </div>
+                                    <div
+                                        v-if="entity.code === 'AWC'"
+                                        class="mt-4 border-t border-gray-200 pt-4"
+                                    >
+                                        <DockToStockPanel
+                                            :panel="dockToStockPanel"
                                         />
                                     </div>
                                 </div>

@@ -1,16 +1,27 @@
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 
-export function useMtWmsLoader() {
+export function useMtWmsLoader(filtersRef = null) {
     const wmsPeliqan = ref(null);
     const wmsLoading = ref(true);
     const wmsError = ref(null);
+
+    function wmsYear() {
+        const y = Number(filtersRef?.value?.book_year);
+        if (y >= 2000 && y <= 2100) {
+            return y;
+        }
+        return new Date().getFullYear();
+    }
 
     async function loadWms() {
         wmsLoading.value = true;
         wmsError.value = null;
 
+        const year = wmsYear();
+        const url = `${route('mt.wms')}?year=${encodeURIComponent(String(year))}`;
+
         try {
-            const res = await fetch(route('mt.wms'), {
+            const res = await fetch(url, {
                 headers: {
                     Accept: 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
@@ -54,6 +65,17 @@ export function useMtWmsLoader() {
     }
 
     onMounted(loadWms);
+
+    if (filtersRef) {
+        watch(
+            () => filtersRef.value?.book_year,
+            (next, prev) => {
+                if (next != null && next !== prev) {
+                    loadWms();
+                }
+            },
+        );
+    }
 
     return { wmsPeliqan, wmsLoading, wmsError, reloadWms: loadWms };
 }

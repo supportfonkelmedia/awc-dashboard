@@ -44,7 +44,7 @@ WMS_LOOKBACK_DAYS = 180
 # unbounded scan that trips Peliqan's execution limit.
 WMS_LOOKBACK_MAX = 3650
 # Bump on redeploy — surfaces in API meta to confirm Peliqan has the latest script.
-HANDLER_VERSION = "2026-06-11-7t-direct-v5"
+HANDLER_VERSION = "2026-09-10-7t-dock-to-stock-v1"
 
 # --- Lazy connection state (import-time dbconnect can 500 the endpoint) ---
 _dbconn_7t = None
@@ -55,6 +55,8 @@ _7T_LAST_ERROR = None
 _AWC_ADMIN_ID = None
 # Per-request lookback window (overridable via ?lookback=); reset each request.
 _ACTIVE_LOOKBACK = WMS_LOOKBACK_DAYS
+# Dock-to-Stock calendar year (overridable via ?year=); reset each request.
+_ACTIVE_DOCK_YEAR = None
 
 
 def _get_7t_conn():
@@ -66,7 +68,7 @@ def _get_7t_conn():
 
 def _reset_state():
     global _dbconn_7t, _7T_FETCH_DB, _7T_AVAILABLE, _7T_PROBE_ERROR
-    global _7T_LAST_ERROR, _AWC_ADMIN_ID, _ACTIVE_LOOKBACK
+    global _7T_LAST_ERROR, _AWC_ADMIN_ID, _ACTIVE_LOOKBACK, _ACTIVE_DOCK_YEAR
     _dbconn_7t = None
     _7T_FETCH_DB = None
     _7T_AVAILABLE = False
@@ -74,6 +76,7 @@ def _reset_state():
     _7T_LAST_ERROR = None
     _AWC_ADMIN_ID = None
     _ACTIVE_LOOKBACK = WMS_LOOKBACK_DAYS
+    _ACTIVE_DOCK_YEAR = None
 
 
 def _apply_lookback(request):
@@ -88,6 +91,22 @@ def _apply_lookback(request):
         except (TypeError, ValueError):
             pass
     return _ACTIVE_LOOKBACK
+
+
+def _apply_dock_year(request):
+    """Calendar year for Dock-to-Stock (?year=). Defaults to current UTC year."""
+    global _ACTIVE_DOCK_YEAR
+    raw = _query_param(request, "year", None)
+    year = None
+    if raw is not None:
+        try:
+            year = int(str(raw).strip())
+        except (TypeError, ValueError):
+            year = None
+    if year is None or year < 2000 or year > 2100:
+        year = pd.Timestamp.utcnow().year
+    _ACTIVE_DOCK_YEAR = year
+    return _ACTIVE_DOCK_YEAR
 
 
 def _short_err(exc):
@@ -278,6 +297,149 @@ def load_kpis_combined():
     }, None
 
 
+def load_dock_to_stock(year):
+    """
+    Brief Fonkel deel 3: Dock-to-Stock (% binnen 24u na lossen).
+
+    Per inbound (Spare_Orders, Gelost=1): Los_Datum → eerste Voorraad_Verplaatsingen
+    met Status=30 (MutatieDatum). KPI alleen over orders mét status-30-verplaatsing;
+    dekking = meetbaar / alle geloste orders in het jaar.
+    """
+    y = int(year)
+    start = f"{y}-01-01"
+    end = f"{y + 1}-01-01"
+
+    summary_sql = f"""
+        WITH measured AS (
+            SELECT
+                LTRIM(RTRIM(s.ID)) AS sid,
+                s.Los_Datum AS los,
+                MIN(vv.MutatieDatum) AS klaar,
+                DATEDIFF(hour, s.Los_Datum, MIN(vv.MutatieDatum)) AS hours
+            FROM dbo.Spare_Orders s
+            INNER JOIN dbo.Ontvangsten o
+                ON LTRIM(RTRIM(o.Spare_Order_ID)) = LTRIM(RTRIM(s.ID))
+            INNER JOIN dbo.Voorraad_Verplaatsingen vv
+                ON vv.Ontvangst_ID = o.ID AND vv.Status = 30
+            WHERE s.Los_Datum >= '{start}'
+              AND s.Los_Datum < '{end}'
+              AND s.Gelost = 1
+            GROUP BY LTRIM(RTRIM(s.ID)), s.Los_Datum
+        ),
+        stats AS (
+            SELECT
+                COUNT(*) AS measurable_orders,
+                SUM(CASE WHEN hours <= 24 THEN 1 ELSE 0 END) AS within_24h,
+                CAST(
+                    100.0 * SUM(CASE WHEN hours <= 24 THEN 1 ELSE 0 END)
+                    / NULLIF(COUNT(*), 0) AS numeric(5, 1)
+                ) AS pct_within_24h
+            FROM measured
+        ),
+        median AS (
+            SELECT DISTINCT
+                PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY hours) OVER () AS median_hours
+            FROM measured
+        ),
+        unloaded AS (
+            SELECT COUNT(*) AS total_unloaded
+            FROM dbo.Spare_Orders s
+            WHERE s.Los_Datum >= '{start}'
+              AND s.Los_Datum < '{end}'
+              AND s.Gelost = 1
+        )
+        SELECT
+            u.total_unloaded,
+            ISNULL(s.measurable_orders, 0) AS measurable_orders,
+            ISNULL(s.within_24h, 0) AS within_24h,
+            s.pct_within_24h,
+            med.median_hours
+        FROM unloaded u
+        LEFT JOIN stats s ON 1 = 1
+        LEFT JOIN median med ON 1 = 1
+    """
+
+    monthly_sql = f"""
+        WITH measured AS (
+            SELECT
+                LTRIM(RTRIM(s.ID)) AS sid,
+                s.Los_Datum AS los,
+                MIN(vv.MutatieDatum) AS klaar,
+                DATEDIFF(hour, s.Los_Datum, MIN(vv.MutatieDatum)) AS hours
+            FROM dbo.Spare_Orders s
+            INNER JOIN dbo.Ontvangsten o
+                ON LTRIM(RTRIM(o.Spare_Order_ID)) = LTRIM(RTRIM(s.ID))
+            INNER JOIN dbo.Voorraad_Verplaatsingen vv
+                ON vv.Ontvangst_ID = o.ID AND vv.Status = 30
+            WHERE s.Los_Datum >= '{start}'
+              AND s.Los_Datum < '{end}'
+              AND s.Gelost = 1
+            GROUP BY LTRIM(RTRIM(s.ID)), s.Los_Datum
+        )
+        SELECT
+            MONTH(los) AS month,
+            COUNT(*) AS orders,
+            SUM(CASE WHEN hours <= 24 THEN 1 ELSE 0 END) AS within_24h,
+            CAST(
+                100.0 * SUM(CASE WHEN hours <= 24 THEN 1 ELSE 0 END)
+                / NULLIF(COUNT(*), 0) AS numeric(5, 1)
+            ) AS pct_within_24h
+        FROM measured
+        GROUP BY MONTH(los)
+        ORDER BY MONTH(los)
+    """
+
+    df_sum, err_sum = query_7t(summary_sql)
+    if err_sum:
+        return None, err_sum
+
+    df_mon, err_mon = query_7t(monthly_sql)
+    if err_mon:
+        return None, err_mon
+
+    total_unloaded = int(_scalar(df_sum, "total_unloaded", 0) or 0)
+    measurable = int(_scalar(df_sum, "measurable_orders", 0) or 0)
+    within_24h = int(_scalar(df_sum, "within_24h", 0) or 0)
+    pct = _scalar(df_sum, "pct_within_24h")
+    median_raw = _scalar(df_sum, "median_hours")
+    median_hours = round(float(median_raw), 1) if median_raw is not None else None
+
+    coverage_pct = (
+        round((measurable / total_unloaded) * 1000) / 10
+        if total_unloaded
+        else None
+    )
+
+    monthly = []
+    if df_mon is not None and not df_mon.empty:
+        for _, row in df_mon.iterrows():
+            mo = int(row.get("month") or row.get("MONTH") or 0)
+            orders = int(row.get("orders") or 0)
+            w24 = int(row.get("within_24h") or 0)
+            pct_m = row.get("pct_within_24h")
+            monthly.append(
+                {
+                    "month": mo,
+                    "year": y,
+                    "orders": orders,
+                    "within_24h": w24,
+                    "pct_within_24h": float(pct_m) if pct_m is not None else None,
+                }
+            )
+
+    return {
+        "year": y,
+        "total_unloaded": total_unloaded,
+        "measurable_orders": measurable,
+        "within_24h": within_24h,
+        "pct_within_24h": float(pct) if pct is not None else None,
+        "median_hours": median_hours,
+        "coverage_pct": coverage_pct,
+        "monthly": monthly,
+        "norm_hours": 24,
+    }, None
+
+
 def _resolve_wms_parts(request):
     raw = str(_query_param(request, "wms_part", "all") or "all").lower().strip()
     allowed = {"occupancy", "leadtime", "accuracy", "ontvangsten"}
@@ -290,6 +452,7 @@ def _resolve_wms_parts(request):
 def build_wms_summary(request=None):
     _reset_state()
     lookback = _apply_lookback(request)
+    dock_year = _apply_dock_year(request)
     parts = _resolve_wms_parts(request)
     query_stats = {}
 
@@ -317,6 +480,7 @@ def build_wms_summary(request=None):
     occupancy = {"total": 0, "occupied": 0, "rate": None}
     lead_days = accuracy = None
     ontv_count = 0
+    dock_to_stock = None
     errors = None
 
     # Single round trip: all KPIs computed regardless of ?wms_part= (it stays in
@@ -332,12 +496,21 @@ def build_wms_summary(request=None):
         accuracy = kpis["inventory_accuracy_pct"]
         ontv_count = kpis["ontvangsten_count"]
 
+    t0 = time.time()
+    d2s, d2s_err = load_dock_to_stock(dock_year)
+    query_stats["dock_to_stock_ms"] = int((time.time() - t0) * 1000)
+    if d2s_err:
+        errors = {**(errors or {}), "dock_to_stock": d2s_err}
+    elif d2s:
+        dock_to_stock = d2s
+
     return {
         "wms_available": True,
         "format": "summary",
         "summary_source": "aggregate_sql",
         "handler_version": HANDLER_VERSION,
         "lookback_days": lookback,
+        "dock_to_stock_year": dock_year,
         "admin_column": AWC_ADMIN_COLUMN,
         "admin_id": admin_id,
         "probe_rows": int(len(adm_df)),
@@ -347,6 +520,7 @@ def build_wms_summary(request=None):
         "storage_lead_time_days": lead_days,
         "inventory_accuracy_pct": accuracy,
         "ontvangsten_count": ontv_count,
+        "dock_to_stock": dock_to_stock,
         "errors": errors,
     }
 

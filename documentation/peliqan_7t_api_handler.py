@@ -46,7 +46,7 @@ WMS_LOOKBACK_DAYS = 180
 # unbounded scan that trips Peliqan's execution limit.
 WMS_LOOKBACK_MAX = 3650
 # Bump on redeploy — surfaces in API meta to confirm Peliqan has the latest script.
-HANDLER_VERSION = "2026-09-10-7t-dock-to-stock-v3"
+HANDLER_VERSION = "2026-09-10-7t-dock-to-stock-v4"
 
 # pq.dbconnect("7T") is the warehouse connection id — not a valid conn.fetch() database name.
 FETCH_DB_CANDIDATES = (FETCH_DB_7T, "db_7t", "db7t")
@@ -341,18 +341,6 @@ def load_kpis_combined():
     }, None
 
 
-def _median(values):
-    nums = [float(v) for v in values if v is not None and not pd.isna(v)]
-    if not nums:
-        return None
-    nums.sort()
-    n = len(nums)
-    mid = n // 2
-    if n % 2:
-        return nums[mid]
-    return (nums[mid - 1] + nums[mid]) / 2.0
-
-
 def _fqn_table(name):
     return f'"{TRINO_CATALOG_7T}".{SCHEMA_DBO}."{name}"'
 
@@ -429,6 +417,9 @@ def _dock_summary_sql(start, end, dialect):
     hours = _dock_hour_diff("x", dialect)
     pct_type = "decimal(5, 1)" if dialect == "trino" else "numeric(5, 1)"
     unloaded = _dock_unloaded_count_subquery(start, end, dialect)
+    median_col = ""
+    if dialect == "trino":
+        median_col = f", approx_percentile({hours}, 0.5) AS median_hours"
     return f"""
         SELECT
             ({unloaded}) AS total_unloaded,
@@ -438,6 +429,7 @@ def _dock_summary_sql(start, end, dialect):
                 100.0 * SUM(CASE WHEN {hours} <= 24 THEN 1 ELSE 0 END)
                 / NULLIF(COUNT(*), 0) AS {pct_type}
             ) AS pct_within_24h
+            {median_col}
         FROM ({measured}) x
     """
 
@@ -461,16 +453,9 @@ def _dock_monthly_sql(start, end, dialect):
     """
 
 
-def _dock_hours_sql(start, end, dialect):
-    measured = _dock_measured_subquery(start, end, dialect=dialect)
-    hours = _dock_hour_diff("x", dialect)
-    return f"SELECT {hours} AS hours FROM ({measured}) x"
-
-
 def _run_dock_queries(start, end, dialect, query_fn):
     summary_sql = _dock_summary_sql(start, end, dialect)
     monthly_sql = _dock_monthly_sql(start, end, dialect)
-    hours_sql = _dock_hours_sql(start, end, dialect)
 
     df_sum, err_sum = query_fn(summary_sql)
     if err_sum:
@@ -481,13 +466,9 @@ def _run_dock_queries(start, end, dialect, query_fn):
         return None, f"{dialect}: {err_mon}"
 
     median_hours = None
-    measurable = int(_scalar(df_sum, "measurable_orders", 0) or 0)
-    if measurable > 0:
-        df_hours, err_hours = query_fn(hours_sql)
-        if not err_hours and df_hours is not None and not df_hours.empty:
-            col = _col(df_hours, "hours") or "hours"
-            med = _median(df_hours[col].tolist())
-            median_hours = round(float(med), 1) if med is not None else None
+    median_raw = _scalar(df_sum, "median_hours")
+    if median_raw is not None:
+        median_hours = round(float(median_raw), 1)
 
     return {
         "df_sum": df_sum,
@@ -508,24 +489,12 @@ def load_dock_to_stock(year):
     start = f"{y}-01-01"
     end = f"{y + 1}-01-01"
 
-    attempts = [
-        ("tsql_fqn", query_7t),
-        ("trino", query_trino),
-    ]
-    result = None
-    last_err = None
-    dock_source = None
-
-    for dialect, query_fn in attempts:
-        result, err = _run_dock_queries(start, end, dialect, query_fn)
-        if err:
-            last_err = err
-            continue
-        dock_source = dialect
-        break
-
-    if result is None:
-        return None, last_err or "dock_to_stock: all query paths failed"
+    # Spare_Orders joins are only reliable via Trino on this Peliqan tenant (DB7T direct
+    # works for warehouse tables but not for this KPI — saves 3+ failed round trips).
+    result, err = _run_dock_queries(start, end, "trino", query_trino)
+    if err:
+        return None, err
+    dock_source = "trino"
 
     df_sum = result["df_sum"]
     df_mon = result["df_mon"]
@@ -574,7 +543,7 @@ def load_dock_to_stock(year):
 
 
 def build_dock_probe(request=None):
-    """Stepwise Dock-to-Stock diagnostics (?dock_probe=1)."""
+    """Light Dock-to-Stock diagnostics (?dock_probe=1) — two Trino queries only."""
     _reset_state()
     year = _apply_dock_year(request)
     start = f"{year}-01-01"
@@ -596,36 +565,20 @@ def build_dock_probe(request=None):
         steps.append(row)
         return err is None
 
-    plain_spare = (
-        f"SELECT COUNT(*) AS n FROM dbo.Spare_Orders s "
-        f"WHERE s.Los_Datum >= '{start}' AND s.Los_Datum < '{end}' AND s.Gelost = 1"
-    )
-    fqn_spare = (
-        f"SELECT COUNT(*) AS n FROM {_dock_unloaded_from('tsql_fqn')} s "
-        f"WHERE {_dock_unloaded_where(start, end, 'tsql_fqn')}"
-    )
     trino_spare = (
         f"SELECT COUNT(*) AS n FROM {_dock_unloaded_from('trino')} s "
         f"WHERE {_dock_unloaded_where(start, end, 'trino')}"
     )
-
-    step("spare_count_plain_db7t", query_7t, plain_spare)
-    step("spare_count_fqn_db7t", query_7t, fqn_spare)
     step("spare_count_trino", query_trino, trino_spare)
-    step("summary_fqn_db7t", query_7t, _dock_summary_sql(start, end, "tsql_fqn"))
     step("summary_trino", query_trino, _dock_summary_sql(start, end, "trino"))
-
-    d2s, d2s_err = load_dock_to_stock(year)
 
     return {
         "dock_probe": True,
         "year": year,
         "handler_version": HANDLER_VERSION,
-        "fetch_db": _7T_FETCH_DB or FETCH_DB_7T,
         "trino_catalog": TRINO_CATALOG_7T,
         "steps": steps,
-        "dock_to_stock": d2s,
-        "dock_error": d2s_err,
+        "hint": "Full KPI: call without dock_probe (or ?dock_only=1). Expect ~60–180s on Trino.",
     }
 
 
@@ -666,24 +619,33 @@ def build_wms_summary(request=None):
             "query_stats": query_stats,
         }
 
+    dock_only = str(_query_param(request, "dock_only", "") or "").lower().strip() in (
+        "1",
+        "true",
+        "yes",
+    )
+
     occupancy = {"total": 0, "occupied": 0, "rate": None}
     lead_days = accuracy = None
     ontv_count = 0
     dock_to_stock = None
     errors = None
 
-    # Single round trip: all KPIs computed regardless of ?wms_part= (it stays in
-    # the response for visibility but no longer drives separate queries).
-    t0 = time.time()
-    kpis, err = load_kpis_combined()
-    query_stats["kpis_ms"] = int((time.time() - t0) * 1000)
-    if err:
-        errors = {"kpis": err}
-    elif kpis:
-        occupancy = kpis["occupancy"]
-        lead_days = kpis["storage_lead_time_days"]
-        accuracy = kpis["inventory_accuracy_pct"]
-        ontv_count = kpis["ontvangsten_count"]
+    if not dock_only:
+        # Single round trip: all KPIs computed regardless of ?wms_part= (it stays in
+        # the response for visibility but no longer drives separate queries).
+        t0 = time.time()
+        kpis, err = load_kpis_combined()
+        query_stats["kpis_ms"] = int((time.time() - t0) * 1000)
+        if err:
+            errors = {"kpis": err}
+        elif kpis:
+            occupancy = kpis["occupancy"]
+            lead_days = kpis["storage_lead_time_days"]
+            accuracy = kpis["inventory_accuracy_pct"]
+            ontv_count = kpis["ontvangsten_count"]
+    else:
+        query_stats["kpis_ms"] = 0
 
     t0 = time.time()
     d2s, d2s_err = load_dock_to_stock(dock_year)

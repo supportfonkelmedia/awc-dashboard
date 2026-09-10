@@ -25,7 +25,7 @@ return [
     | 7T WMS — slower Trino/SQL Server; separate timeout + longer cache
     |--------------------------------------------------------------------------
     */
-    'wms_timeout' => (int) env('PELIQAN_WMS_TIMEOUT', 120),
+    'wms_timeout' => (int) env('PELIQAN_WMS_TIMEOUT', 300),
     'wms_cache_ttl' => (int) env('PELIQAN_WMS_CACHE_TTL', 600),
 
     /*

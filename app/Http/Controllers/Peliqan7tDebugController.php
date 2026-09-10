@@ -47,6 +47,7 @@ class Peliqan7tDebugController extends Controller
             'wms_part' => (string) $request->query('wms_part', ''),
             'sample' => (string) $request->query('sample', ''),
             'dock_probe' => (string) $request->query('dock_probe', ''),
+            'dock_only' => (string) $request->query('dock_only', ''),
             'year' => (string) $request->query('year', ''),
         ], fn ($v) => $v !== '');
 

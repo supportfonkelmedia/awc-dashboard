@@ -5,26 +5,26 @@ After changing `documentation/peliqan_7t_api_handler.py`:
 1. Open Peliqan → API endpoint handler for 7T WMS (`/awc/7t` or your configured route).
 2. Paste the updated handler script from `documentation/peliqan_7t_api_handler.py`.
 3. Save and publish.
-4. Clear Laravel cache: `php artisan cache:clear` (WMS responses are cached ~600s per year).
-5. Clear Laravel cache (required after handler update):
+4. On the server `.env`, ensure:
+   ```env
+   PELIQAN_AWC_7T_URL=https://api.eu.peliqan.io/2401/awc/7t
+   PELIQAN_WMS_TIMEOUT=300
+   ```
+5. Clear config/cache:
+   ```bash
+   php artisan config:clear
+   php artisan cache:clear
+   ```
 
-```bash
-php artisan cache:clear
-```
+## Validate Dock-to-Stock (Brief Fonkel deel 3)
 
-6. Validate Dock-to-Stock (Brief Fonkel deel 3):
+**Full KPI** (2 Trino queries, may take 1–3 min first run):
 
 ```bash
 php scripts/verify_dock_to_stock.php 2026
 ```
 
-The script prints `configured_url` — should match your Peliqan endpoint, e.g.
-`https://api.eu.peliqan.io/2401/awc/7t` (set as `PELIQAN_AWC_7T_URL` in `.env`).
-
-`handler_version` must contain `dock-to-stock-v3` or newer. v3 routes Dock-to-Stock
-through Trino (`7t_db7t_7866`) when plain DB7T cannot reach Spare_Orders joins.
-
-Step-by-step SQL probe:
+**Light probe** (2 quick Trino checks, no full monthly breakdown):
 
 ```bash
 php scripts/verify_dock_to_stock.php 2026 --probe
@@ -32,8 +32,10 @@ php scripts/verify_dock_to_stock.php 2026 --probe
 
 Control figures (whole 2026, stand 3 sep 2026):
 
-- Meetbare orders: **~6.765**
-- Binnen 24 uur: **~5.049** (**74,6%**)
-- Dekking: **~61%** van geloste inbounds
+- Measurable orders: **~6.765**
+- Within 24 hours: **~5.049** (**74,6%**)
+- Coverage: **~61%** of unloaded inbounds
 
-Query parameter: `?year=2026` (defaults to current calendar year).
+`handler_version` must contain `dock-to-stock-v4` or newer. Dock-to-Stock runs via **Trino** catalog `7t_db7t_7866`.
+
+If you see `cURL error 28` timeout → raise `PELIQAN_WMS_TIMEOUT` to `300` or `600`.

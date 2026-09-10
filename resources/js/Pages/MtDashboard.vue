@@ -147,6 +147,7 @@ const {
     winratePipelines,
     winratePeriodLabel,
     margePerLoonPanel,
+    tripleLobPanel,
 } = useMtKpiData(peliqanRef, appliedRef, wmsPeliqan, wmsLoading);
 
 const financeDrawerOpen = ref(false);
@@ -210,28 +211,6 @@ const omzetSpark = computed(() =>
 );
 
 const shipRows = computed(() => sp.value?.shipments ?? []);
-
-const tripleLob = computed(() => {
-    const rows = cw.value?.triple_lob_customers ?? [];
-    const nAll = rows.length;
-    let nTriple = 0;
-    let omzTriple = 0;
-    let omzAll = 0;
-    for (const r of rows) {
-        const o = Number(r.omzet ?? 0);
-        omzAll += o;
-        if (Number(r.aantal_lob) >= 3) {
-            nTriple += 1;
-            omzTriple += o;
-        }
-    }
-    return {
-        nAll,
-        nTriple,
-        pctKlant: nAll ? Math.round((nTriple / nAll) * 1000) / 10 : 0,
-        pctOmz: omzAll ? Math.round((omzTriple / omzAll) * 1000) / 10 : 0,
-    };
-});
 
 const deals = computed(() => hs.value?.deals ?? []);
 
@@ -792,22 +771,135 @@ const labelClass =
 
                         <MtSectionCard
                             title="Triple LOB"
-                            subtitle="Klanten met omzet in ≥3 business lines"
+                            subtitle="Brief Fonkel deel 2 · klant_koppeling_lob"
                             :accent="false"
                         >
-                            <p class="text-2xl font-bold text-gray-900">
-                                {{ tripleLob.nTriple }} / {{ tripleLob.nAll }}
-                                <span
-                                    class="text-base font-normal text-gray-500"
-                                    >klanten (≥3 LOB)</span
+                            <template v-if="tripleLobPanel.status === 'live'">
+                                <div
+                                    class="mb-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
                                 >
-                            </p>
-                            <p class="mt-2 text-sm text-gray-600">
-                                % klanten:
-                                <strong>{{ tripleLob.pctKlant }}%</strong> ·
-                                % omzet:
-                                <strong>{{ tripleLob.pctOmz }}%</strong>
-                            </p>
+                                    <Card :pt="cardPt">
+                                        <template #title
+                                            >% Triple LOB (klanten)</template
+                                        >
+                                        <template #content>
+                                            <p class="text-3xl font-bold">
+                                                {{
+                                                    tripleLobPanel.pctKlant?.toFixed(
+                                                        1,
+                                                    ).replace('.', ',')
+                                                }}%
+                                            </p>
+                                            <p class="text-sm text-gray-500">
+                                                {{
+                                                    tripleLobPanel.inAlleDrie
+                                                }}
+                                                /
+                                                {{
+                                                    tripleLobPanel.klantenTotaal
+                                                }}
+                                                klanten
+                                            </p>
+                                        </template>
+                                    </Card>
+                                    <Card :pt="cardPt">
+                                        <template #title
+                                            >% omzet Triple LOB</template
+                                        >
+                                        <template #content>
+                                            <p class="text-3xl font-bold">
+                                                {{
+                                                    tripleLobPanel.pctOmzet?.toFixed(
+                                                        1,
+                                                    ).replace('.', ',')
+                                                }}%
+                                            </p>
+                                            <p class="text-sm text-gray-500">
+                                                via klantnummers per entiteit
+                                            </p>
+                                        </template>
+                                    </Card>
+                                    <Card :pt="cardPt">
+                                        <template #title
+                                            >Zonder concerns</template
+                                        >
+                                        <template #content>
+                                            <p class="text-3xl font-bold">
+                                                {{
+                                                    tripleLobPanel.pctKlantExclConcern?.toFixed(
+                                                        1,
+                                                    ).replace('.', ',')
+                                                }}%
+                                            </p>
+                                            <p class="text-sm text-gray-500">
+                                                concerns uitgesloten
+                                            </p>
+                                        </template>
+                                    </Card>
+                                    <Card :pt="cardPt">
+                                        <template #title>Controleren</template>
+                                        <template #content>
+                                            <p class="text-3xl font-bold">
+                                                {{
+                                                    tripleLobPanel.controlerenCount
+                                                }}
+                                            </p>
+                                            <p class="text-sm text-gray-500">
+                                                klanten (2 LOB, korte sleutel)
+                                            </p>
+                                        </template>
+                                    </Card>
+                                </div>
+                                <p class="mb-4 text-xs text-gray-500">
+                                    Boekjaren
+                                    {{ tripleLobPanel.bookYearsLabel }} ·
+                                    concerns
+                                    {{
+                                        tripleLobPanel.includeConcern
+                                            ? 'inclusief'
+                                            : 'exclusief'
+                                    }}
+                                </p>
+                                <DataTable
+                                    v-if="tripleLobPanel.validation?.length"
+                                    :value="tripleLobPanel.validation"
+                                    striped-rows
+                                    show-gridlines
+                                    class="p-datatable-sm text-sm"
+                                    :empty-message="'—'"
+                                >
+                                    <template #header>
+                                        <span class="font-semibold">
+                                            Validatie — verdeling zekerheid ×
+                                            aantal LOB
+                                        </span>
+                                    </template>
+                                    <Column
+                                        field="zekerheid"
+                                        header="Zekerheid"
+                                    />
+                                    <Column
+                                        field="aantal_lob"
+                                        header="LOB"
+                                    />
+                                    <Column
+                                        field="klanten"
+                                        header="Klanten"
+                                    />
+                                </DataTable>
+                            </template>
+                            <Message
+                                v-else
+                                severity="info"
+                                :closable="false"
+                            >
+                                <span class="text-sm">
+                                    {{
+                                        tripleLobPanel.note ??
+                                        'Triple LOB — wacht op Peliqan deploy (deel 2).'
+                                    }}
+                                </span>
+                            </Message>
                         </MtSectionCard>
                     </div>
                 </TabPanel>

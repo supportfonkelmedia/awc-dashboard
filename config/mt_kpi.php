@@ -46,4 +46,19 @@ return [
         'AFC Verkooplijn' => ['won' => 16, 'lost' => 8, 'pct' => 66.7],
     ],
 
+    /**
+     * Brief Fonkel deel 2 — klant_koppeling_lob / % Triple LOB.
+     * Keep in sync with MT_KPI_CONFIG in peliqan_mt_api_handler.py.
+     */
+    'triple_lob' => [
+        'book_years' => ['2024', '2025'],
+        'admin_codes' => ['alaw', 'pgl1', 'acco'],
+        'afgekeurd_sleutels' => [
+            'DISTILLERS', 'DUTCH', 'GOOD', 'HOXTON', 'MAX', 'SPIRITS',
+        ],
+        'concern_sleutels' => [
+            'ALFA', 'COMPAGNIA', 'DASH', 'ESSPO', 'RIGHT', 'TECAN',
+        ],
+    ],
+
 ];

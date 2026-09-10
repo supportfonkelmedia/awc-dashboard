@@ -52,6 +52,17 @@ MT_KPI_CONFIG = {
         "Verkooppijplijn": {"won": 55, "lost": 148, "pct": 27.1},
         "AFC Verkooplijn": {"won": 16, "lost": 8, "pct": 66.7},
     },
+    # Brief Fonkel deel 2 — klant_koppeling_lob / % Triple LOB
+    "triple_lob": {
+        "book_years": ["2024", "2025"],
+        "admin_codes": ["alaw", "pgl1", "acco"],
+        "afgekeurd_sleutels": [
+            "DISTILLERS", "DUTCH", "GOOD", "HOXTON", "MAX", "SPIRITS",
+        ],
+        "concern_sleutels": [
+            "ALFA", "COMPAGNIA", "DASH", "ESSPO", "RIGHT", "TECAN",
+        ],
+    },
 }
 
 _dbconn = pq.dbconnect(WAREHOUSE_DW)
@@ -412,6 +423,11 @@ def build_params(q):
     quarter_raw = q.get("quarter") or "all"
     wage_accounts = parse_wage_accounts(q)
 
+    tl_cfg = MT_KPI_CONFIG["triple_lob"]
+    triple_lob_years = list(tl_cfg["book_years"])
+    incl_concern_raw = str(q.get("triple_lob_include_concern", "true")).lower()
+    triple_lob_include_concern = incl_concern_raw not in ("0", "false", "no")
+
     start_s = q.get("start_date")
     end_s = q.get("end_date")
     if start_s:
@@ -481,6 +497,8 @@ def build_params(q):
         "wage_accounts": wage_accounts,
         "cw_filter": cw_f,
         "cw_filter_v": cw_f_v,
+        "triple_lob_book_years": triple_lob_years,
+        "triple_lob_include_concern": triple_lob_include_concern,
     }
 
 
@@ -720,6 +738,7 @@ def sql_balances(book_year):
 
 
 def sql_triple_lob(book_year):
+    """Deprecated proxy — kept for reference; use build_triple_lob_kpi instead."""
     return f"""
     SELECT
         relation_number,
@@ -732,6 +751,173 @@ def sql_triple_lob(book_year):
       AND relation_number IS NOT NULL AND relation_number != ''
     GROUP BY relation_number
 """
+
+
+def sql_klant_koppeling_lob(book_years):
+    """Brief Fonkel deel 2 — koppeltabel klant × LOB via search_name."""
+    cfg = MT_KPI_CONFIG["triple_lob"]
+    years_in = sql_in_list(book_years)
+    admins_in = sql_in_list(cfg["admin_codes"])
+    afgekeurd_in = sql_in_list(cfg["afgekeurd_sleutels"])
+    concern_in = sql_in_list(cfg["concern_sleutels"])
+
+    return f"""
+    SELECT
+        k.sleutel,
+        MAX(k.naam) AS klantnaam,
+        MAX(CASE WHEN k.admin_code = 'alaw' THEN k.rn END) AS awc_klantnr,
+        MAX(CASE WHEN k.admin_code = 'pgl1' THEN k.rn END) AS afc_klantnr,
+        MAX(CASE WHEN k.admin_code = 'acco' THEN k.rn END) AS acc_klantnr,
+        COUNT(DISTINCT k.admin_code) AS aantal_lob,
+        MAX(k.land) AS land,
+        CASE
+            WHEN k.sleutel IN ({afgekeurd_in}) THEN 'afgekeurd'
+            WHEN k.sleutel IN ({concern_in}) THEN 'concern'
+            WHEN COUNT(DISTINCT k.admin_code) = 1 THEN 'enkel'
+            WHEN COUNT(DISTINCT k.admin_code) = 3 THEN 'zeker'
+            WHEN LENGTH(k.sleutel) < 6 THEN 'controleren'
+            ELSE 'waarschijnlijk'
+        END AS zekerheid
+    FROM (
+        SELECT
+            r.admin_code,
+            TRIM(r.relation_number) AS rn,
+            r.name AS naam,
+            r.country_code AS land,
+            UPPER(REGEXP_REPLACE(TRIM(r.search_name), '[^A-Za-z0-9]', '', 'g')) AS sleutel
+        FROM cashweb.relation r
+        JOIN (
+            SELECT DISTINCT admin_code, TRIM(relation_number) AS rn
+            FROM cashweb.ledger_mutations
+            WHERE admin_code IN ({admins_in})
+              AND LEFT(TRIM(COALESCE(account_number, '')), 2) = '12'
+              AND book_year IN ({years_in})
+              AND NULLIF(TRIM(relation_number), '') IS NOT NULL
+        ) o
+          ON o.admin_code = r.admin_code
+         AND o.rn = TRIM(r.relation_number)
+        WHERE NULLIF(TRIM(r.search_name), '') IS NOT NULL
+    ) k
+    GROUP BY k.sleutel
+    """
+
+
+def sql_omzet_by_admin_relation(book_years):
+    """Omzet per admin + klantnummer (voor % omzet Triple LOB)."""
+    cfg = MT_KPI_CONFIG["triple_lob"]
+    years_in = sql_in_list(book_years)
+    admins_in = sql_in_list(cfg["admin_codes"])
+    return f"""
+    SELECT
+        admin_code,
+        TRIM(relation_number) AS rn,
+        SUM(CASE WHEN {CW_IS_D} THEN {CW_AMOUNT} ELSE 0 END) AS omzet
+    FROM cashweb.ledger_mutations
+    WHERE admin_code IN ({admins_in})
+      AND journal_code IN {CW_OMZET_DAGBOEKEN}
+      AND book_year IN ({years_in})
+      AND NULLIF(TRIM(relation_number), '') IS NOT NULL
+    GROUP BY admin_code, TRIM(relation_number)
+    """
+
+
+def build_triple_lob_kpi(df_koppeling, df_omzet_rel, book_years, include_concern=True):
+    empty = {
+        "klanten_totaal": 0,
+        "in_alle_drie": 0,
+        "pct_triple_lob": 0.0,
+        "pct_omzet_triple_lob": 0.0,
+        "klanten_totaal_excl_concern": 0,
+        "in_alle_drie_excl_concern": 0,
+        "pct_triple_lob_excl_concern": 0.0,
+        "pct_omzet_triple_lob_excl_concern": 0.0,
+        "include_concern": include_concern,
+        "book_years": list(book_years),
+        "method": "klant_koppeling_lob",
+        "controleren_count": 0,
+        "validation": [],
+    }
+    if df_koppeling is None or df_koppeling.empty:
+        return empty
+
+    df = df_koppeling.copy()
+    df["aantal_lob"] = df["aantal_lob"].apply(lambda x: int(safe_float(x)))
+
+    validation = []
+    grp = (
+        df.groupby(["zekerheid", "aantal_lob"])
+        .size()
+        .reset_index(name="klanten")
+    )
+    for _, r in grp.iterrows():
+        validation.append({
+            "zekerheid": str(r["zekerheid"]),
+            "aantal_lob": int(r["aantal_lob"]),
+            "klanten": int(r["klanten"]),
+        })
+    validation.sort(key=lambda x: (x["zekerheid"], x["aantal_lob"]))
+
+    omzet_lookup = {}
+    if df_omzet_rel is not None and not df_omzet_rel.empty:
+        for _, r in df_omzet_rel.iterrows():
+            admin = str(r.get("admin_code") or "").strip()
+            rn = str(r.get("rn") or "").strip()
+            if admin and rn:
+                key = (admin, rn)
+                omzet_lookup[key] = omzet_lookup.get(key, 0.0) + safe_float(
+                    r.get("omzet")
+                )
+
+    admin_cols = [
+        ("alaw", "awc_klantnr"),
+        ("pgl1", "afc_klantnr"),
+        ("acco", "acc_klantnr"),
+    ]
+
+    def row_omzet(row):
+        total = 0.0
+        for admin, col in admin_cols:
+            rn = row.get(col)
+            if rn is not None and str(rn).strip():
+                total += omzet_lookup.get((admin, str(rn).strip()), 0.0)
+        return total
+
+    def stats(incl_concern):
+        subset = df[df["zekerheid"] != "afgekeurd"].copy()
+        if not incl_concern:
+            subset = subset[subset["zekerheid"] != "concern"]
+        n = len(subset)
+        if n == 0:
+            return 0, 0, 0.0, 0.0
+        n_triple = int((subset["aantal_lob"] == 3).sum())
+        pct = round(100.0 * n_triple / n, 1)
+        omz_all = sum(row_omzet(r) for _, r in subset.iterrows())
+        omz_triple = sum(
+            row_omzet(r)
+            for _, r in subset[subset["aantal_lob"] == 3].iterrows()
+        )
+        pct_omz = round(100.0 * omz_triple / omz_all, 1) if omz_all > 0 else 0.0
+        return n, n_triple, pct, pct_omz
+
+    n, n_triple, pct, pct_omz = stats(include_concern)
+    n_ex, n_triple_ex, pct_ex, pct_omz_ex = stats(False)
+    controleren = int((df["zekerheid"] == "controleren").sum())
+
+    return {
+        "klanten_totaal": n,
+        "in_alle_drie": n_triple,
+        "pct_triple_lob": pct,
+        "pct_omzet_triple_lob": pct_omz,
+        "klanten_totaal_excl_concern": n_ex,
+        "in_alle_drie_excl_concern": n_triple_ex,
+        "pct_triple_lob_excl_concern": pct_ex,
+        "pct_omzet_triple_lob_excl_concern": pct_omz_ex,
+        "include_concern": include_concern,
+        "book_years": list(book_years),
+        "method": "klant_koppeling_lob",
+        "controleren_count": controleren,
+        "validation": validation,
+    }
 
 
 def sql_sub_admin_dist(cw_f):
@@ -765,7 +951,15 @@ def bundle_cashweb(p):
     df_trend = fetch(sql_omzet_trend(p["book_year"]), "fin_trend")
     df_jc = fetch(sql_journal_breakdown(p["cw_filter"]), "dagboeken")
     df_bal = fetch(sql_balances(p["book_year"]), "balances")
-    df_triple = fetch(sql_triple_lob(p["book_year"]), "triple")
+    tl_years = p["triple_lob_book_years"]
+    df_koppeling = fetch(sql_klant_koppeling_lob(tl_years), "klant_koppeling")
+    df_omzet_rel = fetch(sql_omzet_by_admin_relation(tl_years), "omzet_per_klant")
+    triple_lob = build_triple_lob_kpi(
+        df_koppeling,
+        df_omzet_rel,
+        tl_years,
+        include_concern=p["triple_lob_include_concern"],
+    )
     df_sub = fetch(sql_sub_admin_dist(p["cw_filter"]), "subadm")
     df_lob = fetch(sql_omzet_by_lob(p["cw_filter"]), "omzet_lob")
     df_lob_v = fetch(sql_omzet_by_lob_v(p["cw_filter_v"]), "omzet_lob_v")
@@ -805,7 +999,7 @@ def bundle_cashweb(p):
         "omzet_trend_per_maand": df_records(df_trend),
         "journal_breakdown": df_records(df_jc),
         "ledger_balances": df_records(df_bal),
-        "triple_lob_customers": df_records(df_triple),
+        "triple_lob": triple_lob,
         "sub_administration_dist": df_records(df_sub),
         "revenue_per_lob": revenue_lob,
         "marge_per_loon": marge_per_loon,

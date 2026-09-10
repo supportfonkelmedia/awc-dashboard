@@ -94,25 +94,60 @@ export function useMtKpiData(peliqanRef, appliedRef, wmsPeliqanRef = null, wmsLo
 
     const aggregates = computed(() => cw.value?.aggregates ?? null);
 
-    const tripleLob = computed(() => {
-        const rows = cw.value?.triple_lob_customers ?? [];
-        const nAll = rows.length;
-        let nTriple = 0;
-        let omzTriple = 0;
-        let omzAll = 0;
-        for (const r of rows) {
-            const o = Number(r.omzet ?? 0);
-            omzAll += o;
-            if (Number(r.aantal_lob) >= 3) {
-                nTriple += 1;
-                omzTriple += o;
-            }
+    const tripleLobPanel = computed(() => {
+        const api = cw.value?.triple_lob;
+        const periodYears = api?.book_years?.join(' & ') ?? '2024 & 2025';
+
+        if (!api?.klanten_totaal) {
+            return {
+                status: KPI_STATUS.IN_DEVELOPMENT,
+                klantenTotaal: 0,
+                inAlleDrie: 0,
+                pctKlant: null,
+                pctOmzet: null,
+                pctKlantExclConcern: null,
+                pctOmzetExclConcern: null,
+                includeConcern: true,
+                bookYearsLabel: periodYears,
+                controlerenCount: 0,
+                validation: [],
+                method: null,
+                note: 'Deploy peliqan_mt_api_handler (Brief Fonkel deel 2).',
+            };
         }
+
+        const incl = api.include_concern !== false;
         return {
-            nAll,
-            nTriple,
-            pctKlant: nAll ? Math.round((nTriple / nAll) * 1000) / 10 : 0,
-            pctOmz: omzAll ? Math.round((omzTriple / omzAll) * 1000) / 10 : 0,
+            status: KPI_STATUS.LIVE,
+            klantenTotaal: Number(api.klanten_totaal ?? 0),
+            inAlleDrie: Number(api.in_alle_drie ?? 0),
+            pctKlant: incl
+                ? Number(api.pct_triple_lob ?? 0)
+                : Number(api.pct_triple_lob_excl_concern ?? 0),
+            pctOmzet: incl
+                ? Number(api.pct_omzet_triple_lob ?? 0)
+                : Number(api.pct_omzet_triple_lob_excl_concern ?? 0),
+            pctKlantExclConcern: Number(api.pct_triple_lob_excl_concern ?? 0),
+            pctOmzetExclConcern: Number(
+                api.pct_omzet_triple_lob_excl_concern ?? 0,
+            ),
+            includeConcern: incl,
+            bookYearsLabel: periodYears,
+            controlerenCount: Number(api.controleren_count ?? 0),
+            validation: api.validation ?? [],
+            method: api.method ?? 'klant_koppeling_lob',
+            note: null,
+        };
+    });
+
+    /** @deprecated use tripleLobPanel */
+    const tripleLob = computed(() => {
+        const p = tripleLobPanel.value;
+        return {
+            nAll: p.klantenTotaal,
+            nTriple: p.inAlleDrie,
+            pctKlant: p.pctKlant ?? 0,
+            pctOmz: p.pctOmzet ?? 0,
         };
     });
 
@@ -448,14 +483,21 @@ export function useMtKpiData(peliqanRef, appliedRef, wmsPeliqanRef = null, wmsLo
                         status: KPI_STATUS.TO_DEFINE,
                         footer: `${def.source} · ${period}`,
                     });
-                case 'ltv_triple_lob':
+                case 'ltv_triple_lob': {
+                    const tl = tripleLobPanel.value;
+                    if (tl.status === KPI_STATUS.LIVE && tl.klantenTotaal > 0) {
+                        return kpi(def, {
+                            status: KPI_STATUS.IN_DEVELOPMENT,
+                            note: `${tl.inAlleDrie} triple-LOB klanten (${tl.pctKlant}% van ${tl.klantenTotaal}) — LTV-formule nog af te stemmen`,
+                            footer: `klant_koppeling_lob · ${tl.bookYearsLabel}`,
+                        });
+                    }
                     return kpi(def, {
                         status: KPI_STATUS.IN_DEVELOPMENT,
-                        note: tl.nAll
-                            ? `${tl.nTriple} triple-LOB klanten (${tl.pctKlant}% van ${tl.nAll}) — geen LTV-formule`
-                            : 'Triple LOB nog valideren in Cashweb.',
+                        note: tl.note ?? 'Triple LOB — Brief Fonkel deel 2.',
                         footer: def.source,
                     });
+                }
                 case 'ab_players':
                     return kpi(def, {
                         status: KPI_STATUS.NOT_MEASURED,
@@ -686,11 +728,26 @@ export function useMtKpiData(peliqanRef, appliedRef, wmsPeliqanRef = null, wmsLo
     }
 
     function resolveTactical(def) {
-        const tl = tripleLob.value;
-        if (def.id === 'triple_lob_pct' && tl.nAll > 0) {
+        const tl = tripleLobPanel.value;
+        if (def.id === 'triple_lob_pct' && tl.status === KPI_STATUS.LIVE) {
+            const pctFmt =
+                tl.pctKlant != null
+                    ? `${Number(tl.pctKlant).toFixed(1).replace('.', ',')}%`
+                    : null;
+            return kpi(def, {
+                status: KPI_STATUS.LIVE,
+                value: pctFmt,
+                footer: `Brief Fonkel deel 2 · ${tl.bookYearsLabel}`,
+                note:
+                    tl.pctOmzet != null
+                        ? `${tl.inAlleDrie}/${tl.klantenTotaal} klanten · ${Number(tl.pctOmzet).toFixed(1).replace('.', ',')}% omzet`
+                        : `${tl.inAlleDrie}/${tl.klantenTotaal} klanten`,
+            });
+        }
+        if (def.id === 'triple_lob_pct' && tl.note) {
             return kpi(def, {
                 status: KPI_STATUS.IN_DEVELOPMENT,
-                note: `${tl.pctKlant}% klanten · ${tl.pctOmz}% omzet — validatie nodig`,
+                note: tl.note,
                 footer: def.source,
             });
         }
@@ -966,6 +1023,7 @@ export function useMtKpiData(peliqanRef, appliedRef, wmsPeliqanRef = null, wmsLo
         winratePipelines,
         winratePeriodLabel,
         margePerLoonPanel,
+        tripleLobPanel,
         wmsAvailable,
         occupancy,
         storageLeadTime,

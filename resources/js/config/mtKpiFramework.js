@@ -192,8 +192,8 @@ export const TACTICAL_KPIS = [
         id: 'triple_lob_pct',
         label: '% Triple LOB',
         strategicLink: 'ltv_triple_lob',
-        defaultStatus: KPI_STATUS.IN_DEVELOPMENT,
-        source: 'Cashweb',
+        defaultStatus: KPI_STATUS.LIVE,
+        source: 'Cashweb · klant_koppeling_lob',
     },
     {
         id: 'enps',
@@ -409,8 +409,10 @@ export const KPI_EXPLAIN = {
         method: 'Nog geen gekoppelde bron.',
     },
     triple_lob_pct: {
-        description: 'Aandeel klanten dat in ≥3 business lines omzet draait.',
-        method: 'Cashweb: klanten met omzet in ≥3 LOB gedeeld door het totaal aantal klanten.',
+        description:
+            'Aandeel klanten met omzet bij AWC, AFC én ACC (Warehouse, Freight, Customs).',
+        method:
+            'Brief Fonkel deel 2: klant_koppeling_lob via search_name, debiteuren 12xx, zekerheid ≠ afgekeurd.',
     },
     enps: {
         description: 'Employee Net Promoter Score — medewerkerstevredenheid.',

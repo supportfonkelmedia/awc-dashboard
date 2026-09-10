@@ -31,6 +31,8 @@ import pandas as pd
 # --- Connection ids: must match the Peliqan 7T database / connection exactly. ---
 CONNECT_7T = "7T"
 FETCH_DB_7T = "DB7T"
+# Trino federated catalog for 7T (required for some tables, e.g. Spare_Orders joins).
+TRINO_CATALOG_7T = "7t_db7t_7866"
 SCHEMA_DBO = "dbo"
 
 # AWC administratie selector. The 7T Administraties table identifies AWC by
@@ -44,7 +46,7 @@ WMS_LOOKBACK_DAYS = 180
 # unbounded scan that trips Peliqan's execution limit.
 WMS_LOOKBACK_MAX = 3650
 # Bump on redeploy — surfaces in API meta to confirm Peliqan has the latest script.
-HANDLER_VERSION = "2026-09-10-7t-dock-to-stock-v2"
+HANDLER_VERSION = "2026-09-10-7t-dock-to-stock-v3"
 
 # pq.dbconnect("7T") is the warehouse connection id — not a valid conn.fetch() database name.
 FETCH_DB_CANDIDATES = (FETCH_DB_7T, "db_7t", "db7t")
@@ -55,6 +57,7 @@ _7T_FETCH_DB = None
 _7T_AVAILABLE = False
 _7T_PROBE_ERROR = None
 _7T_LAST_ERROR = None
+_trino_conn = None
 _AWC_ADMIN_ID = None
 # Per-request lookback window (overridable via ?lookback=); reset each request.
 _ACTIVE_LOOKBACK = WMS_LOOKBACK_DAYS
@@ -71,12 +74,13 @@ def _get_7t_conn():
 
 def _reset_state():
     global _dbconn_7t, _7T_FETCH_DB, _7T_AVAILABLE, _7T_PROBE_ERROR
-    global _7T_LAST_ERROR, _AWC_ADMIN_ID, _ACTIVE_LOOKBACK, _ACTIVE_DOCK_YEAR
+    global _7T_LAST_ERROR, _trino_conn, _AWC_ADMIN_ID, _ACTIVE_LOOKBACK, _ACTIVE_DOCK_YEAR
     _dbconn_7t = None
     _7T_FETCH_DB = None
     _7T_AVAILABLE = False
     _7T_PROBE_ERROR = None
     _7T_LAST_ERROR = None
+    _trino_conn = None
     _AWC_ADMIN_ID = None
     _ACTIVE_LOOKBACK = WMS_LOOKBACK_DAYS
     _ACTIVE_DOCK_YEAR = None
@@ -117,7 +121,7 @@ def _short_err(exc):
     m = re.search(r"message='([^']+)'", msg) or re.search(r'message="([^"]+)"', msg)
     if m:
         return m.group(1)
-    m = re.search(r"PeliqanClientException\('([^']+)'", msg)
+    m = re.search(r"PeliqanClientException[:\(]+\('([^']+)'", msg)
     if m:
         return m.group(1)
     return f"{type(exc).__name__}: {msg[:240]}"
@@ -157,6 +161,31 @@ def query_7t(sql):
         err = last_err or "7T query returned no data"
         _7T_LAST_ERROR = err
         return pd.DataFrame(), err
+    except Exception as e:
+        err = _short_err(e)
+        _7T_LAST_ERROR = err
+        return pd.DataFrame(), err
+
+
+def _get_trino_conn():
+    global _trino_conn
+    if _trino_conn is None:
+        _trino_conn = pq.trinoconnect()
+    return _trino_conn
+
+
+def query_trino(sql):
+    """Run a query via Trino federated catalog (7T external SQL Server)."""
+    global _7T_LAST_ERROR
+    try:
+        conn = _get_trino_conn()
+        df = conn.fetch(TRINO_CATALOG_7T, query=sql, df=True)
+        if df is None:
+            err = f"{TRINO_CATALOG_7T}: empty result"
+            _7T_LAST_ERROR = err
+            return pd.DataFrame(), err
+        _7T_LAST_ERROR = None
+        return df, None
     except Exception as e:
         err = _short_err(e)
         _7T_LAST_ERROR = err
@@ -324,23 +353,147 @@ def _median(values):
     return (nums[mid - 1] + nums[mid]) / 2.0
 
 
-def _dock_measured_subquery(start, end):
+def _fqn_table(name):
+    return f'"{TRINO_CATALOG_7T}".{SCHEMA_DBO}."{name}"'
+
+
+def _dock_measured_subquery(start, end, dialect="tsql_fqn"):
     """Shared measured-order subquery (Brief Fonkel deel 3 validatiequery)."""
+    if dialect == "trino":
+        return f"""
+            SELECT
+                trim(s.ID) AS sid,
+                s.Los_Datum AS los,
+                MIN(vv.MutatieDatum) AS klaar
+            FROM {SCHEMA_DBO}."Spare_Orders" s
+            INNER JOIN {SCHEMA_DBO}."Ontvangsten" o
+                ON trim(o.Spare_Order_ID) = trim(s.ID)
+            INNER JOIN {SCHEMA_DBO}."Voorraad_Verplaatsingen" vv
+                ON vv.Ontvangst_ID = o.ID AND vv.Status = 30
+            WHERE s.Los_Datum >= DATE '{start}'
+              AND s.Los_Datum < DATE '{end}'
+              AND s.Gelost = 1
+            GROUP BY trim(s.ID), s.Los_Datum
+        """
+    spare = _fqn_table("Spare_Orders")
+    ontv = _fqn_table("Ontvangsten")
+    vv_tbl = _fqn_table("Voorraad_Verplaatsingen")
     return f"""
         SELECT
             LTRIM(RTRIM(s.ID)) AS sid,
             s.Los_Datum AS los,
             MIN(vv.MutatieDatum) AS klaar
-        FROM dbo.Spare_Orders s
-        INNER JOIN dbo.Ontvangsten o
+        FROM {spare} s
+        INNER JOIN {ontv} o
             ON LTRIM(RTRIM(o.Spare_Order_ID)) = LTRIM(RTRIM(s.ID))
-        INNER JOIN dbo.Voorraad_Verplaatsingen vv
+        INNER JOIN {vv_tbl} vv
             ON vv.Ontvangst_ID = o.ID AND vv.Status = 30
         WHERE s.Los_Datum >= '{start}'
           AND s.Los_Datum < '{end}'
           AND s.Gelost = 1
         GROUP BY LTRIM(RTRIM(s.ID)), s.Los_Datum
     """
+
+
+def _dock_hour_diff(alias, dialect):
+    if dialect == "trino":
+        return f"date_diff('hour', {alias}.los, {alias}.klaar)"
+    return f"DATEDIFF(hour, {alias}.los, {alias}.klaar)"
+
+
+def _dock_unloaded_from(dialect):
+    if dialect == "trino":
+        return f'{SCHEMA_DBO}."Spare_Orders"'
+    return _fqn_table("Spare_Orders")
+
+
+def _dock_unloaded_where(start, end, dialect):
+    if dialect == "trino":
+        return (
+            f"s.Los_Datum >= DATE '{start}' AND s.Los_Datum < DATE '{end}' "
+            f"AND s.Gelost = 1"
+        )
+    return (
+        f"s.Los_Datum >= '{start}' AND s.Los_Datum < '{end}' AND s.Gelost = 1"
+    )
+
+
+def _dock_unloaded_count_subquery(start, end, dialect):
+    tbl = _dock_unloaded_from(dialect)
+    where = _dock_unloaded_where(start, end, dialect)
+    return f"SELECT COUNT(*) FROM {tbl} s WHERE {where}"
+
+
+def _dock_summary_sql(start, end, dialect):
+    measured = _dock_measured_subquery(start, end, dialect=dialect)
+    hours = _dock_hour_diff("x", dialect)
+    pct_type = "decimal(5, 1)" if dialect == "trino" else "numeric(5, 1)"
+    unloaded = _dock_unloaded_count_subquery(start, end, dialect)
+    return f"""
+        SELECT
+            ({unloaded}) AS total_unloaded,
+            COUNT(*) AS measurable_orders,
+            SUM(CASE WHEN {hours} <= 24 THEN 1 ELSE 0 END) AS within_24h,
+            CAST(
+                100.0 * SUM(CASE WHEN {hours} <= 24 THEN 1 ELSE 0 END)
+                / NULLIF(COUNT(*), 0) AS {pct_type}
+            ) AS pct_within_24h
+        FROM ({measured}) x
+    """
+
+
+def _dock_monthly_sql(start, end, dialect):
+    measured = _dock_measured_subquery(start, end, dialect=dialect)
+    hours = _dock_hour_diff("x", dialect)
+    pct_type = "decimal(5, 1)" if dialect == "trino" else "numeric(5, 1)"
+    return f"""
+        SELECT
+            MONTH(x.los) AS month,
+            COUNT(*) AS orders,
+            SUM(CASE WHEN {hours} <= 24 THEN 1 ELSE 0 END) AS within_24h,
+            CAST(
+                100.0 * SUM(CASE WHEN {hours} <= 24 THEN 1 ELSE 0 END)
+                / NULLIF(COUNT(*), 0) AS {pct_type}
+            ) AS pct_within_24h
+        FROM ({measured}) x
+        GROUP BY MONTH(x.los)
+        ORDER BY MONTH(x.los)
+    """
+
+
+def _dock_hours_sql(start, end, dialect):
+    measured = _dock_measured_subquery(start, end, dialect=dialect)
+    hours = _dock_hour_diff("x", dialect)
+    return f"SELECT {hours} AS hours FROM ({measured}) x"
+
+
+def _run_dock_queries(start, end, dialect, query_fn):
+    summary_sql = _dock_summary_sql(start, end, dialect)
+    monthly_sql = _dock_monthly_sql(start, end, dialect)
+    hours_sql = _dock_hours_sql(start, end, dialect)
+
+    df_sum, err_sum = query_fn(summary_sql)
+    if err_sum:
+        return None, f"{dialect}: {err_sum}"
+
+    df_mon, err_mon = query_fn(monthly_sql)
+    if err_mon:
+        return None, f"{dialect}: {err_mon}"
+
+    median_hours = None
+    measurable = int(_scalar(df_sum, "measurable_orders", 0) or 0)
+    if measurable > 0:
+        df_hours, err_hours = query_fn(hours_sql)
+        if not err_hours and df_hours is not None and not df_hours.empty:
+            col = _col(df_hours, "hours") or "hours"
+            med = _median(df_hours[col].tolist())
+            median_hours = round(float(med), 1) if med is not None else None
+
+    return {
+        "df_sum": df_sum,
+        "df_mon": df_mon,
+        "median_hours": median_hours,
+    }, None
 
 
 def load_dock_to_stock(year):
@@ -354,64 +507,34 @@ def load_dock_to_stock(year):
     y = int(year)
     start = f"{y}-01-01"
     end = f"{y + 1}-01-01"
-    measured = _dock_measured_subquery(start, end)
 
-    summary_sql = f"""
-        SELECT
-            (SELECT COUNT(*)
-                FROM dbo.Spare_Orders s
-                WHERE s.Los_Datum >= '{start}'
-                  AND s.Los_Datum < '{end}'
-                  AND s.Gelost = 1) AS total_unloaded,
-            COUNT(*) AS measurable_orders,
-            SUM(CASE WHEN DATEDIFF(hour, x.los, x.klaar) <= 24 THEN 1 ELSE 0 END) AS within_24h,
-            CAST(
-                100.0 * SUM(CASE WHEN DATEDIFF(hour, x.los, x.klaar) <= 24 THEN 1 ELSE 0 END)
-                / NULLIF(COUNT(*), 0) AS numeric(5, 1)
-            ) AS pct_within_24h
-        FROM ({measured}) x
-    """
+    attempts = [
+        ("tsql_fqn", query_7t),
+        ("trino", query_trino),
+    ]
+    result = None
+    last_err = None
+    dock_source = None
 
-    monthly_sql = f"""
-        SELECT
-            MONTH(x.los) AS month,
-            COUNT(*) AS orders,
-            SUM(CASE WHEN DATEDIFF(hour, x.los, x.klaar) <= 24 THEN 1 ELSE 0 END) AS within_24h,
-            CAST(
-                100.0 * SUM(CASE WHEN DATEDIFF(hour, x.los, x.klaar) <= 24 THEN 1 ELSE 0 END)
-                / NULLIF(COUNT(*), 0) AS numeric(5, 1)
-            ) AS pct_within_24h
-        FROM ({measured}) x
-        GROUP BY MONTH(x.los)
-        ORDER BY MONTH(x.los)
-    """
+    for dialect, query_fn in attempts:
+        result, err = _run_dock_queries(start, end, dialect, query_fn)
+        if err:
+            last_err = err
+            continue
+        dock_source = dialect
+        break
 
-    df_sum, err_sum = query_7t(summary_sql)
-    if err_sum:
-        return None, err_sum
+    if result is None:
+        return None, last_err or "dock_to_stock: all query paths failed"
 
-    df_mon, err_mon = query_7t(monthly_sql)
-    if err_mon:
-        return None, err_mon
+    df_sum = result["df_sum"]
+    df_mon = result["df_mon"]
+    median_hours = result["median_hours"]
 
     total_unloaded = int(_scalar(df_sum, "total_unloaded", 0) or 0)
     measurable = int(_scalar(df_sum, "measurable_orders", 0) or 0)
     within_24h = int(_scalar(df_sum, "within_24h", 0) or 0)
     pct = _scalar(df_sum, "pct_within_24h")
-
-    median_hours = None
-    if measurable > 0:
-        hours_sql = f"""
-            SELECT DATEDIFF(hour, x.los, x.klaar) AS hours
-            FROM ({measured}) x
-        """
-        df_hours, err_hours = query_7t(hours_sql)
-        if err_hours:
-            return None, err_hours
-        if df_hours is not None and not df_hours.empty:
-            col = _col(df_hours, "hours") or "hours"
-            med = _median(df_hours[col].tolist())
-            median_hours = round(float(med), 1) if med is not None else None
 
     coverage_pct = (
         round((measurable / total_unloaded) * 1000) / 10
@@ -446,7 +569,64 @@ def load_dock_to_stock(year):
         "coverage_pct": coverage_pct,
         "monthly": monthly,
         "norm_hours": 24,
+        "source": dock_source,
     }, None
+
+
+def build_dock_probe(request=None):
+    """Stepwise Dock-to-Stock diagnostics (?dock_probe=1)."""
+    _reset_state()
+    year = _apply_dock_year(request)
+    start = f"{year}-01-01"
+    end = f"{year + 1}-01-01"
+    steps = []
+
+    def step(name, query_fn, sql):
+        t0 = time.time()
+        df, err = query_fn(sql)
+        ms = int((time.time() - t0) * 1000)
+        row = {"step": name, "ms": ms, "ok": err is None}
+        if err:
+            row["error"] = err
+        elif df is not None and not df.empty:
+            row["rows"] = int(len(df))
+            row["sample"] = _records(df.head(3))
+        else:
+            row["rows"] = 0
+        steps.append(row)
+        return err is None
+
+    plain_spare = (
+        f"SELECT COUNT(*) AS n FROM dbo.Spare_Orders s "
+        f"WHERE s.Los_Datum >= '{start}' AND s.Los_Datum < '{end}' AND s.Gelost = 1"
+    )
+    fqn_spare = (
+        f"SELECT COUNT(*) AS n FROM {_dock_unloaded_from('tsql_fqn')} s "
+        f"WHERE {_dock_unloaded_where(start, end, 'tsql_fqn')}"
+    )
+    trino_spare = (
+        f"SELECT COUNT(*) AS n FROM {_dock_unloaded_from('trino')} s "
+        f"WHERE {_dock_unloaded_where(start, end, 'trino')}"
+    )
+
+    step("spare_count_plain_db7t", query_7t, plain_spare)
+    step("spare_count_fqn_db7t", query_7t, fqn_spare)
+    step("spare_count_trino", query_trino, trino_spare)
+    step("summary_fqn_db7t", query_7t, _dock_summary_sql(start, end, "tsql_fqn"))
+    step("summary_trino", query_trino, _dock_summary_sql(start, end, "trino"))
+
+    d2s, d2s_err = load_dock_to_stock(year)
+
+    return {
+        "dock_probe": True,
+        "year": year,
+        "handler_version": HANDLER_VERSION,
+        "fetch_db": _7T_FETCH_DB or FETCH_DB_7T,
+        "trino_catalog": TRINO_CATALOG_7T,
+        "steps": steps,
+        "dock_to_stock": d2s,
+        "dock_error": d2s_err,
+    }
 
 
 def _resolve_wms_parts(request):
@@ -652,6 +832,16 @@ def build_sample(request=None):
 
 
 def build_payload(request=None):
+    if str(_query_param(request, "dock_probe", "") or "").lower().strip() in (
+        "1",
+        "true",
+        "yes",
+    ):
+        return {
+            "bundle": "wms",
+            "meta": {"handler_version": HANDLER_VERSION, "dock_probe": True},
+            "data": build_dock_probe(request=request),
+        }
     if str(_query_param(request, "sample", "") or "").lower().strip() in ("1", "true", "yes"):
         return {
             "bundle": "wms",

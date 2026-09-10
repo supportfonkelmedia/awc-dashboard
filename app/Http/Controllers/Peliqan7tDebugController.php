@@ -46,6 +46,8 @@ class Peliqan7tDebugController extends Controller
             'lookback' => (string) $request->query('lookback', ''),
             'wms_part' => (string) $request->query('wms_part', ''),
             'sample' => (string) $request->query('sample', ''),
+            'dock_probe' => (string) $request->query('dock_probe', ''),
+            'year' => (string) $request->query('year', ''),
         ], fn ($v) => $v !== '');
 
         $startedAt = microtime(true);

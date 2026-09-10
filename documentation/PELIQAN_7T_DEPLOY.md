@@ -18,8 +18,17 @@ php artisan cache:clear
 php scripts/verify_dock_to_stock.php 2026
 ```
 
-The script prints `handler_version` — must contain `dock-to-stock-v2` or newer.
-If you see `ERROR_APPLICATION_DOES_NOT_EXIST`, redeploy v2+ (fixes wrong `7T` fetch key).
+The script prints `configured_url` — should match your Peliqan endpoint, e.g.
+`https://api.eu.peliqan.io/2401/awc/7t` (set as `PELIQAN_AWC_7T_URL` in `.env`).
+
+`handler_version` must contain `dock-to-stock-v3` or newer. v3 routes Dock-to-Stock
+through Trino (`7t_db7t_7866`) when plain DB7T cannot reach Spare_Orders joins.
+
+Step-by-step SQL probe:
+
+```bash
+php scripts/verify_dock_to_stock.php 2026 --probe
+```
 
 Control figures (whole 2026, stand 3 sep 2026):
 

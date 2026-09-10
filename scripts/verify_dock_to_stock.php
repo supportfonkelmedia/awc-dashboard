@@ -12,10 +12,19 @@ $app = require_once __DIR__.'/../bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 $year = (int) ($argv[1] ?? 2026);
+$probe = in_array('--probe', $argv, true);
 $c = app(\App\Services\Peliqan\PeliqanClient::class);
+$url = (string) config('peliqan.awc_7t_url', '');
+
+echo 'configured_url='.($url !== '' ? $url : '(empty — set PELIQAN_AWC_7T_URL)')."\n";
+
+$query = ['year' => (string) $year];
+if ($probe) {
+    $query['dock_probe'] = '1';
+}
 
 try {
-    $r = $c->fetch7tWms(['year' => (string) $year]);
+    $r = $c->fetch7tWms($query);
 } catch (\App\Services\Peliqan\PeliqanException $e) {
     echo "Peliqan HTTP/script error: {$e->getMessage()}\n";
     exit(1);
@@ -23,10 +32,26 @@ try {
 
 $data = $r['data'] ?? [];
 $meta = $r['meta'] ?? [];
+
+if ($probe) {
+    echo "dock_probe steps:\n";
+    foreach ($data['steps'] ?? [] as $step) {
+        $ok = ($step['ok'] ?? false) ? 'OK' : 'FAIL';
+        $err = $step['error'] ?? '';
+        echo "  {$step['step']}: {$ok} ({$step['ms']}ms)".($err ? " — {$err}" : '')."\n";
+    }
+    if (! empty($data['dock_error'])) {
+        echo 'dock_error: '.$data['dock_error']."\n";
+    }
+    $data = array_merge($data, $data['dock_to_stock'] ?? []);
+}
+
 $handlerVersion = $data['handler_version'] ?? $meta['handler_version'] ?? '?';
-$fetchDb = $meta['warehouses']['wms_db'] ?? '?';
+$fetchDb = $meta['warehouses']['wms_db'] ?? $data['fetch_db'] ?? '?';
+$dockSource = $data['source'] ?? '?';
 
 echo "handler_version={$handlerVersion}\n";
+echo "dock_source={$dockSource}\n";
 echo 'wms_available='.(($data['wms_available'] ?? false) ? 'true' : 'false')."\n";
 echo "fetch_db={$fetchDb}\n";
 
@@ -40,14 +65,18 @@ if (! empty($data['errors']) && is_array($data['errors'])) {
 }
 
 $d2s = $data['dock_to_stock'] ?? null;
+if (! $d2s && isset($data['measurable_orders'])) {
+    $d2s = $data;
+}
 
 if (! $d2s) {
     echo "\nMISSING dock_to_stock\n";
-    if ($handlerVersion === '?' || ! str_contains((string) $handlerVersion, 'dock-to-stock')) {
-        echo "→ Redeploy documentation/peliqan_7t_api_handler.py in Peliqan (handler_version should contain 'dock-to-stock').\n";
+    if ($handlerVersion === '?' || ! str_contains((string) $handlerVersion, 'dock-to-stock-v3')) {
+        echo "→ Redeploy documentation/peliqan_7t_api_handler.py in Peliqan (expect handler_version *-v3).\n";
     }
     if (! empty($data['errors']['dock_to_stock'])) {
-        echo "→ SQL error above — after v2 fix, redeploy handler and run: php artisan cache:clear\n";
+        echo "→ Run with --probe for step-by-step SQL diagnostics: php scripts/verify_dock_to_stock.php 2026 --probe\n";
+        echo "→ Then: php artisan cache:clear\n";
     }
     exit(1);
 }

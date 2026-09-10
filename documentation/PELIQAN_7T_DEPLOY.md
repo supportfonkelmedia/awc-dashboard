@@ -6,11 +6,20 @@ After changing `documentation/peliqan_7t_api_handler.py`:
 2. Paste the updated handler script from `documentation/peliqan_7t_api_handler.py`.
 3. Save and publish.
 4. Clear Laravel cache: `php artisan cache:clear` (WMS responses are cached ~600s per year).
-5. Validate Dock-to-Stock (Brief Fonkel deel 3):
+5. Clear Laravel cache (required after handler update):
+
+```bash
+php artisan cache:clear
+```
+
+6. Validate Dock-to-Stock (Brief Fonkel deel 3):
 
 ```bash
 php scripts/verify_dock_to_stock.php 2026
 ```
+
+The script prints `handler_version` — must contain `dock-to-stock-v2` or newer.
+If you see `ERROR_APPLICATION_DOES_NOT_EXIST`, redeploy v2+ (fixes wrong `7T` fetch key).
 
 Control figures (whole 2026, stand 3 sep 2026):
 

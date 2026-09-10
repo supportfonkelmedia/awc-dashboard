@@ -13,19 +13,46 @@ $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 $year = (int) ($argv[1] ?? 2026);
 $c = app(\App\Services\Peliqan\PeliqanClient::class);
-$r = $c->fetch7tWms(['year' => (string) $year]);
-$d2s = $r['data']['dock_to_stock'] ?? null;
+
+try {
+    $r = $c->fetch7tWms(['year' => (string) $year]);
+} catch (\App\Services\Peliqan\PeliqanException $e) {
+    echo "Peliqan HTTP/script error: {$e->getMessage()}\n";
+    exit(1);
+}
+
+$data = $r['data'] ?? [];
+$meta = $r['meta'] ?? [];
+$handlerVersion = $data['handler_version'] ?? $meta['handler_version'] ?? '?';
+$fetchDb = $meta['warehouses']['wms_db'] ?? '?';
+
+echo "handler_version={$handlerVersion}\n";
+echo 'wms_available='.(($data['wms_available'] ?? false) ? 'true' : 'false')."\n";
+echo "fetch_db={$fetchDb}\n";
+
+if (! empty($data['errors']) && is_array($data['errors'])) {
+    echo "errors:\n";
+    foreach ($data['errors'] as $key => $msg) {
+        if ($msg) {
+            echo "  {$key}: {$msg}\n";
+        }
+    }
+}
+
+$d2s = $data['dock_to_stock'] ?? null;
 
 if (! $d2s) {
-    echo "MISSING dock_to_stock (deploy peliqan_7t_api_handler deel 3)\n";
-    $err = $r['data']['errors']['dock_to_stock'] ?? null;
-    if ($err) {
-        echo "error: {$err}\n";
+    echo "\nMISSING dock_to_stock\n";
+    if ($handlerVersion === '?' || ! str_contains((string) $handlerVersion, 'dock-to-stock')) {
+        echo "→ Redeploy documentation/peliqan_7t_api_handler.py in Peliqan (handler_version should contain 'dock-to-stock').\n";
+    }
+    if (! empty($data['errors']['dock_to_stock'])) {
+        echo "→ SQL error above — after v2 fix, redeploy handler and run: php artisan cache:clear\n";
     }
     exit(1);
 }
 
-echo "year={$d2s['year']}\n";
+echo "\nyear={$d2s['year']}\n";
 echo 'total_unloaded='.($d2s['total_unloaded'] ?? '?')."\n";
 echo 'measurable_orders='.($d2s['measurable_orders'] ?? '?')."\n";
 echo 'within_24h='.($d2s['within_24h'] ?? '?')."\n";

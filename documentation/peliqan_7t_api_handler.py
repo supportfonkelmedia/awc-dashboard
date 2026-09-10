@@ -44,7 +44,10 @@ WMS_LOOKBACK_DAYS = 180
 # unbounded scan that trips Peliqan's execution limit.
 WMS_LOOKBACK_MAX = 3650
 # Bump on redeploy — surfaces in API meta to confirm Peliqan has the latest script.
-HANDLER_VERSION = "2026-09-10-7t-dock-to-stock-v1"
+HANDLER_VERSION = "2026-09-10-7t-dock-to-stock-v2"
+
+# pq.dbconnect("7T") is the warehouse connection id — not a valid conn.fetch() database name.
+FETCH_DB_CANDIDATES = (FETCH_DB_7T, "db_7t", "db7t")
 
 # --- Lazy connection state (import-time dbconnect can 500 the endpoint) ---
 _dbconn_7t = None
@@ -114,17 +117,29 @@ def _short_err(exc):
     m = re.search(r"message='([^']+)'", msg) or re.search(r'message="([^"]+)"', msg)
     if m:
         return m.group(1)
+    m = re.search(r"PeliqanClientException\('([^']+)'", msg)
+    if m:
+        return m.group(1)
     return f"{type(exc).__name__}: {msg[:240]}"
+
+
+def _fetch_db_keys():
+    """Database names for conn.fetch() — never use CONNECT_7T (that is dbconnect id only)."""
+    keys = []
+    cached = str(_7T_FETCH_DB or "").strip()
+    if cached and cached.upper() != CONNECT_7T.upper():
+        keys.append(cached)
+    for key in FETCH_DB_CANDIDATES:
+        key = str(key or "").strip()
+        if key and key not in keys:
+            keys.append(key)
+    return keys
 
 
 def query_7t(sql):
     """Run a query against the 7T SQL Server (direct, df=True). Returns (df, err)."""
     global _7T_LAST_ERROR, _7T_FETCH_DB
-    fetch_keys = []
-    for key in (_7T_FETCH_DB, FETCH_DB_7T, CONNECT_7T):
-        key = str(key or "").strip()
-        if key and key not in fetch_keys:
-            fetch_keys.append(key)
+    fetch_keys = _fetch_db_keys()
     last_err = None
     try:
         conn = _get_7t_conn()
@@ -297,6 +312,37 @@ def load_kpis_combined():
     }, None
 
 
+def _median(values):
+    nums = [float(v) for v in values if v is not None and not pd.isna(v)]
+    if not nums:
+        return None
+    nums.sort()
+    n = len(nums)
+    mid = n // 2
+    if n % 2:
+        return nums[mid]
+    return (nums[mid - 1] + nums[mid]) / 2.0
+
+
+def _dock_measured_subquery(start, end):
+    """Shared measured-order subquery (Brief Fonkel deel 3 validatiequery)."""
+    return f"""
+        SELECT
+            LTRIM(RTRIM(s.ID)) AS sid,
+            s.Los_Datum AS los,
+            MIN(vv.MutatieDatum) AS klaar
+        FROM dbo.Spare_Orders s
+        INNER JOIN dbo.Ontvangsten o
+            ON LTRIM(RTRIM(o.Spare_Order_ID)) = LTRIM(RTRIM(s.ID))
+        INNER JOIN dbo.Voorraad_Verplaatsingen vv
+            ON vv.Ontvangst_ID = o.ID AND vv.Status = 30
+        WHERE s.Los_Datum >= '{start}'
+          AND s.Los_Datum < '{end}'
+          AND s.Gelost = 1
+        GROUP BY LTRIM(RTRIM(s.ID)), s.Los_Datum
+    """
+
+
 def load_dock_to_stock(year):
     """
     Brief Fonkel deel 3: Dock-to-Stock (% binnen 24u na lossen).
@@ -308,85 +354,36 @@ def load_dock_to_stock(year):
     y = int(year)
     start = f"{y}-01-01"
     end = f"{y + 1}-01-01"
+    measured = _dock_measured_subquery(start, end)
 
     summary_sql = f"""
-        WITH measured AS (
-            SELECT
-                LTRIM(RTRIM(s.ID)) AS sid,
-                s.Los_Datum AS los,
-                MIN(vv.MutatieDatum) AS klaar,
-                DATEDIFF(hour, s.Los_Datum, MIN(vv.MutatieDatum)) AS hours
-            FROM dbo.Spare_Orders s
-            INNER JOIN dbo.Ontvangsten o
-                ON LTRIM(RTRIM(o.Spare_Order_ID)) = LTRIM(RTRIM(s.ID))
-            INNER JOIN dbo.Voorraad_Verplaatsingen vv
-                ON vv.Ontvangst_ID = o.ID AND vv.Status = 30
-            WHERE s.Los_Datum >= '{start}'
-              AND s.Los_Datum < '{end}'
-              AND s.Gelost = 1
-            GROUP BY LTRIM(RTRIM(s.ID)), s.Los_Datum
-        ),
-        stats AS (
-            SELECT
-                COUNT(*) AS measurable_orders,
-                SUM(CASE WHEN hours <= 24 THEN 1 ELSE 0 END) AS within_24h,
-                CAST(
-                    100.0 * SUM(CASE WHEN hours <= 24 THEN 1 ELSE 0 END)
-                    / NULLIF(COUNT(*), 0) AS numeric(5, 1)
-                ) AS pct_within_24h
-            FROM measured
-        ),
-        median AS (
-            SELECT DISTINCT
-                PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY hours) OVER () AS median_hours
-            FROM measured
-        ),
-        unloaded AS (
-            SELECT COUNT(*) AS total_unloaded
-            FROM dbo.Spare_Orders s
-            WHERE s.Los_Datum >= '{start}'
-              AND s.Los_Datum < '{end}'
-              AND s.Gelost = 1
-        )
         SELECT
-            u.total_unloaded,
-            ISNULL(s.measurable_orders, 0) AS measurable_orders,
-            ISNULL(s.within_24h, 0) AS within_24h,
-            s.pct_within_24h,
-            med.median_hours
-        FROM unloaded u
-        LEFT JOIN stats s ON 1 = 1
-        LEFT JOIN median med ON 1 = 1
+            (SELECT COUNT(*)
+                FROM dbo.Spare_Orders s
+                WHERE s.Los_Datum >= '{start}'
+                  AND s.Los_Datum < '{end}'
+                  AND s.Gelost = 1) AS total_unloaded,
+            COUNT(*) AS measurable_orders,
+            SUM(CASE WHEN DATEDIFF(hour, x.los, x.klaar) <= 24 THEN 1 ELSE 0 END) AS within_24h,
+            CAST(
+                100.0 * SUM(CASE WHEN DATEDIFF(hour, x.los, x.klaar) <= 24 THEN 1 ELSE 0 END)
+                / NULLIF(COUNT(*), 0) AS numeric(5, 1)
+            ) AS pct_within_24h
+        FROM ({measured}) x
     """
 
     monthly_sql = f"""
-        WITH measured AS (
-            SELECT
-                LTRIM(RTRIM(s.ID)) AS sid,
-                s.Los_Datum AS los,
-                MIN(vv.MutatieDatum) AS klaar,
-                DATEDIFF(hour, s.Los_Datum, MIN(vv.MutatieDatum)) AS hours
-            FROM dbo.Spare_Orders s
-            INNER JOIN dbo.Ontvangsten o
-                ON LTRIM(RTRIM(o.Spare_Order_ID)) = LTRIM(RTRIM(s.ID))
-            INNER JOIN dbo.Voorraad_Verplaatsingen vv
-                ON vv.Ontvangst_ID = o.ID AND vv.Status = 30
-            WHERE s.Los_Datum >= '{start}'
-              AND s.Los_Datum < '{end}'
-              AND s.Gelost = 1
-            GROUP BY LTRIM(RTRIM(s.ID)), s.Los_Datum
-        )
         SELECT
-            MONTH(los) AS month,
+            MONTH(x.los) AS month,
             COUNT(*) AS orders,
-            SUM(CASE WHEN hours <= 24 THEN 1 ELSE 0 END) AS within_24h,
+            SUM(CASE WHEN DATEDIFF(hour, x.los, x.klaar) <= 24 THEN 1 ELSE 0 END) AS within_24h,
             CAST(
-                100.0 * SUM(CASE WHEN hours <= 24 THEN 1 ELSE 0 END)
+                100.0 * SUM(CASE WHEN DATEDIFF(hour, x.los, x.klaar) <= 24 THEN 1 ELSE 0 END)
                 / NULLIF(COUNT(*), 0) AS numeric(5, 1)
             ) AS pct_within_24h
-        FROM measured
-        GROUP BY MONTH(los)
-        ORDER BY MONTH(los)
+        FROM ({measured}) x
+        GROUP BY MONTH(x.los)
+        ORDER BY MONTH(x.los)
     """
 
     df_sum, err_sum = query_7t(summary_sql)
@@ -401,8 +398,20 @@ def load_dock_to_stock(year):
     measurable = int(_scalar(df_sum, "measurable_orders", 0) or 0)
     within_24h = int(_scalar(df_sum, "within_24h", 0) or 0)
     pct = _scalar(df_sum, "pct_within_24h")
-    median_raw = _scalar(df_sum, "median_hours")
-    median_hours = round(float(median_raw), 1) if median_raw is not None else None
+
+    median_hours = None
+    if measurable > 0:
+        hours_sql = f"""
+            SELECT DATEDIFF(hour, x.los, x.klaar) AS hours
+            FROM ({measured}) x
+        """
+        df_hours, err_hours = query_7t(hours_sql)
+        if err_hours:
+            return None, err_hours
+        if df_hours is not None and not df_hours.empty:
+            col = _col(df_hours, "hours") or "hours"
+            med = _median(df_hours[col].tolist())
+            median_hours = round(float(med), 1) if med is not None else None
 
     coverage_pct = (
         round((measurable / total_unloaded) * 1000) / 10

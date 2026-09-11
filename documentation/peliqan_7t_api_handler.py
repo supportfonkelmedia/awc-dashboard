@@ -46,7 +46,7 @@ WMS_LOOKBACK_DAYS = 180
 # unbounded scan that trips Peliqan's execution limit.
 WMS_LOOKBACK_MAX = 3650
 # Bump on redeploy — surfaces in API meta to confirm Peliqan has the latest script.
-HANDLER_VERSION = "2026-09-10-7t-dock-to-stock-v4"
+HANDLER_VERSION = "2026-09-10-7t-dock-to-stock-v5"
 
 # pq.dbconnect("7T") is the warehouse connection id — not a valid conn.fetch() database name.
 FETCH_DB_CANDIDATES = (FETCH_DB_7T, "db_7t", "db7t")
@@ -360,7 +360,7 @@ def _dock_measured_subquery(start, end, dialect="tsql_fqn"):
                 ON vv.Ontvangst_ID = o.ID AND vv.Status = 30
             WHERE s.Los_Datum >= DATE '{start}'
               AND s.Los_Datum < DATE '{end}'
-              AND s.Gelost = 1
+              AND {_dock_gelost_clause("s", "trino")}
             GROUP BY trim(s.ID), s.Los_Datum
         """
     spare = _fqn_table("Spare_Orders")
@@ -383,6 +383,13 @@ def _dock_measured_subquery(start, end, dialect="tsql_fqn"):
     """
 
 
+def _dock_gelost_clause(alias, dialect):
+    """Gelost is bit/int in SQL Server; Trino exposes it as boolean."""
+    if dialect == "trino":
+        return f"{alias}.Gelost = true"
+    return f"{alias}.Gelost = 1"
+
+
 def _dock_hour_diff(alias, dialect):
     if dialect == "trino":
         return f"date_diff('hour', {alias}.los, {alias}.klaar)"
@@ -399,7 +406,7 @@ def _dock_unloaded_where(start, end, dialect):
     if dialect == "trino":
         return (
             f"s.Los_Datum >= DATE '{start}' AND s.Los_Datum < DATE '{end}' "
-            f"AND s.Gelost = 1"
+            f"AND {_dock_gelost_clause('s', 'trino')}"
         )
     return (
         f"s.Los_Datum >= '{start}' AND s.Los_Datum < '{end}' AND s.Gelost = 1"

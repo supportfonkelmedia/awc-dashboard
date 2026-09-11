@@ -36,6 +36,6 @@ Control figures (whole 2026, stand 3 sep 2026):
 - Within 24 hours: **~5.049** (**74,6%**)
 - Coverage: **~61%** of unloaded inbounds
 
-`handler_version` must contain `dock-to-stock-v4` or newer. Dock-to-Stock runs via **Trino** catalog `7t_db7t_7866`.
+`handler_version` must contain `dock-to-stock-v5` or newer. Dock-to-Stock runs via **Trino** catalog `7t_db7t_7866`.
 
 If you see `cURL error 28` timeout → raise `PELIQAN_WMS_TIMEOUT` to `300` or `600`.

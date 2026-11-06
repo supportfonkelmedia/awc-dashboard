@@ -22,36 +22,30 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | 7T WMS — slower Trino/SQL Server; separate timeout + longer cache
-    |--------------------------------------------------------------------------
-    */
-    'wms_timeout' => (int) env('PELIQAN_WMS_TIMEOUT', 300),
-    'wms_cache_ttl' => (int) env('PELIQAN_WMS_CACHE_TTL', 600),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Published endpoint URLs (no query string)
+    | Published endpoint URL (no query string)
     |--------------------------------------------------------------------------
     |
-    | Paste the "Final URL" from each API endpoint in Peliqan, without ?…
-    | Example: https://api.eu.peliqan.io/2401/awc/data
+    | "Final URL" of the KPI API endpoint in Peliqan (peliqan_kpi_api_handler.py).
+    | Example: https://api.eu.peliqan.io/2401/kpi/data
     |
     */
-    'awc_data_url' => env('PELIQAN_AWC_DATA_URL', ''),
-    'mt_data_url' => env('PELIQAN_MT_DATA_URL', ''),
-    'schema_7t_url' => env('PELIQAN_7T_SCHEMA_URL', ''),
+    'kpi_data_url' => env('PELIQAN_KPI_DATA_URL', ''),
 
     /*
-    | 7T WMS — own endpoint (direct SQL Server handler, no Trino).
-    | Example: https://api.eu.peliqan.io/2401/awc/7t
+    | KPI cache TTL (seconds); 0 = no cache. Overdracht: max ~1 uur.
     */
-    'awc_7t_url' => env('PELIQAN_AWC_7T_URL', ''),
+    'kpi_cache_ttl' => (int) env('PELIQAN_KPI_CACHE_TTL', 3600),
 
     /*
-    |--------------------------------------------------------------------------
-    | MT dashboard cache TTL (seconds); 0 = disable Cache::remember for Peliqan
-    |--------------------------------------------------------------------------
+    | Log full GET query + response body to storage/logs/peliqan-*.log (see logging.channels.peliqan).
     */
-    'cache_ttl' => (int) env('PELIQAN_CACHE_TTL', 120),
+    'http_log' => filter_var(env('PELIQAN_HTTP_LOG', false), FILTER_VALIDATE_BOOL),
+
+    'http_log_max_body' => (int) env('PELIQAN_HTTP_LOG_MAX_BODY', 100_000),
+
+    'http_log_cache_hits' => filter_var(
+        env('PELIQAN_HTTP_LOG_CACHE_HITS', true),
+        FILTER_VALIDATE_BOOL,
+    ),
 
 ];

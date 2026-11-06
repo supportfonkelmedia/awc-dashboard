@@ -48,11 +48,11 @@ function operIconClass(routeName) {
             </p>
             <nav class="flex flex-col gap-px">
                 <Link
-                    :href="route('mt.dashboard')"
+                    :href="route('kpi.screen', { scherm: 'strategisch' })"
                     :class="[
                         rowPad,
                         'relative flex w-full items-center gap-3 text-sm transition',
-                        route().current('mt.dashboard')
+                        route().current('kpi.screen')
                             ? 'bg-white/[0.06] font-medium text-white before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-[#ff7020]'
                             : 'text-gray-300 hover:bg-white/5 hover:text-white',
                     ]"
@@ -62,20 +62,20 @@ function operIconClass(routeName) {
                         <i
                             class="pi pi-chart-bar"
                             :class="
-                                route().current('mt.dashboard')
+                                route().current('kpi.screen')
                                     ? 'text-[#ff7020]'
                                     : 'text-gray-400'
                             "
                         />
                     </span>
-                    MT Dashboard
+                    KPI-dashboard
                 </Link>
                 <Link
-                    :href="route('awc.dashboard')"
+                    :href="route('kpi.screen', { scherm: 'awc' })"
                     :class="[
                         rowPad,
                         'relative flex w-full items-center gap-3 rounded-md text-sm transition',
-                        route().current('awc.dashboard')
+                        route().current('kpi.screen', { scherm: 'awc' })
                             ? 'bg-white/[0.08] font-medium text-white shadow-[0_0_14px_rgba(56,189,248,0.28)] ring-1 ring-sky-400/65 before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:rounded-l-md before:bg-sky-400'
                             : 'text-gray-300 hover:bg-white/5 hover:text-white',
                     ]"
@@ -85,7 +85,7 @@ function operIconClass(routeName) {
                         <i
                             class="pi pi-warehouse"
                             :class="
-                                route().current('awc.dashboard')
+                                route().current('kpi.screen', { scherm: 'awc' })
                                     ? 'text-sky-300'
                                     : 'text-gray-400'
                             "
@@ -94,11 +94,11 @@ function operIconClass(routeName) {
                     AWC
                 </Link>
                 <Link
-                    :href="route('afc.dashboard')"
+                    :href="route('kpi.screen', { scherm: 'afc' })"
                     :class="[
                         rowPad,
                         'relative flex w-full items-center gap-3 rounded-md text-sm transition',
-                        route().current('afc.dashboard')
+                        route().current('kpi.screen', { scherm: 'afc' })
                             ? 'bg-white/[0.08] font-medium text-white shadow-[0_0_14px_rgba(56,189,248,0.28)] ring-1 ring-sky-400/65 before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:rounded-l-md before:bg-sky-400'
                             : 'text-gray-300 hover:bg-white/5 hover:text-white',
                     ]"
@@ -108,7 +108,7 @@ function operIconClass(routeName) {
                         <i
                             class="pi pi-truck"
                             :class="
-                                route().current('afc.dashboard')
+                                route().current('kpi.screen', { scherm: 'afc' })
                                     ? 'text-sky-300'
                                     : 'text-gray-400'
                             "
@@ -117,11 +117,11 @@ function operIconClass(routeName) {
                     AFC
                 </Link>
                 <Link
-                    :href="route('acc.dashboard')"
+                    :href="route('kpi.screen', { scherm: 'acc' })"
                     :class="[
                         rowPad,
                         'relative flex w-full items-center gap-3 rounded-md text-sm transition',
-                        route().current('acc.dashboard')
+                        route().current('kpi.screen', { scherm: 'acc' })
                             ? 'bg-white/[0.08] font-medium text-white shadow-[0_0_14px_rgba(56,189,248,0.28)] ring-1 ring-sky-400/65 before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:rounded-l-md before:bg-sky-400'
                             : 'text-gray-300 hover:bg-white/5 hover:text-white',
                     ]"
@@ -131,7 +131,7 @@ function operIconClass(routeName) {
                         <i
                             class="pi pi-building"
                             :class="
-                                route().current('acc.dashboard')
+                                route().current('kpi.screen', { scherm: 'acc' })
                                     ? 'text-sky-300'
                                     : 'text-gray-400'
                             "
@@ -239,20 +239,6 @@ function operIconClass(routeName) {
                         />
                     </span>
                     Tools
-                </Link>
-                <Link
-                    v-if="$page.props.appDebug"
-                    :href="route('debug.peliqan.7t')"
-                    :class="operClasses('debug.peliqan.7t')"
-                    @click="onNavigate?.()"
-                >
-                    <span :class="iconWrap">
-                        <i
-                            class="pi pi-database"
-                            :class="operIconClass('debug.peliqan.7t')"
-                        />
-                    </span>
-                    7T Debug
                 </Link>
                 <Link
                     :href="route('operationeel.users')"

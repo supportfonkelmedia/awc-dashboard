@@ -73,6 +73,18 @@ return [
             'replace_placeholders' => true,
         ],
 
+        /*
+        | Peliqan HTTP (Laravel → api.eu.peliqan.io): request query + response body.
+        | Enable with PELIQAN_HTTP_LOG; does not log JWT (only URL + query + status + body).
+        */
+        'peliqan' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/peliqan.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_DAILY_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),

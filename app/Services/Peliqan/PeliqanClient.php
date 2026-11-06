@@ -17,67 +17,16 @@ class PeliqanClient
     }
 
     /**
-     * AWC dashboard handler (?bundle=wms|hubspot|finance|all).
+     * KPI dashboard handler (?bundle=screen|controles|drill|registry + scherm/views).
      *
      * @param  array<string, string|int|null>  $query
      * @return array<string, mixed>
      */
-    public function fetchAwc(array $query = []): array
+    public function fetchKpi(array $query = []): array
     {
-        $url = (string) config('peliqan.awc_data_url', '');
+        $url = (string) config('peliqan.kpi_data_url', '');
 
         return $this->getJson($url, $query);
-    }
-
-    /**
-     * Fast 7T WMS KPI aggregates from the dedicated direct-SQL 7T endpoint.
-     *
-     * @param  array<string, string|int|null>  $query
-     * @return array<string, mixed>
-     */
-    public function fetch7tWms(array $query = []): array
-    {
-        $url = (string) config('peliqan.awc_7t_url', '');
-        $timeout = (int) config('peliqan.wms_timeout', config('peliqan.timeout', 60));
-
-        return $this->getJson($url, $query, $timeout);
-    }
-
-    /**
-     * MT dashboard handler (?bundle=cashweb|hubspot|sprinter|all + filters).
-     *
-     * @param  array<string, string|int|null>  $query
-     * @return array<string, mixed>
-     */
-    public function fetchMt(array $query = []): array
-    {
-        $url = (string) config('peliqan.mt_data_url', '');
-
-        return $this->getJson($url, $query);
-    }
-
-    /**
-     * 7T schema export handler (?bundle=summary|kpi|full|table + filters).
-     *
-     * @param  array<string, string|int|null>  $query
-     * @return array<string, mixed>
-     */
-    public function fetch7tSchema(array $query = []): array
-    {
-        $url = (string) config('peliqan.schema_7t_url', '');
-
-        return $this->getJson($url, $query);
-    }
-
-    /**
-     * Raw GET to any Peliqan published URL (full URL in config or passed in).
-     *
-     * @param  array<string, string|int|null>  $query
-     * @return array<string, mixed>
-     */
-    public function fetch(string $absoluteUrl, array $query = []): array
-    {
-        return $this->getJson($absoluteUrl, $query);
     }
 
     /**
@@ -105,7 +54,30 @@ class PeliqanClient
             ])
             ->get($url, $query);
 
+        if (config('peliqan.http_log')) {
+            $this->logPeliqanHttpExchange($url, $query, $response);
+        }
+
         return $this->decodeSuccessfulResponse($response, $url);
+    }
+
+    /**
+     * @param  array<string, string>  $query
+     */
+    protected function logPeliqanHttpExchange(string $url, array $query, Response $response): void
+    {
+        $maxBody = max(0, (int) config('peliqan.http_log_max_body', 100_000));
+        $body = $response->body();
+        if ($maxBody > 0 && mb_strlen($body) > $maxBody) {
+            $body = mb_substr($body, 0, $maxBody).'… [truncated, increase PELIQAN_HTTP_LOG_MAX_BODY]';
+        }
+
+        Log::channel('peliqan')->debug('Peliqan HTTP response', [
+            'request_url' => $url,
+            'request_query' => $query,
+            'response_status' => $response->status(),
+            'response_body' => $body,
+        ]);
     }
 
     protected function normalizeUrl(string $url): string

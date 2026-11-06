@@ -39,7 +39,7 @@ In [Overdracht KPI-dashboard Fonkel.md](Overdracht%20KPI-dashboard%20Fonkel.md) 
 | Data | `PeliqanClient::fetchKpi` → `KpiScreenService` (alleen KPI-contract) | Contract `kpi_*` via API of MariaDB-replica; geen KPI-rekenwerk in frontend |
 | UI | Config-tegels op `/kpi/*`; legacy UI verwijderd | Config-tegels op `/kpi/*` |
 
-**Andere Fonkel-pagina’s:** blijven `ManagementLayout` (sidebar + topbar) gebruiken; alleen `/kpi/*` is standalone voor embed.
+**Andere pagina’s:** de demo-shell (`/dashboard`, `/operationeel/*`, `ManagementLayout`, `SidebarNav`) is verwijderd; `/dashboard` redirect naar `/kpi/strategisch` (Breeze-home na login). Alleen auth- en profielpagina’s (Breeze `AuthenticatedLayout`) blijven naast `/kpi/*`.
 
 ---
 

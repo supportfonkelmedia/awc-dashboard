@@ -6,22 +6,17 @@ use App\Http\Controllers\KpiHandmatigInvoerController;
 use App\Http\Controllers\KpiPeliqanDataController;
 use App\Http\Controllers\KpiScreenDataController;
 use App\Http\Controllers\ProfileController;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
+// Geen landingspagina: gast → login, ingelogd → KPI-dashboard.
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+    return redirect()->route(auth()->check() ? 'dashboard' : 'login');
+})->name('home');
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Breeze-home na login/verificatie → KPI-dashboard.
+Route::redirect('/dashboard', '/kpi/strategisch')
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 Route::middleware(['auth', 'verified'])
     ->prefix('kpi')
@@ -67,35 +62,6 @@ Route::redirect('/afc-dashboard', '/kpi/afc')
 Route::redirect('/acc-dashboard', '/kpi/acc')
     ->middleware(['auth', 'verified'])
     ->name('acc.dashboard');
-
-Route::middleware(['auth', 'verified'])
-    ->prefix('operationeel')
-    ->name('operationeel.')
-    ->group(function () {
-        Route::get('/foutenoverzicht', function () {
-            return Inertia::render('OperationalModule', ['module' => 'errors']);
-        })->name('errors');
-
-        Route::get('/rapportages', function () {
-            return Inertia::render('OperationalModule', ['module' => 'reports']);
-        })->name('reports');
-
-        Route::get('/communicatie', function () {
-            return Inertia::render('OperationalModule', ['module' => 'communication']);
-        })->name('communication');
-
-        Route::get('/mijn-teams', function () {
-            return Inertia::render('OperationalModule', ['module' => 'teams']);
-        })->name('teams');
-
-        Route::get('/tools', function () {
-            return Inertia::render('OperationalModule', ['module' => 'tools']);
-        })->name('tools');
-
-        Route::get('/gebruikers', function () {
-            return Inertia::render('OperationalModule', ['module' => 'users']);
-        })->name('users');
-    });
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue';
 import AfcBlok from './AfcBlok.vue';
 import AfcGrafiek from './AfcGrafiek.vue';
+import AfcInfo from './AfcInfo.vue';
 import AfcKeuze from './AfcKeuze.vue';
 import AfcTabel from './AfcTabel.vue';
 import { MAANDEN_KORT, maandModaliteitReeks, perModaliteit } from '@/utils/afcAnalyse';
@@ -47,12 +48,15 @@ const reeksen = computed(() =>
 <template>
     <AfcBlok
         :titel="`Per modaliteit, ${jaar} t/m vandaag naast dezelfde periode vorig jaar`"
-        intro="Omzet is excl. invoerrechten en btw. Doorbelaste invoerrechten zitten vooral in zee-import; die worden zonder marge doorbelast en tellen daarom niet mee."
+        uitleg="Omzet excl. invoerrechten en btw. Invoerrechten (vooral zee-import) worden zonder marge doorbelast en tellen daarom niet mee."
     >
         <AfcTabel :kolommen="kolommen" :rijen="tabel" :rij-klasse="(r) => (r.isTotaal ? 'afc-totaal' : '')" />
 
         <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
-            <h3 class="text-sm font-semibold text-gray-900">Per maand en modaliteit, sinds januari 2024</h3>
+            <h3 class="flex items-center gap-1.5 text-sm font-semibold text-gray-900">
+                Per maand en modaliteit, sinds januari 2024
+                <AfcInfo tekst="Op rapportagedatum in Sprinter. Bij de jaarovergang krijgen openstaande dossiers 1 januari als datum; daarom springt januari omhoog (vooral zee). De lopende maand is nog niet compleet." />
+            </h3>
             <AfcKeuze v-model="maat" label="Toon" :opties="maatOpties" />
         </div>
         <AfcGrafiek
@@ -63,8 +67,5 @@ const reeksen = computed(() =>
             :reeksen="reeksen"
             :eenheid="maat === 'zendingen' ? 'aantal' : 'euro'"
         />
-        <p class="mt-3 max-w-3xl text-xs leading-relaxed text-gray-500">
-            Op rapportagedatum in Sprinter. Bij de jaarovergang krijgen openstaande dossiers 1 januari als datum, daarom springt januari omhoog (vooral zee). De lopende maand is nog niet compleet.
-        </p>
     </AfcBlok>
 </template>

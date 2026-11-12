@@ -25,7 +25,7 @@ const kolommen = [
 <template>
     <AfcBlok
         :titel="`Per dossiereigenaar, ${jaar} t/m vandaag`"
-        intro="Eigenaar van het dossier in Sprinter. De afdeling is in Sprinter vaak leeg; daarom tellen we hoeveel zendingen zonder afdeling zijn. Later komen hier teams bij."
+        uitleg="Eigenaar van het dossier in Sprinter. De afdeling is daar vaak leeg; de laatste kolom telt die zendingen. Teams volgen later."
     >
         <p v-if="!beschikbareJaren.includes(jaar)" class="text-sm text-gray-500">
             Cijfers per eigenaar zijn er voor {{ beschikbareJaren.join(' en ') }}.

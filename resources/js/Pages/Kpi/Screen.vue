@@ -207,7 +207,8 @@ function isOmzetbrugBanner(banner) {
                     class="mt-4 inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
                 >
                     <i class="pi pi-chart-bar text-xs" aria-hidden="true" />
-                    Naar de AFC-analyse: omzet, marge, klanten en eigenaren
+                    AFC-analyse
+                    <i class="pi pi-arrow-right text-[10px]" aria-hidden="true" />
                 </Link>
 
                 <Message v-if="loadError" severity="warn" class="mt-6 w-full">

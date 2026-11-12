@@ -45,7 +45,10 @@ const kolommen = [
 <template>
     <AfcBlok
         :titel="`Top 40 klanten, ${jaar} t/m vandaag`"
-        intro="Klanten zijn samengevoegd op hun vaste debiteur in Cash (tussen haakjes). Betaalt de debiteur voor derden, of is de klant nog nooit gefactureerd, dan staat de klant los met '(geen debiteur)'. Marge onder 10% is oranje. Klik op een kolomkop om te sorteren."
+        :uitleg="[
+            'Samengevoegd op de vaste debiteur in Cash (tussen haakjes). Betaalt de debiteur voor derden of is er nog nooit gefactureerd, dan staat de klant los als (geen debiteur).',
+            'Marge onder 10% is oranje. Klik op een kolomkop om te sorteren.',
+        ]"
     >
         <template #acties>
             <AfcSegment v-model="modaliteit" label="Modaliteit" :opties="modOpties" />

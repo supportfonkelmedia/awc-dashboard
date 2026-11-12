@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import AfcInfo from './AfcInfo.vue';
 import AfcKaart from './AfcKaart.vue';
 import AfcTabel from './AfcTabel.vue';
 import { MAANDEN_KORT, aansluiting, ketenPerJaar } from '@/utils/afcAnalyse';
@@ -42,13 +43,17 @@ const ketenKolommen = [
         <summary class="cursor-pointer list-none text-base font-semibold text-gray-900">
             <span class="mr-1 inline-block transition group-open:rotate-90">›</span>
             Financiële aansluiting en ketenkosten
-            <span class="ml-2 text-xs font-normal text-gray-500">voor finance; ingeklapt</span>
         </summary>
 
-        <h3 class="mt-5 text-sm font-semibold text-gray-900">Sprinter tegen Cash, per maand van {{ jaar }}</h3>
-        <p class="mt-1 max-w-3xl text-sm leading-relaxed text-gray-600">
-            Sprinter rapporteert op rapportagedatum, Cash op boekperiode; per maand lopen ze daardoor uiteen. Over het hele jaar hoort de brutomarge dicht bij elkaar te liggen. Het omzetverschil komt deels doordat invoerrechten in Cash niet als omzet worden geboekt. Alle richtingen.
-        </p>
+        <h3 class="mt-5 flex items-center gap-1.5 text-sm font-semibold text-gray-900">
+            Sprinter tegen Cash, per maand van {{ jaar }}
+            <AfcInfo
+                :tekst="[
+                    'Sprinter telt op rapportagedatum, Cash op boekperiode; per maand lopen ze uiteen. Over een heel jaar hoort de brutomarge dicht bij elkaar te liggen.',
+                    'Het omzetverschil komt deels doordat Cash invoerrechten niet als omzet boekt. Alle richtingen.',
+                ]"
+            />
+        </h3>
         <div class="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
             <AfcKaart label="Brutomarge Sprinter, heel jaar" :waarde="euroKort(totaal('margeSprinter'))" />
             <AfcKaart label="Brutomarge Cash (8xxx min 6xxx)" :waarde="euroKort(totaal('margeCash'))" />
@@ -60,10 +65,15 @@ const ketenKolommen = [
         </div>
         <AfcTabel class="mt-4" :kolommen="kolommen" :rijen="maanden" />
 
-        <h3 class="mt-8 text-sm font-semibold text-gray-900">Sim Cargo (ILN) en SVZ in Cash</h3>
-        <p class="mt-1 max-w-3xl text-sm leading-relaxed text-gray-600">
-            Sim Cargo wordt niet via een inkoopfactuur geboekt maar rechtstreeks vanuit de bank op 6021: het netto clearingbedrag op betaaldatum. Facturen, creditnota's (vergoeding voor zendingen die AFC als depot 216 aflevert) en vaste maandlasten staan dus verrekend in één bedrag. SVZ-facturen (voorhalen en uitrijden) staan als inkoopfactuur op 6010 en 6050.
-        </p>
+        <h3 class="mt-8 flex items-center gap-1.5 text-sm font-semibold text-gray-900">
+            Sim Cargo (ILN) en SVZ in Cash
+            <AfcInfo
+                :tekst="[
+                    'Sim Cargo komt rechtstreeks vanuit de bank op 6021: het netto clearingbedrag op betaaldatum. Facturen, creditnota\'s (AFC als depot 216) en vaste maandlasten zitten in één bedrag.',
+                    'SVZ (voorhalen en uitrijden) staat als inkoopfactuur op 6010 en 6050.',
+                ]"
+            />
+        </h3>
         <AfcTabel class="mt-3" :kolommen="ketenKolommen" :rijen="keten" />
     </details>
 </template>

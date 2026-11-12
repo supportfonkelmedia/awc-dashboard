@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue';
 import AfcBlok from './AfcBlok.vue';
+import AfcInfo from './AfcInfo.vue';
 import AfcKeuze from './AfcKeuze.vue';
 import AfcTabel from './AfcTabel.vue';
 import { KLANTSTATUSSEN, klantenMetStatus, statusOverzicht } from '@/utils/afcAnalyse';
@@ -53,23 +54,27 @@ const lijstKolommen = [
 <template>
     <AfcBlok
         titel="Klantbehoud en churn"
-        intro="Per klant (opdrachtgever in Sprinter) over alle zendingen sinds maart 2023, op aanmaakdatum. Verloren = laatste zending meer dan 90 dagen geleden (Eenmalig als het bij één zending bleef). Nieuw = eerste zending in de afgelopen 365 dagen. Dalend = omzet afgelopen 12 maanden minder dan 75% van de 12 maanden daarvoor. Het richtingfilter geldt hier niet."
+        :uitleg="[
+            'Per opdrachtgever in Sprinter, alle zendingen sinds maart 2023, op aanmaakdatum.',
+            'Verloren: laatste zending meer dan 90 dagen geleden (Eenmalig bij één zending). Nieuw: eerste zending in de afgelopen 365 dagen. Dalend: omzet afgelopen 12 maanden onder 75% van de 12 maanden daarvoor.',
+            'Het richtingfilter geldt hier niet.',
+        ]"
     >
         <AfcTabel :kolommen="overzichtKolommen" :rijen="overzicht" />
 
-        <h3 class="mt-6 text-sm font-semibold text-gray-900">Per kalenderjaar, ten opzichte van het jaar ervoor</h3>
+        <h3 class="mt-6 flex items-center gap-1.5 text-sm font-semibold text-gray-900">
+            Per kalenderjaar, ten opzichte van het jaar ervoor
+            <AfcInfo tekst="Het lopende jaar is nog niet compleet: wie dit jaar nog niet maar vorig jaar wel verscheepte, telt als weggevallen. 2023 begint pas in maart." />
+        </h3>
         <AfcTabel class="mt-2" :kolommen="jaarKolommen" :rijen="perJaar" />
-        <p class="mt-2 max-w-3xl text-xs leading-relaxed text-gray-500">
-            Het lopende jaar is nog niet compleet: klanten die dit jaar nog niet, maar vorig jaar wel verscheepten, tellen hier als weggevallen. 2024 is afgezet tegen 2023, waarvan de gegevens pas in maart beginnen.
-        </p>
 
         <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
-            <h3 class="text-sm font-semibold text-gray-900">Klanten per status</h3>
+            <h3 class="flex items-center gap-1.5 text-sm font-semibold text-gray-900">
+                Klanten per status
+                <AfcInfo tekst="Maximaal 50 klanten, op omzet. Bij Verloren, Dalend en Eenmalig op de omzet van 12 tot 24 maanden geleden." />
+            </h3>
             <AfcKeuze v-model="status" label="Status" :opties="statusOpties" />
         </div>
         <AfcTabel class="mt-2" :kolommen="lijstKolommen" :rijen="lijst" sorteerbaar />
-        <p class="mt-2 text-xs text-gray-500">
-            Maximaal 50 klanten, gesorteerd op omzet (bij Verloren, Dalend en Eenmalig op de omzet 12 tot 24 maanden geleden).
-        </p>
     </AfcBlok>
 </template>

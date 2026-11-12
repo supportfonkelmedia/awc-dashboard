@@ -1,6 +1,7 @@
 <script setup>
 import AfcFinancieel from '@/Components/Kpi/AfcAnalyse/AfcFinancieel.vue';
 import AfcEigenaren from '@/Components/Kpi/AfcAnalyse/AfcEigenaren.vue';
+import AfcInfo from '@/Components/Kpi/AfcAnalyse/AfcInfo.vue';
 import AfcKaart from '@/Components/Kpi/AfcAnalyse/AfcKaart.vue';
 import AfcKeuze from '@/Components/Kpi/AfcAnalyse/AfcKeuze.vue';
 import AfcKlantbehoud from '@/Components/Kpi/AfcAnalyse/AfcKlantbehoud.vue';
@@ -193,10 +194,16 @@ const heeftData = computed(() => rows('kpi_afc_zending_maand').length > 0);
                     >
                         ‹ Terug naar AFC Freight
                     </Link>
-                    <h1 class="mt-2 text-xl font-semibold text-gray-900">AFC-analyse: omzet, marge en klanten</h1>
-                    <p class="mt-1 max-w-3xl text-sm leading-relaxed text-gray-600">
-                        Sprinter (zendingen) naast Cash (grootboek, administratie Amsterdam Freight Company). Marge = brutomarge volgens Sprinter: verkoop min gereserveerde inkoop. Omzet is overal excl. invoerrechten en btw. Het richtingfilter werkt op alle Sprinter-cijfers; Cash en klantstatus kennen geen richting.
-                    </p>
+                    <h1 class="mt-2 flex items-center gap-2 text-xl font-semibold text-gray-900">
+                        AFC-analyse
+                        <AfcInfo
+                            :tekst="[
+                                'Sprinter (zendingen) naast Cash (grootboek van Amsterdam Freight Company).',
+                                'Marge is de brutomarge volgens Sprinter: verkoop min gereserveerde inkoop. Omzet overal excl. invoerrechten en btw.',
+                                'Het richtingfilter werkt op alle Sprinter-cijfers; Cash en klantstatus kennen geen richting.',
+                            ]"
+                        />
+                    </h1>
                 </div>
 
                 <div
@@ -228,11 +235,18 @@ const heeftData = computed(() => rows('kpi_afc_zending_maand').length > 0);
                                 :regel2="k.regel2"
                             />
                         </div>
-                        <p class="mt-2 text-xs text-gray-500">
-                            Jaar t/m vandaag vergelijkt met dezelfde kalenderperiode een jaar eerder, beide op rapportagedatum. De tweede regel is de laatste volle maand naast de maand ervoor.
-                            <template v-if="openZendingen">
-                                In {{ maandNaam(kern.maand) }} staan nog {{ getal(openZendingen) }} zendingen open; hun marge kan nog veranderen.
-                            </template>
+                        <p class="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                            <span class="inline-flex items-center gap-1">
+                                Hoe lees ik dit
+                                <AfcInfo tekst="Jaar t/m vandaag tegen dezelfde kalenderperiode een jaar eerder, op rapportagedatum. De tweede regel is de laatste volle maand naast de maand ervoor." />
+                            </span>
+                            <span
+                                v-if="openZendingen"
+                                class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-800 ring-1 ring-amber-200"
+                            >
+                                {{ getal(openZendingen) }} open in {{ maandNaam(kern.maand) }}
+                                <AfcInfo tekst="Deze zendingen zijn nog niet gefactureerd; hun marge kan nog veranderen." />
+                            </span>
                         </p>
                     </section>
 
@@ -269,7 +283,7 @@ const heeftData = computed(() => rows('kpi_afc_zending_maand').length > 0);
                     />
 
                     <details class="rounded-xl border border-gray-200 bg-white p-5 text-sm text-gray-600 lg:p-6">
-                        <summary class="cursor-pointer font-semibold text-gray-900">Definities en bekende beperkingen</summary>
+                        <summary class="cursor-pointer font-semibold text-gray-900">Definities</summary>
                         <ul class="mt-3 max-w-3xl list-disc space-y-1.5 pl-5 leading-relaxed">
                             <li>Bron Sprinter: de koppeling sprinter_api in Peliqan (zendingen vanaf maart 2023). Geannuleerde zendingen (status C) tellen niet mee.</li>
                             <li>Omzet en marge in Sprinter zijn totalen per zending. De inkoop is de reservering in Sprinter, niet de definitieve inkoopfactuur. Open zendingen (status O) kunnen nog veranderen.</li>

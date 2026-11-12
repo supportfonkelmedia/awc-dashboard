@@ -5,7 +5,7 @@ import AfcGrafiek from './AfcGrafiek.vue';
 import AfcKeuze from './AfcKeuze.vue';
 import AfcTabel from './AfcTabel.vue';
 import { MAANDEN_KORT, cumulatiefPerJaar, resultaatPerJaar } from '@/utils/afcAnalyse';
-import { euro, euroKort, groeiKlasse, groeiTekst, procent } from '@/utils/afcFormat';
+import { euro, groeiKlasse, groeiTekst, procent } from '@/utils/afcFormat';
 
 const props = defineProps({
     rows: { type: Array, required: true },
@@ -31,18 +31,6 @@ const maandOpties = computed(() =>
 );
 
 const perJaar = computed(() => resultaatPerJaar(props.rows, tmMaand.value));
-const dit = computed(() => perJaar.value.find((r) => r.jaar === props.lopendJaar));
-const vorig = computed(() => perJaar.value.find((r) => r.jaar === props.lopendJaar - 1));
-
-const zin = computed(() => {
-    if (!dit.value) {
-        return null;
-    }
-    const periode = tmMaand.value === 1 ? 'januari' : `jan t/m ${MAANDEN_KORT[tmMaand.value - 1]}`;
-    const tegen = vorig.value ? `, tegen ${euroKort(vorig.value.resultaat)} een jaar eerder over dezelfde maanden` : '';
-
-    return `Resultaat vóór belasting ${periode} ${props.lopendJaar}: ${euroKort(dit.value.resultaat)}${tegen}.`;
-});
 
 const kolommen = [
     { key: 'jaar', label: 'Jaar' },
@@ -76,8 +64,11 @@ const reeksen = computed(() =>
 <template>
     <AfcBlok
         :titel="`Resultaat volgens Cash t/m ${MAANDEN_KORT[tmMaand - 1]}, per jaar`"
-        :intro="zin"
-        voetnoot="Op boekperiode in Cash (boekjaar leidend). Maanden die nog niet zijn afgesloten missen vaak kosten en correcties; jaarafsluitingsboekingen landen in december. Vennootschapsbelasting (9100) en de afsluitboeking (9993) tellen niet mee. Het richtingfilter geldt hier niet: Cash kent geen richting."
+        :uitleg="[
+            'Grootboek in Cash, op boekperiode (boekjaar leidend). Vennootschapsbelasting (9100) en de afsluitboeking (9993) tellen niet mee.',
+            'Niet afgesloten maanden missen vaak nog kosten; jaarafsluiting landt in december.',
+            'Het richtingfilter geldt hier niet: Cash kent geen richting.',
+        ]"
     >
         <template #acties>
             <AfcKeuze v-model="tmMaand" label="T/m maand" :opties="maandOpties" />

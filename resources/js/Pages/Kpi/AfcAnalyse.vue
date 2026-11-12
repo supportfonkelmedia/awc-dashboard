@@ -6,6 +6,7 @@ import AfcKaart from '@/Components/Kpi/AfcAnalyse/AfcKaart.vue';
 import AfcKeuze from '@/Components/Kpi/AfcAnalyse/AfcKeuze.vue';
 import AfcKlantbehoud from '@/Components/Kpi/AfcAnalyse/AfcKlantbehoud.vue';
 import AfcKlanten from '@/Components/Kpi/AfcAnalyse/AfcKlanten.vue';
+import AfcMargebrug from '@/Components/Kpi/AfcAnalyse/AfcMargebrug.vue';
 import AfcModaliteit from '@/Components/Kpi/AfcAnalyse/AfcModaliteit.vue';
 import AfcResultaatCash from '@/Components/Kpi/AfcAnalyse/AfcResultaatCash.vue';
 import AfcSegment from '@/Components/Kpi/AfcAnalyse/AfcSegment.vue';
@@ -249,6 +250,8 @@ const heeftData = computed(() => rows('kpi_afc_zending_maand').length > 0);
                             </span>
                         </p>
                     </section>
+
+                    <AfcMargebrug :rows="zendingen" :jaar="jaar" :tm-label="tmLabel" />
 
                     <AfcResultaatCash
                         :rows="rows('kpi_afc_resultaat_maand')"

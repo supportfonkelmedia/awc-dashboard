@@ -100,22 +100,6 @@ export function perModaliteit(zendingRows, jaar) {
     }));
 }
 
-/** Reeksen per maand en modaliteit (gestapelde staven). */
-export function maandModaliteitReeks(zendingRows, maat) {
-    const veld = { omzet: 'omzet', marge: 'marge', zendingen: 'zendingen' }[maat] ?? 'omzet';
-    const maanden = [...new Set(zendingRows.map((r) => String(r.maand).slice(0, 10)))].sort();
-    const series = MODALITEITEN.map((mod) => ({
-        modaliteit: mod,
-        data: maanden.map((m) =>
-            zendingRows
-                .filter((r) => String(r.maand).slice(0, 10) === m && r.modaliteit === mod)
-                .reduce((s, r) => s + num(r[veld]), 0),
-        ),
-    }));
-
-    return { maanden, series };
-}
-
 /** Resultaat volgens Cash per boekjaar, t/m maand M. */
 export function resultaatPerJaar(resultaatRows, tmMaand) {
     const jaren = [...new Set(resultaatRows.map((r) => Number(r.boekjaar)))].sort();
@@ -332,4 +316,126 @@ export function ketenPerJaar(resultaatRows) {
             maanden: rows.length,
         };
     });
+}
+
+/**
+ * Margebrug: waar komt het margeverschil met vorig jaar (t/m vandaag) vandaan?
+ * Per modaliteit: volume-effect = (zendingen nu - vorig) x marge per zending vorig jaar,
+ * tarief-effect = zendingen nu x (marge per zending nu - vorig). De stappen tellen exact op.
+ *
+ * @returns {{ vorig: number, nu: number, stappen: Array<{ label: string, waarde: number, soort: string }> }|null}
+ */
+export function margebrug(zendingRows, jaar) {
+    const nuRows = ytdRows(zendingRows, jaar);
+    const vorigRows = ytdRows(zendingRows, jaar - 1);
+    const totNu = som(nuRows);
+    const totVorig = som(vorigRows);
+    if (!totNu.zendingen || !totVorig.zendingen) {
+        return null;
+    }
+    let volume = 0;
+    const tarief = [];
+    for (const mod of MODALITEITEN) {
+        const n = som(nuRows.filter((r) => r.modaliteit === mod));
+        const v = som(vorigRows.filter((r) => r.modaliteit === mod));
+        const mpzV = v.zendingen ? v.marge / v.zendingen : 0;
+        const mpzN = n.zendingen ? n.marge / n.zendingen : 0;
+        if (!v.zendingen) {
+            // Nieuwe modaliteit: alles is volume.
+            volume += n.marge;
+            continue;
+        }
+        volume += (n.zendingen - v.zendingen) * mpzV;
+        if (n.zendingen) {
+            tarief.push({
+                label: `Marge per zending ${mod}`,
+                waarde: n.zendingen * (mpzN - mpzV),
+                soort: 'tarief',
+                mpzNu: mpzN,
+                mpzVorig: mpzV,
+            });
+        }
+    }
+
+    return {
+        vorig: totVorig.marge,
+        nu: totNu.marge,
+        zendingenNu: totNu.zendingen,
+        zendingenVorig: totVorig.zendingen,
+        stappen: [{ label: 'Aantal zendingen', waarde: volume, soort: 'volume' }, ...tarief],
+    };
+}
+
+/**
+ * Cash: cumulatief per maand in het gekozen jaar min hetzelfde in het jaar ervoor.
+ *
+ * @returns {Array<{ maand: number, nu: number|null, vorig: number|null, verschil: number|null }>}
+ */
+export function cumulatiefVerschil(resultaatRows, veld, jaar, tmMaand) {
+    const reeksen = cumulatiefPerJaar(resultaatRows, veld, jaar, tmMaand);
+    const nu = reeksen.find((r) => r.jaar === jaar)?.data ?? [];
+    const vorig = reeksen.find((r) => r.jaar === jaar - 1)?.data ?? [];
+
+    return Array.from({ length: 12 }, (_, i) => {
+        const a = nu[i] ?? null;
+        const b = vorig[i] ?? null;
+
+        return { maand: i + 1, nu: a, vorig: b, verschil: a != null && b != null ? a - b : null };
+    });
+}
+
+/**
+ * Per maand van het jaar, met dezelfde maand een jaar eerder. Maat: omzet, marge,
+ * zendingen, margePerZending of margePct.
+ */
+export function maandMetVorigJaar(zendingRows, jaar, { modaliteit = 'alle', maat = 'marge' } = {}) {
+    const rows = modaliteit === 'alle' ? zendingRows : zendingRows.filter((r) => r.modaliteit === modaliteit);
+    const waarde = (s) => {
+        if (!s.zendingen) {
+            return null;
+        }
+        switch (maat) {
+            case 'margePerZending':
+                return s.marge / s.zendingen;
+            case 'margePct':
+                return pct(s.marge, s.omzet);
+            case 'zendingen':
+                return s.zendingen;
+            case 'omzet':
+                return s.omzet;
+            default:
+                return s.marge;
+        }
+    };
+    const maand = (j, m) => som(rows.filter((r) => Number(r.jaar) === j && maandVan(r) === m));
+
+    return Array.from({ length: 12 }, (_, i) => {
+        const nu = maand(jaar, i + 1);
+
+        return {
+            maand: i + 1,
+            nu: waarde(nu),
+            vorig: waarde(maand(jaar - 1, i + 1)),
+            open: nu.open > 0,
+        };
+    });
+}
+
+/**
+ * Omzet die binnenkomt (nieuwe klanten) tegen omzet die wegvalt (klanten die het jaar
+ * ervoor wel en nu niet verschepen), per kalenderjaar.
+ */
+export function omzetInUit(retentieRows) {
+    return [...retentieRows]
+        .sort((a, b) => Number(a.jaar) - Number(b.jaar))
+        .filter((r) => num(r.actief_vorig_jaar) > 0)
+        .map((r) => ({
+            jaar: Number(r.jaar),
+            lopend: truthy(r.lopend_jaar),
+            nieuw: num(r.omzet_nieuwe_klanten),
+            weg: num(r.omzet_weggevallen_vorig_jaar),
+            netto: num(r.omzet_nieuwe_klanten) - num(r.omzet_weggevallen_vorig_jaar),
+            klantenNieuw: num(r.nieuw),
+            klantenWeg: num(r.weggevallen),
+        }));
 }

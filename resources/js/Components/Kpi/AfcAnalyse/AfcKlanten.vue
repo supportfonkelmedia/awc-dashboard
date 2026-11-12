@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue';
 import AfcBlok from './AfcBlok.vue';
+import AfcKlantkaart from './AfcKlantkaart.vue';
 import AfcSegment from './AfcSegment.vue';
 import AfcTabel from './AfcTabel.vue';
 import { topKlanten } from '@/utils/afcAnalyse';
@@ -57,6 +58,9 @@ const kolommen = [
         <p v-if="!beschikbaar" class="text-sm text-gray-500">
             Klantcijfers zijn er voor {{ beschikbareJaren.join(' en ') }}. Kies een van die jaren.
         </p>
-        <AfcTabel v-else :kolommen="kolommen" :rijen="top.rows" sorteerbaar />
+        <template v-else>
+            <AfcKlantkaart :klanten="top.rows" />
+            <AfcTabel class="mt-6" :kolommen="kolommen" :rijen="top.rows" sorteerbaar />
+        </template>
     </AfcBlok>
 </template>

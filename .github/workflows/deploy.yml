@@ -1,0 +1,121 @@
+# Deploy by branch:
+#   dev  → GitHub Environment "development"
+#   main → GitHub Environment "production"
+# Set SSH_HOST, SSH_USER, SSH_PASSWORD, SSH_PORT, DEPLOY_PATH (+ optional PHP_BIN) per environment.
+
+name: Build & deploy
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Deploy target
+        type: choice
+        required: true
+        default: development
+        options:
+          - development
+          - production
+
+run-name: ${{ github.workflow }} (${{ github.event_name == 'workflow_dispatch' && inputs.target || (github.ref == 'refs/heads/main' && 'production' || 'development') }})
+
+jobs:
+  resolve-environment:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.map.outputs.environment }}
+    steps:
+      - id: map
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ENV="${{ inputs.target }}"
+          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            ENV="production"
+          else
+            ENV="development"
+          fi
+          echo "environment=${ENV}" >> "$GITHUB_OUTPUT"
+
+  build-and-deploy:
+    needs: resolve-environment
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ needs.resolve-environment.outputs.environment }}
+    concurrency:
+      group: deploy-${{ needs.resolve-environment.outputs.environment }}
+      cancel-in-progress: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install JS dependencies & build assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Create deployment archive
+        run: |
+          tar czf deploy.tar.gz \
+            --exclude='./.git' \
+            --exclude='./node_modules' \
+            --exclude='./vendor' \
+            --exclude='./.env' \
+            --exclude='./.env.*' \
+            --exclude='./deploy.tar.gz' \
+            .
+
+      - name: Upload archive to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: ${{ secrets.SSH_PORT || '22' }}
+          source: deploy.tar.gz
+          target: ${{ secrets.DEPLOY_PATH }}
+          overwrite: true
+
+      - name: Extract, Composer, Artisan
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: ${{ secrets.SSH_PORT || '22' }}
+          command_timeout: 20m
+          script: |
+            set -e
+            cd "${{ secrets.DEPLOY_PATH }}"
+
+            tar xzf deploy.tar.gz
+            rm -f deploy.tar.gz
+
+            if [ -n "${{ secrets.PHP_BIN }}" ]; then
+              PHP="${{ secrets.PHP_BIN }}"
+            elif command -v php83 >/dev/null 2>&1; then
+              PHP=php83
+            elif command -v php84 >/dev/null 2>&1; then
+              PHP=php84
+            else
+              PHP=php
+            fi
+
+            COMPOSER="$(command -v composer)"
+            $PHP "$COMPOSER" install --no-dev --optimize-autoloader --no-interaction
+
+            $PHP artisan migrate --force --no-interaction
+            $PHP artisan storage:link --force 2>/dev/null || true
+            $PHP artisan config:cache
+            $PHP artisan route:cache
+            $PHP artisan view:cache

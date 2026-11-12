@@ -10,6 +10,14 @@
 #   scherm = strategisch | operationeel | tactisch | awc | afc | acc  (required for screen)
 #   views  = comma-separated drill view base names (for drill), e.g. kpi_bm_maand,kpi_ebitda_maand
 #   limit  = max rows per drill view (default 2000, max 5000)
+#   scope       = optional drill filter on scope_code / scope (only views that have that column)
+#   periode_van = optional drill filter YYYY, YYYY-MM or YYYY-MM-DD on the view's period column
+#
+# Drill (v7): rows are ordered in SQL (period column DESC where the view has one, else a stable key,
+# with the full row text as final tie-breaker) and LIMIT is applied in SQL after ordering.
+# Additive response key `table_meta` per view: row_count, truncated, total_count, limit, order_by, filters.
+# Existing keys (bundle, views, tables, errors, meta) are unchanged; truncation still also adds the
+# old {view, warning: truncated_to_N_rows} entry to errors[].
 #
 # Reads replicated KPI tables in warehouse dw_2401, schema "My Queries", suffix _my_queries.
 # Fonkel/Laravel does tegel assembly & formatting; this handler only fetches rows.
@@ -23,7 +31,7 @@ import pandas as pd
 
 WAREHOUSE_DW = "dw_2401"
 KPI_SCHEMA = '"My Queries"'
-HANDLER_VERSION = "2026-11-06-kpi-v6-request-dict-query-string"
+HANDLER_VERSION = "2026-11-12-kpi-v7-drill-ordered-limit"
 
 SCREENS = frozenset(
     {"strategisch", "operationeel", "tactisch", "awc", "afc", "acc"}
@@ -50,12 +58,6 @@ ALLOWED_DRILL_VIEWS = frozenset(
         "kpi_awc_ops_maand",
         "kpi_awc_schade_klant",
         "kpi_afc_sprinter_maand",
-        "kpi_afc_zending_maand",
-        "kpi_afc_eigenaar_maand",
-        "kpi_afc_klant_jaar",
-        "kpi_afc_klant",
-        "kpi_afc_klant_retentie_jaar",
-        "kpi_afc_resultaat_maand",
         "kpi_handmatig",
         "kpi_doelen",
         "kpi_intercompany",
@@ -66,6 +68,47 @@ ALLOWED_DRILL_VIEWS = frozenset(
         "kpi_trend",
     }
 )
+
+
+# Drill ordering per view: (period column or None, ORDER BY expression). Column names checked
+# against the _my_queries replicas on 2026-11-12. A final `t::text` tie-breaker is appended so the
+# order (and therefore any truncated subset) is fully deterministic.
+DRILL_ORDER = {
+    "kpi_bm_maand": ("maand", "t.maand DESC, t.admin_code"),
+    "kpi_ebitda_maand": ("maand", "t.maand DESC, t.scope_code"),
+    "kpi_kosten_maand": ("maand", "t.maand DESC, t.scope_code, t.groep"),
+    "kpi_omzetbrug": ("stand_per", "t.stand_per DESC, t.scope, t.volgorde"),
+    "kpi_omzetbrug_top": ("stand_per", "t.stand_per DESC, t.scope, t.lijst, t.rang"),
+    "kpi_omzetbrug_klant": ("stand_per", "t.stand_per DESC, t.scope, ABS(t.verschil) DESC NULLS LAST, t.klant"),
+    "kpi_triple_lob_maand": ("maand", "t.maand DESC"),
+    "kpi_triple_lob_te_controleren": (None, "t.omzet_12m DESC NULLS LAST, t.zoek"),
+    "kpi_winrate_maand": ("peildatum", "t.peildatum DESC, t.pipeline, t.soort"),
+    "kpi_winrate_fases": (None, "t.pipeline, t.fase"),
+    "kpi_churn_kwartaal": ("kwartaal", "t.kwartaal DESC"),
+    "kpi_acc_dossiers_maand": ("maand", "t.maand DESC, t.soort"),
+    "kpi_acc_doorlooptijd_maand": ("maand", "t.maand DESC"),
+    "kpi_onboarding_kwartaal": ("kwartaal", "t.kwartaal DESC, t.pijplijn"),
+    "kpi_d2s_maand": ("maand", "t.maand DESC"),
+    "kpi_awc_ops_maand": ("maand", "t.maand DESC"),
+    "kpi_awc_schade_klant": (None, "t.rang, t.relatie_id"),
+    "kpi_afc_sprinter_maand": ("maand", "t.maand DESC"),
+    "kpi_handmatig": ("periode_einde", "t.periode_einde DESC, t.kpi_code, t.scope_code"),
+    "kpi_doelen": ("geldig_vanaf", "t.geldig_vanaf DESC, t.kpi_code, t.scope_code"),
+    "kpi_intercompany": (None, "t.admin_code, t.zoek"),
+    "kpi_controles": (None, "t.volgorde, t.controle"),
+    "kpi_registry": (None, "t.volgorde, t.kpi_code"),
+    "kpi_tegel_config": (None, "t.scherm, t.positie"),
+    "kpi_oordeel": (None, "t.volgorde, t.kpi_code, t.scope_code"),
+    "kpi_trend": ("periode", "t.periode DESC, t.kpi_code, t.scope_code, t.serie, t.volgnummer"),
+}
+
+# Optional `scope` drill filter: views with a scope_code column, and the omzetbrug views whose
+# `scope` column holds labels (Concern/AWC/AFC/ACC) instead of codes.
+DRILL_SCOPE_CODE_VIEWS = frozenset(
+    {"kpi_ebitda_maand", "kpi_kosten_maand", "kpi_handmatig", "kpi_doelen", "kpi_oordeel", "kpi_trend"}
+)
+DRILL_SCOPE_LABEL_VIEWS = frozenset({"kpi_omzetbrug", "kpi_omzetbrug_top", "kpi_omzetbrug_klant"})
+SCOPE_CODE_TO_LABEL = {"concern": "Concern", "alaw": "AWC", "pgl1": "AFC", "acco": "ACC"}
 
 _dbconn = None
 
@@ -438,6 +481,96 @@ def sanitize_view_name(name):
     return name
 
 
+def _parse_periode_van(raw):
+    """'2026', '2026-03' or '2026-03-15' -> 'YYYY-MM-DD'; anything else -> None."""
+    raw = str(raw or "").strip()
+    m = re.match(r"^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?$", raw)
+    if not m:
+        return None
+    y, mo, d = int(m.group(1)), int(m.group(2) or 1), int(m.group(3) or 1)
+    if not (1900 <= y <= 2100 and 1 <= mo <= 12 and 1 <= d <= 31):
+        return None
+    return f"{y:04d}-{mo:02d}-{d:02d}"
+
+
+def _drill_where(view, scope, periode_van):
+    """Build WHERE clauses for the optional filters; returns (clauses, applied, ignored)."""
+    clauses, applied, ignored = [], {}, {}
+    if scope:
+        if view in DRILL_SCOPE_CODE_VIEWS:
+            clauses.append(f"COALESCE(t.scope_code, '') = {sql_str_literal(scope)}")
+            applied["scope"] = scope
+        elif view in DRILL_SCOPE_LABEL_VIEWS:
+            label = SCOPE_CODE_TO_LABEL.get(scope.lower(), scope)
+            clauses.append(
+                f"LOWER(COALESCE(t.scope, '')) IN (LOWER({sql_str_literal(scope)}), LOWER({sql_str_literal(label)}))"
+            )
+            applied["scope"] = scope
+        else:
+            ignored["scope"] = "view_has_no_scope_column"
+    if periode_van:
+        period_col = DRILL_ORDER.get(view, (None, None))[0]
+        if period_col:
+            clauses.append(f"t.{period_col} >= DATE {sql_str_literal(periode_van)}")
+            applied["periode_van"] = periode_van
+        else:
+            ignored["periode_van"] = "view_has_no_period_column"
+    return clauses, applied, ignored
+
+
+def fetch_drill_view(view, limit, scope, periode_van):
+    """
+    Ordered, SQL-limited fetch of one drill view.
+    Returns (records, meta, error, warnings). Falls back to the pre-v7 behaviour
+    (SELECT * + cut in Python) if the ordered query fails, so a renamed column can
+    never take the drill down.
+    """
+    rel = kpi_relation(view)
+    period_col, order_expr = DRILL_ORDER.get(view, (None, None))
+    clauses, applied, ignored = _drill_where(view, scope, periode_van)
+    where_sql = (" WHERE " + " AND ".join(clauses)) if clauses else ""
+    order_sql = f"{order_expr}, t::text" if order_expr else "t::text"
+    warnings = []
+
+    q = f"SELECT t.* FROM {rel} AS t{where_sql} ORDER BY {order_sql} LIMIT {int(limit) + 1}"
+    df, err = fetch(q, view)
+    fallback = False
+    if err:
+        warnings.append({"view": view, "warning": f"ordered_query_failed_fallback_unordered: {err[:300]}"})
+        df, err = fetch_table(view)
+        fallback = True
+        if err:
+            return [], None, err, warnings
+
+    recs = df_records(df)
+    truncated = len(recs) > limit
+    if truncated:
+        recs = recs[:limit]
+
+    total_count = len(recs)
+    if truncated and not fallback:
+        df_n, err_n = fetch(f"SELECT COUNT(*) AS n FROM {rel} AS t{where_sql}", view + "_count")
+        try:
+            total_count = int(df_n.iloc[0, 0]) if not err_n and not df_n.empty else None
+        except Exception:
+            total_count = None
+    elif truncated and fallback:
+        total_count = len(df) if df is not None else None
+
+    meta = {
+        "row_count": len(recs),
+        "truncated": truncated,
+        "total_count": total_count,
+        "limit": limit,
+        "order_by": None if fallback else (order_expr or "").replace("t.", ""),
+        "ordered": not fallback,
+        "filters": applied,
+    }
+    if ignored:
+        meta["filters_ignored"] = ignored
+    return recs, meta, None, warnings
+
+
 def bundle_drill(q):
     raw = str(q.get("views", "")).strip()
     if not raw:
@@ -458,29 +591,41 @@ def bundle_drill(q):
     if not views:
         return {"error": "invalid_views", "message": "no allowed view names in views param"}
 
-    tables = {}
     errors = []
+    scope = str(q.get("scope", "") or "").strip()[:64]
+    periode_raw = str(q.get("periode_van", "") or "").strip()
+    periode_van = _parse_periode_van(periode_raw) if periode_raw else None
+    if periode_raw and not periode_van:
+        errors.append({"view": "*", "warning": f"periode_van_ignored_invalid: {periode_raw[:40]}"})
+
+    tables = {}
+    table_meta = {}
     for view in views:
-        df, err = fetch_table(view)
+        recs, meta, err, warnings = fetch_drill_view(view, limit, scope, periode_van)
+        errors.extend(warnings)
         if err:
             errors.append({"view": view, "error": err})
             tables[view] = []
-        else:
-            recs = df_records(df)
-            if len(recs) > limit:
-                tables[view] = recs[:limit]
-                errors.append(
-                    {"view": view, "warning": f"truncated_to_{limit}_rows"}
-                )
-            else:
-                tables[view] = recs
+            table_meta[view] = {"row_count": 0, "truncated": False, "total_count": None, "limit": limit, "error": True}
+            continue
+        tables[view] = recs
+        table_meta[view] = meta
+        if meta["truncated"]:
+            # Same entry as before v7, kept for clients that read errors[].
+            errors.append({"view": view, "warning": f"truncated_to_{limit}_rows"})
 
     return {
         "bundle": "drill",
         "views": views,
         "tables": tables,
+        "table_meta": table_meta,
         "errors": errors,
-        "meta": {"warehouse": WAREHOUSE_DW, "handler_version": HANDLER_VERSION},
+        "meta": {
+            "warehouse": WAREHOUSE_DW,
+            "handler_version": HANDLER_VERSION,
+            "limit": limit,
+            "filters": {k: v for k, v in (("scope", scope), ("periode_van", periode_van)) if v},
+        },
     }
 
 

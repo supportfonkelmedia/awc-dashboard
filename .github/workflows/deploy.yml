@@ -1,7 +1,7 @@
-# Deploy by branch:
-#   dev  → GitHub Environment "development"
-#   main → GitHub Environment "production"
-# Set SSH_HOST, SSH_USER, SSH_PASSWORD, SSH_PORT, DEPLOY_PATH (+ optional PHP_BIN) per environment.
+# Ploi-style deploy: build on GitHub, rsync public/build, git pull + Composer on server.
+#   dev  → environment "development"
+#   main → environment "production"
+# Secrets per environment: SSH_HOST, SSH_USER, SSH_PASSWORD, SSH_PORT, DEPLOY_PATH (+ optional PHP_BIN)
 
 name: Build & deploy
 
@@ -60,7 +60,7 @@ jobs:
           tools: composer
           coverage: none
 
-      - name: Install PHP dependencies (Ziggy for Vite)
+      - name: Install Composer deps (Ziggy for Vite)
         run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
 
       - name: Setup Node
@@ -69,64 +69,67 @@ jobs:
           node-version: "22"
           cache: npm
 
-      - name: Install JS dependencies & build assets
+      - name: Install & build frontend
         run: |
           npm ci
           npm run build
 
-      - name: Create deployment archive
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vite-build-${{ github.ref_name }}
+          path: public/build/
+          retention-days: 7
+
+      - name: Rsync assets & deploy on server
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSHPASS: ${{ secrets.SSH_PASSWORD }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          GIT_BRANCH: ${{ github.ref_name }}
+          PHP_BIN: ${{ secrets.PHP_BIN }}
         run: |
-          ARCHIVE="${{ runner.temp }}/deploy.tar.gz"
-          tar czf "$ARCHIVE" \
-            --exclude='.git' \
-            --exclude='node_modules' \
-            --exclude='vendor' \
-            --exclude='.env' \
-            --exclude='.env.*' \
-            -C "$GITHUB_WORKSPACE" .
-          cp "$ARCHIVE" "$GITHUB_WORKSPACE/deploy.tar.gz"
+          set -euo pipefail
+          PORT="${SSH_PORT:-22}"
 
-      - name: Upload archive to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          port: ${{ secrets.SSH_PORT || '22' }}
-          source: deploy.tar.gz
-          target: ${{ secrets.DEPLOY_PATH }}
-          overwrite: true
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq sshpass openssh-client
 
-      - name: Extract, Composer, Artisan
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          port: ${{ secrets.SSH_PORT || '22' }}
-          command_timeout: 20m
-          script: |
-            set -e
-            cd "${{ secrets.DEPLOY_PATH }}"
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "$PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
 
-            tar xzf deploy.tar.gz
-            rm -f deploy.tar.gz
+          RSYNC_SSH="ssh -p ${PORT} -o StrictHostKeyChecking=yes"
+          sshpass -e rsync -avz --delete -e "$RSYNC_SSH" \
+            public/build/ \
+            "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/public/build/"
 
-            if [ -n "${{ secrets.PHP_BIN }}" ]; then
-              PHP="${{ secrets.PHP_BIN }}"
-            elif command -v php83 >/dev/null 2>&1; then
-              PHP=php83
-            elif command -v php84 >/dev/null 2>&1; then
-              PHP=php84
-            else
-              PHP=php
-            fi
+          sshpass -e ssh -p "$PORT" -o StrictHostKeyChecking=yes \
+            "${SSH_USER}@${SSH_HOST}" \
+            "DEPLOY_PATH=$(printf %q "$DEPLOY_PATH") GIT_BRANCH=$(printf %q "$GIT_BRANCH") PHP_BIN=$(printf %q "$PHP_BIN") bash -s" <<'REMOTE'
+          set -euo pipefail
+          cd "$DEPLOY_PATH"
 
-            COMPOSER="$(command -v composer)"
-            $PHP "$COMPOSER" install --no-dev --optimize-autoloader --no-interaction
+          git fetch origin
+          git reset --hard "origin/${GIT_BRANCH}"
 
-            $PHP artisan migrate --force --no-interaction
-            $PHP artisan storage:link --force 2>/dev/null || true
-            $PHP artisan config:cache
-            $PHP artisan route:cache
-            $PHP artisan view:cache
+          if [ -n "${PHP_BIN:-}" ]; then
+            PHP="$PHP_BIN"
+          elif command -v php83 >/dev/null 2>&1; then
+            PHP=php83
+          elif command -v php84 >/dev/null 2>&1; then
+            PHP=php84
+          else
+            PHP=php
+          fi
+
+          COMPOSER="$(command -v composer)"
+          $PHP "$COMPOSER" install --no-dev --optimize-autoloader --no-interaction
+
+          $PHP artisan migrate --force --no-interaction
+          $PHP artisan storage:link --force 2>/dev/null || true
+          $PHP artisan config:cache
+          $PHP artisan route:cache
+          $PHP artisan view:cache
+          REMOTE

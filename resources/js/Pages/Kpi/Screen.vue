@@ -18,7 +18,7 @@ import { useKpiScreenLoader } from '@/composables/useKpiScreenLoader';
 import { ENTITEIT_SCOPES, paramFromScope, scopeFromParam } from '@/constants/kpiEntiteiten';
 import { KPI_SCREEN_META } from '@/constants/kpiScreens';
 import KpiStandaloneLayout from '@/Layouts/KpiStandaloneLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import Message from 'primevue/message';
 import ProgressSpinner from 'primevue/progressspinner';
 import { computed, ref, toRef, watch } from 'vue';
@@ -200,6 +200,15 @@ function isOmzetbrugBanner(banner) {
                 <KpiCustomerJourneyBar v-if="scherm === 'operationeel'" />
 
                 <KpiAfcSprinterAlert v-if="scherm === 'afc'" :payload="payload" />
+
+                <Link
+                    v-if="scherm === 'afc'"
+                    :href="route('kpi.afc.analyse')"
+                    class="mt-4 inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
+                >
+                    <i class="pi pi-chart-bar text-xs" aria-hidden="true" />
+                    Naar de AFC-analyse: omzet, marge, klanten en eigenaren
+                </Link>
 
                 <Message v-if="loadError" severity="warn" class="mt-6 w-full">
                     {{ loadError }}

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\KpiAfcAnalyseController;
 use App\Http\Controllers\KpiDashboardController;
 use App\Http\Controllers\KpiDoelInvoerController;
 use App\Http\Controllers\KpiFeedbackController;
@@ -25,6 +26,8 @@ Route::middleware(['auth', 'verified'])
     ->group(function () {
         Route::redirect('/', '/kpi/strategisch');
         Route::redirect('/concern', '/kpi/strategisch')->name('concern');
+
+        Route::get('/afc/analyse', KpiAfcAnalyseController::class)->name('afc.analyse');
 
         Route::get('/{scherm}', KpiDashboardController::class)
             ->where('scherm', implode('|', KpiDashboardController::SCREENS))

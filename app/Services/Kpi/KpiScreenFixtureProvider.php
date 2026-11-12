@@ -584,7 +584,7 @@ class KpiScreenFixtureProvider
                 'kpi_omzetbrug' => $this->omzetbrugRows(),
                 'kpi_handmatig' => [],
                 'kpi_trend' => $this->entiteitTrendRows(),
-                default => [
+                default => (new AfcAnalyseFixture)->rows($view) ?? [
                     ['periode' => '2026-07-01', 'waarde' => 0, 'status' => 'definitief', 'notitie' => 'Demo-data. Echte cijfers komen uit Peliqan.'],
                 ],
             };

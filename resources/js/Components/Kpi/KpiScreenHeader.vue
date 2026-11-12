@@ -1,5 +1,6 @@
 <script setup>
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 defineProps({
     scherm: {
@@ -17,6 +18,11 @@ defineProps({
     stale: { type: Boolean, default: false },
     fixture: { type: Boolean, default: false },
 });
+
+const emit = defineEmits(['feedback']);
+
+const page = usePage();
+const isFeedbackAdmin = computed(() => Boolean(page.props.auth?.isFeedbackAdmin));
 
 const tactischControlesUrl = `${route('kpi.screen', { scherm: 'tactisch' })}#datakwaliteit`;
 </script>
@@ -72,6 +78,21 @@ const tactischControlesUrl = `${route('kpi.screen', { scherm: 'tactisch' })}#dat
                     <span class="text-amber-400">{{ controles.let_op }} let op</span>
                     <span class="text-emerald-400">{{ controles.ok }} ok</span>
                 </Link>
+                <Link
+                    v-if="isFeedbackAdmin"
+                    :href="route('kpi.feedback.index')"
+                    class="text-xs text-white/70 underline-offset-2 hover:text-white hover:underline"
+                >
+                    Feedbackoverzicht
+                </Link>
+                <button
+                    type="button"
+                    class="inline-flex items-center gap-1.5 rounded-full bg-[#ff7020] px-3 py-1 text-xs font-semibold text-white transition hover:bg-[#e8621a] focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                    @click="emit('feedback')"
+                >
+                    <i class="pi pi-comment text-[11px]" aria-hidden="true" />
+                    Feedback
+                </button>
             </div>
         </div>
     </header>

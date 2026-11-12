@@ -29,4 +29,14 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /** Mag het feedbackoverzicht zien en statussen wijzigen (KPI_FEEDBACK_ADMINS). */
+    public function isFeedbackAdmin(): bool
+    {
+        return in_array(
+            strtolower(trim((string) $this->email)),
+            config('kpi_feedback.admin_emails', []),
+            true,
+        );
+    }
 }

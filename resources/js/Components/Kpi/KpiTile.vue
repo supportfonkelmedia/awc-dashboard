@@ -9,7 +9,7 @@ defineProps({
     },
 });
 
-const emit = defineEmits(['details', 'invoer', 'doel']);
+const emit = defineEmits(['details', 'invoer', 'doel', 'feedback']);
 
 const stateBoxClass = {
     data_onvolledig: 'bg-red-50 text-red-700',
@@ -158,6 +158,7 @@ const goalChip = {
             :tile="tile"
             :show-details="tile.drillViews.length > 0"
             @details="emit('details', tile)"
+            @feedback="emit('feedback', tile)"
         />
     </article>
 </template>

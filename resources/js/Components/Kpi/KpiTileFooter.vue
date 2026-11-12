@@ -13,7 +13,7 @@ defineProps({
     },
 });
 
-const emit = defineEmits(['details']);
+const emit = defineEmits(['details', 'feedback']);
 </script>
 
 <template>
@@ -31,14 +31,25 @@ const emit = defineEmits(['details']);
                 </span>
             </p>
         </div>
-        <button
-            v-if="showDetails"
-            type="button"
-            class="inline-flex shrink-0 items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-[11px] font-medium text-gray-800 hover:bg-gray-50"
-            @click="emit('details')"
-        >
-            Details
-            <i class="pi pi-angle-right text-[11px]" aria-hidden="true" />
-        </button>
+        <div class="flex shrink-0 items-center gap-1.5">
+            <button
+                type="button"
+                class="inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7020]"
+                :aria-label="`Feedback over ${tile.titel ?? 'deze tegel'}`"
+                title="Feedback over deze tegel"
+                @click="emit('feedback')"
+            >
+                <i class="pi pi-comment text-[12px]" aria-hidden="true" />
+            </button>
+            <button
+                v-if="showDetails"
+                type="button"
+                class="inline-flex shrink-0 items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-[11px] font-medium text-gray-800 hover:bg-gray-50"
+                @click="emit('details')"
+            >
+                Details
+                <i class="pi pi-angle-right text-[11px]" aria-hidden="true" />
+            </button>
+        </div>
     </footer>
 </template>

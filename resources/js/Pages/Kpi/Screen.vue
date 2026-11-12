@@ -3,6 +3,7 @@ import KpiAfcSprinterAlert from '@/Components/Kpi/KpiAfcSprinterAlert.vue';
 import KpiCustomerJourneyBar from '@/Components/Kpi/KpiCustomerJourneyBar.vue';
 import KpiPijlerSection from '@/Components/Kpi/KpiPijlerSection.vue';
 import KpiDrillDownDrawer from '@/Components/Kpi/KpiDrillDownDrawer.vue';
+import KpiFeedbackModal from '@/Components/Kpi/KpiFeedbackModal.vue';
 import KpiGoalModal from '@/Components/Kpi/KpiGoalModal.vue';
 import KpiManualEntryModal from '@/Components/Kpi/KpiManualEntryModal.vue';
 import KpiOmzetbrugBanner from '@/Components/Kpi/KpiOmzetbrugBanner.vue';
@@ -128,6 +129,14 @@ const invoerKpiCode = ref('enps');
 const doelOpen = ref(false);
 const doelTile = ref(null);
 
+const feedbackOpen = ref(false);
+const feedbackTile = ref(null);
+
+function openFeedback(tile = null) {
+    feedbackTile.value = tile;
+    feedbackOpen.value = true;
+}
+
 function openDetails(tile) {
     drillTile.value = tile;
     drillOpen.value = true;
@@ -168,6 +177,7 @@ function isOmzetbrugBanner(banner) {
                 :controles="payload?.controles_summary ?? { fout: 0, let_op: 0, ok: 0 }"
                 :stale="Boolean(payload?.meta?.stale)"
                 :fixture="kpiUsesFixture || Boolean(payload?.meta?.fixture)"
+                @feedback="openFeedback()"
             />
             <KpiScreenNav :scherm="scherm" />
 
@@ -226,6 +236,7 @@ function isOmzetbrugBanner(banner) {
                                     :tile="row"
                                     :prefetched-rows="payload?.kpi_omzetbrug"
                                     @details="openDetails"
+                                    @feedback="openFeedback"
                                 />
                                 <KpiTile
                                     v-else
@@ -233,6 +244,7 @@ function isOmzetbrugBanner(banner) {
                                     @details="openDetails"
                                     @invoer="onInvoer"
                                     @doel="onDoel"
+                                    @feedback="openFeedback"
                                 />
                             </template>
                         </template>
@@ -271,6 +283,13 @@ function isOmzetbrugBanner(banner) {
             v-model:visible="invoerOpen"
             :kpi-code="invoerKpiCode"
             @saved="reload"
+        />
+
+        <KpiFeedbackModal
+            v-model:visible="feedbackOpen"
+            :scherm="scherm"
+            :entiteit="effectiveEntiteit"
+            :tile="feedbackTile"
         />
 
         <KpiGoalModal

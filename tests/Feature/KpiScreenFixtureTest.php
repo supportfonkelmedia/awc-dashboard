@@ -32,8 +32,9 @@ class KpiScreenFixtureTest extends TestCase
             ->assertOk()
             ->assertJsonPath('meta.fixture', true)
             ->assertJsonPath('controles_summary.fout', 1)
-            ->assertJsonPath('controles_summary.let_op', 2)
-            ->assertJsonPath('controles_summary.ok', 11);
+            // Volume Sprinter3000 is ok sinds de sync op sprinter_api (12-11-2026).
+            ->assertJsonPath('controles_summary.let_op', 1)
+            ->assertJsonPath('controles_summary.ok', 12);
     }
 
     public function test_fixture_omzetbrug_formats_like_acceptatie(): void

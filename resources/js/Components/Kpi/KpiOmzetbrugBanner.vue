@@ -17,7 +17,7 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(['details']);
+const emit = defineEmits(['details', 'feedback']);
 
 const loading = ref(true);
 const error = ref(null);
@@ -262,6 +262,7 @@ function valueClass(seg) {
             :tile="tile"
             :show-details="Boolean(tile.drillViews?.length)"
             @details="emit('details', tile)"
+            @feedback="emit('feedback', tile)"
         />
     </article>
 </template>

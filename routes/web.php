@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\KpiDashboardController;
 use App\Http\Controllers\KpiDoelInvoerController;
+use App\Http\Controllers\KpiFeedbackController;
 use App\Http\Controllers\KpiHandmatigInvoerController;
 use App\Http\Controllers\KpiPeliqanDataController;
 use App\Http\Controllers\KpiScreenDataController;
@@ -44,6 +45,17 @@ Route::middleware(['auth', 'verified'])
 
         Route::post('/invoer/doelen', [KpiDoelInvoerController::class, 'store'])
             ->name('invoer.doelen');
+
+        Route::prefix('feedback')->name('feedback.')->group(function () {
+            Route::get('/', [KpiFeedbackController::class, 'index'])->name('index');
+            Route::post('/', [KpiFeedbackController::class, 'store'])->name('store');
+            Route::patch('/{feedback}', [KpiFeedbackController::class, 'update'])
+                ->whereNumber('feedback')
+                ->name('update');
+            Route::get('/{feedback}/screenshot', [KpiFeedbackController::class, 'screenshot'])
+                ->whereNumber('feedback')
+                ->name('screenshot');
+        });
     });
 
 // Oude URLs (bookmarks) → KPI-schermen.

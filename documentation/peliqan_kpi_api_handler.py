@@ -31,7 +31,7 @@ import pandas as pd
 
 WAREHOUSE_DW = "dw_2401"
 KPI_SCHEMA = '"My Queries"'
-HANDLER_VERSION = "2026-11-12-kpi-v7-drill-ordered-limit"
+HANDLER_VERSION = "2026-11-12-kpi-v8-afc-analyse"
 
 SCREENS = frozenset(
     {"strategisch", "operationeel", "tactisch", "awc", "afc", "acc"}
@@ -58,6 +58,13 @@ ALLOWED_DRILL_VIEWS = frozenset(
         "kpi_awc_ops_maand",
         "kpi_awc_schade_klant",
         "kpi_afc_sprinter_maand",
+        # AFC-analyse (/kpi/afc/analyse), zie documentation/AFC-analyse.md in awc-dashboard
+        "kpi_afc_zending_maand",
+        "kpi_afc_eigenaar_maand",
+        "kpi_afc_klant_jaar",
+        "kpi_afc_klant",
+        "kpi_afc_klant_retentie_jaar",
+        "kpi_afc_resultaat_maand",
         "kpi_handmatig",
         "kpi_doelen",
         "kpi_intercompany",
@@ -92,6 +99,12 @@ DRILL_ORDER = {
     "kpi_awc_ops_maand": ("maand", "t.maand DESC"),
     "kpi_awc_schade_klant": (None, "t.rang, t.relatie_id"),
     "kpi_afc_sprinter_maand": ("maand", "t.maand DESC"),
+    "kpi_afc_zending_maand": ("maand", "t.maand DESC, t.modaliteit, t.richting"),
+    "kpi_afc_eigenaar_maand": ("maand", "t.maand DESC, t.eigenaar"),
+    "kpi_afc_klant_jaar": (None, "t.jaar DESC, t.omzet DESC NULLS LAST, t.klantgroep_id"),
+    "kpi_afc_klant": (None, "t.omzet_12m DESC NULLS LAST, t.klant_id"),
+    "kpi_afc_klant_retentie_jaar": (None, "t.jaar"),
+    "kpi_afc_resultaat_maand": ("maand", "t.maand DESC"),
     "kpi_handmatig": ("periode_einde", "t.periode_einde DESC, t.kpi_code, t.scope_code"),
     "kpi_doelen": ("geldig_vanaf", "t.geldig_vanaf DESC, t.kpi_code, t.scope_code"),
     "kpi_intercompany": (None, "t.admin_code, t.zoek"),

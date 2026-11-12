@@ -81,7 +81,34 @@ jobs:
           path: public/build/
           retention-days: 7
 
-      - name: Rsync assets & deploy on server
+      - name: Install SSH client tools
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq sshpass openssh-client
+
+      - name: Rsync assets to server
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSHPASS: ${{ secrets.SSH_PASSWORD }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          set -eo pipefail
+          for key in SSH_HOST SSH_USER SSHPASS DEPLOY_PATH; do
+            if [ -z "${!key}" ]; then
+              echo "Missing GitHub environment secret: ${key}"
+              exit 1
+            fi
+          done
+          PORT="${SSH_PORT:-22}"
+          echo "Rsync → ${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/public/build/ (port ${PORT})"
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "$PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
+          RSYNC_SSH="ssh -p ${PORT} -o StrictHostKeyChecking=yes"
+          sshpass -e rsync -avz --delete -e "$RSYNC_SSH" \
+            public/build/ \
+            "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/public/build/"
+
+      - name: Git pull, Composer & Artisan on server
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
           SSH_USER: ${{ secrets.SSH_USER }}
@@ -91,45 +118,9 @@ jobs:
           GIT_BRANCH: ${{ github.ref_name }}
           PHP_BIN: ${{ secrets.PHP_BIN }}
         run: |
-          set -euo pipefail
+          set -eo pipefail
           PORT="${SSH_PORT:-22}"
-
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq sshpass openssh-client
-
-          mkdir -p ~/.ssh
-          ssh-keyscan -p "$PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts
-
-          RSYNC_SSH="ssh -p ${PORT} -o StrictHostKeyChecking=yes"
-          sshpass -e rsync -avz --delete -e "$RSYNC_SSH" \
-            public/build/ \
-            "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/public/build/"
-
           sshpass -e ssh -p "$PORT" -o StrictHostKeyChecking=yes \
             "${SSH_USER}@${SSH_HOST}" \
-            "DEPLOY_PATH=$(printf %q "$DEPLOY_PATH") GIT_BRANCH=$(printf %q "$GIT_BRANCH") PHP_BIN=$(printf %q "$PHP_BIN") bash -s" <<'REMOTE'
-          set -euo pipefail
-          cd "$DEPLOY_PATH"
-
-          git fetch origin
-          git reset --hard "origin/${GIT_BRANCH}"
-
-          if [ -n "${PHP_BIN:-}" ]; then
-            PHP="$PHP_BIN"
-          elif command -v php83 >/dev/null 2>&1; then
-            PHP=php83
-          elif command -v php84 >/dev/null 2>&1; then
-            PHP=php84
-          else
-            PHP=php
-          fi
-
-          COMPOSER="$(command -v composer)"
-          $PHP "$COMPOSER" install --no-dev --optimize-autoloader --no-interaction
-
-          $PHP artisan migrate --force --no-interaction
-          $PHP artisan storage:link --force 2>/dev/null || true
-          $PHP artisan config:cache
-          $PHP artisan route:cache
-          $PHP artisan view:cache
-          REMOTE
+            "DEPLOY_PATH=$(printf %q "$DEPLOY_PATH") GIT_BRANCH=$(printf %q "$GIT_BRANCH") PHP_BIN=$(printf %q "${PHP_BIN:-}") bash -s" \
+            < .github/scripts/deploy-remote.sh

@@ -11,8 +11,10 @@ import KpiStrategischPeriodBar from '@/Components/Kpi/KpiStrategischPeriodBar.vu
 import KpiScreenNav from '@/Components/Kpi/KpiScreenNav.vue';
 import KpiSectionBlock from '@/Components/Kpi/KpiSectionBlock.vue';
 import KpiTile from '@/Components/Kpi/KpiTile.vue';
+import { fetchKpiDrill } from '@/composables/useKpiDrillFetch';
 import { useKpiScreenModel } from '@/composables/useKpiScreenModel';
 import { useKpiScreenLoader } from '@/composables/useKpiScreenLoader';
+import { ENTITEIT_SCOPES, paramFromScope, scopeFromParam } from '@/constants/kpiEntiteiten';
 import { KPI_SCREEN_META } from '@/constants/kpiScreens';
 import KpiStandaloneLayout from '@/Layouts/KpiStandaloneLayout.vue';
 import { Head } from '@inertiajs/vue3';
@@ -48,8 +50,63 @@ const effectivePeriode = computed(() =>
     props.scherm === 'strategisch' ? periode.value : 'all',
 );
 
+/**
+ * ENTITEIT (alleen strategisch): staat in de URL (?entiteit=awc), zodat een gefilterde
+ * weergave te delen is. Standaard het concern.
+ */
+const entiteit = ref(
+    typeof window !== 'undefined'
+        ? scopeFromParam(new URLSearchParams(window.location.search).get('entiteit'))
+        : 'concern',
+);
+const effectiveEntiteit = computed(() =>
+    props.scherm === 'strategisch' ? entiteit.value : 'concern',
+);
+
+// Trendlijnen van AWC/AFC/ACC zitten niet in de schermbundel; één keer ophalen via de drill-route.
+const entiteitTrends = ref([]);
+const entiteitTrendsError = ref(null);
+let entiteitTrendsGeladen = false;
+
+async function loadEntiteitTrends() {
+    if (entiteitTrendsGeladen) {
+        return;
+    }
+    entiteitTrendsGeladen = true;
+    const { tables, error: err } = await fetchKpiDrill(['kpi_trend']);
+    if (err) {
+        entiteitTrendsGeladen = false;
+        entiteitTrendsError.value = `Trendlijnen per entiteit laden mislukt: ${err}`;
+
+        return;
+    }
+    entiteitTrendsError.value = null;
+    entiteitTrends.value = (tables.kpi_trend ?? []).filter((r) =>
+        ENTITEIT_SCOPES.has(String(r.scope_code ?? '')),
+    );
+}
+
+watch(
+    effectiveEntiteit,
+    (scope) => {
+        if (typeof window !== 'undefined' && props.scherm === 'strategisch') {
+            const url = new URL(window.location.href);
+            if (scope === 'concern') {
+                url.searchParams.delete('entiteit');
+            } else {
+                url.searchParams.set('entiteit', paramFromScope(scope));
+            }
+            window.history.replaceState(window.history.state, '', url);
+        }
+        if (scope !== 'concern') {
+            loadEntiteitTrends();
+        }
+    },
+    { immediate: true },
+);
+
 const { layoutRowGroups, sections, gepland2027, bijgewerktLabel, periodeOptions } =
-    useKpiScreenModel(payload, effectivePeriode);
+    useKpiScreenModel(payload, effectivePeriode, effectiveEntiteit, entiteitTrends);
 
 // Gekozen jaar zonder trendpunten op dit scherm → terug naar Alles.
 watch(periodeOptions, (years) => {
@@ -58,7 +115,9 @@ watch(periodeOptions, (years) => {
     }
 });
 
-const loadError = computed(() => props.peliqanError ?? error.value);
+const loadError = computed(
+    () => props.peliqanError ?? error.value ?? entiteitTrendsError.value,
+);
 
 const drillOpen = ref(false);
 const drillTile = ref(null);
@@ -116,6 +175,7 @@ function isOmzetbrugBanner(banner) {
                 <KpiStrategischPeriodBar
                     v-if="scherm === 'strategisch'"
                     v-model="periode"
+                    v-model:entiteit="entiteit"
                     :years="periodeOptions"
                     class="mb-6"
                 />

@@ -75,6 +75,9 @@ const goalChip = {
                     {{ goalChip[tile.goalStatus].label }}
                 </span>
             </div>
+            <p v-if="tile.entiteitNote" class="mt-0.5 text-[11px] text-gray-500">
+                {{ tile.entiteitNote }}
+            </p>
 
             <!-- Value state -->
             <template v-if="tile.resolved.display === 'value'">

@@ -583,6 +583,7 @@ class KpiScreenFixtureProvider
                 'kpi_registry' => $this->registryRows(),
                 'kpi_omzetbrug' => $this->omzetbrugRows(),
                 'kpi_handmatig' => [],
+                'kpi_trend' => $this->entiteitTrendRows(),
                 default => [
                     ['periode' => '2026-07-01', 'waarde' => 0, 'status' => 'definitief', 'notitie' => 'Fixture — deploy Peliqan voor echte drill.'],
                 ],
@@ -596,6 +597,32 @@ class KpiScreenFixtureProvider
             'errors' => [],
             'meta' => $this->meta('drill'),
         ];
+    }
+
+    /**
+     * Trendrijen per entiteit voor het entiteitfilter op strategisch (drill-route kpi_trend).
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function entiteitTrendRows(): array
+    {
+        $reeksen = [
+            'bruto_marge_per_loonkosten' => ['alaw' => [2.30, 2.28, 2.21], 'pgl1' => [4.15, 4.09, 3.92], 'acco' => [2.20, 2.27, 2.51]],
+            'ebitda' => ['alaw' => [910_000, 892_583, 499_121], 'pgl1' => [760_000, 755_740, 576_602], 'acco' => [105_000, 107_143, 119_275]],
+            'omzet_brug' => ['alaw' => [11_700_000, 11_900_000, 12_044_618], 'pgl1' => [6_900_000, 6_850_000, 6_781_148], 'acco' => [200_000, 207_000, 214_800]],
+        ];
+        $maanden = ['2026-05-01', '2026-06-01', '2026-07-01'];
+
+        $rows = [];
+        foreach ($reeksen as $kpi => $perScope) {
+            foreach ($perScope as $scope => $waarden) {
+                foreach ($waarden as $i => $waarde) {
+                    $rows[] = $this->trend($kpi, $scope, $maanden[$i], $waarde, 'definitief', $i + 1);
+                }
+            }
+        }
+
+        return $rows;
     }
 
     /**

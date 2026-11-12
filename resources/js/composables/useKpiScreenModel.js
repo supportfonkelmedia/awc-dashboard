@@ -9,6 +9,7 @@ import {
     STATE_LABELS,
 } from '@/utils/kpiFormat';
 import { oldestBronBijgewerktLabel } from '@/utils/kpiFreshness';
+import { scopeLabel } from '@/constants/kpiEntiteiten';
 
 /**
  * @param {Record<string, unknown>|null|undefined} row
@@ -300,10 +301,70 @@ function resolveTile(configRow, oordeelRow) {
 }
 
 /**
+ * Trendrijen uit de drill-route samenvoegen met die van het scherm, zonder dubbele punten.
+ *
+ * @param {Array<Record<string, unknown>>} base
+ * @param {Array<Record<string, unknown>>} extra
+ */
+function mergeTrends(base, extra) {
+    if (!extra?.length) {
+        return base;
+    }
+    const key = (r) =>
+        `${r.kpi_code}|${r.scope_code ?? ''}|${r.serie ?? ''}|${r.periode}`;
+    const seen = new Set(base.map(key));
+
+    return [...base, ...extra.filter((r) => !seen.has(key(r)))];
+}
+
+/**
+ * Entiteitfilter (alleen strategisch): een tegel schakelt naar de gekozen entiteit
+ * als kpi_oordeel daar een rij voor heeft. Anders blijft de tegel staan met een notitie,
+ * zodat niemand een concerncijfer voor een entiteitcijfer aanziet.
+ *
+ * @param {Record<string, unknown>} row tegel_config-rij
+ * @param {Array<Record<string, unknown>>} oordelen
+ * @param {string} entiteit scope_code, of 'concern'
+ * @returns {{ row: Record<string, unknown>, note: string|null }}
+ */
+function applyEntiteit(row, oordelen, entiteit) {
+    if (entiteit === 'concern' || !row.kpi_code) {
+        return { row, note: null };
+    }
+    const kpiCode = String(row.kpi_code);
+    if (findOordeelRow(oordelen, kpiCode, entiteit)) {
+        return {
+            row: {
+                ...row,
+                scope_code: entiteit,
+                trend_scope_code: row.trend_kpi_code ? entiteit : row.trend_scope_code,
+                titel: `${row.titel ?? ''}, ${scopeLabel(entiteit)}`,
+            },
+            note: null,
+        };
+    }
+    const huidige = row.scope_code == null ? '' : String(row.scope_code);
+
+    return {
+        row,
+        note: huidige
+            ? `Niet per entiteit beschikbaar; toont ${huidige === 'concern' ? 'het concern' : scopeLabel(huidige)}.`
+            : 'Niet per entiteit beschikbaar.',
+    };
+}
+
+/**
  * @param {import('vue').Ref<object|null>} payloadRef
  * @param {import('vue').Ref<string>} [periodeRef] 'all' | '2026' — alleen voor trendlijnen
+ * @param {import('vue').Ref<string>} [entiteitRef] scope_code of 'concern' — alleen strategisch
+ * @param {import('vue').Ref<Array<object>>} [extraTrendsRef] trendrijen voor andere entiteiten
  */
-export function useKpiScreenModel(payloadRef, periodeRef = null) {
+export function useKpiScreenModel(
+    payloadRef,
+    periodeRef = null,
+    entiteitRef = null,
+    extraTrendsRef = null,
+) {
     const elements = computed(() => {
         const payload = payloadRef.value;
         if (!payload) {
@@ -314,16 +375,23 @@ export function useKpiScreenModel(payloadRef, periodeRef = null) {
         const scherm = payload.scherm ? String(payload.scherm) : '';
         const config = payload.tegel_config ?? [];
         const oordelen = payload.kpi_oordeel ?? [];
-        const trends = payload.kpi_trend ?? [];
+        const trends = mergeTrends(payload.kpi_trend ?? [], extraTrendsRef?.value ?? []);
+        const entiteit =
+            scherm === 'strategisch' ? (entiteitRef?.value ?? 'concern') : 'concern';
 
         /** @type {Array<object>} */
         const out = [];
 
-        for (const row of config) {
-            const element = String(row.element ?? 'tegel');
+        for (const configRow of config) {
+            const element = String(configRow.element ?? 'tegel');
             if (element === 'header') {
                 continue;
             }
+
+            const { row, note: entiteitNote } =
+                element === 'tegel' || element === 'banner'
+                    ? applyEntiteit(configRow, oordelen, entiteit)
+                    : { row: configRow, note: null };
 
             const oordeelRow =
                 row.kpi_code != null && row.kpi_code !== ''
@@ -434,7 +502,9 @@ export function useKpiScreenModel(payloadRef, periodeRef = null) {
             });
 
             out.push({
-                key: `${row.scherm}-${row.positie}-${row.kpi_code ?? row.titel}`,
+                // scope in de key: bij een andere entiteit mount de tegel/banner opnieuw.
+                key: `${row.scherm}-${row.positie}-${row.kpi_code ?? row.titel}-${normScope(row)}`,
+                entiteitNote,
                 element,
                 positie: Number(row.positie ?? 0),
                 pijler: pijlerRaw,

@@ -1,6 +1,6 @@
 <script setup>
 import { leesbaar } from '@/utils/leesbaar';
-import KpiTrendSparkline from '@/Components/Kpi/KpiTrendSparkline.vue';
+import KpiTegelGrafiek from '@/Components/Kpi/KpiTegelGrafiek.vue';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import Drawer from 'primevue/drawer';
@@ -133,10 +133,15 @@ function tableColumns(rows) {
             <h3 class="mb-2 text-sm font-semibold text-gray-900">
                 Trend
             </h3>
-            <KpiTrendSparkline
-                :series="tile.trendSeries"
+            <KpiTegelGrafiek
+                :series="tile.trendSeriesAll ?? tile.trendSeries"
+                :periode="tile.trendPeriode ?? 'all'"
+                :kpi-code="tile.kpiCode"
                 :eenheid="tile.eenheid ?? 'ratio'"
-                height-class="h-24"
+                :richting="tile.richting"
+                :doel="tile.doel"
+                height-class="h-48"
+                assen
             />
         </div>
 

@@ -427,6 +427,8 @@ export function useKpiScreenModel(
                 : [];
             const trendPoints = filterTrendByPeriode(trendPointsAll, periode);
             const trendSeries = groupTrendSeries(trendPoints);
+            // De tegelgrafiek zet dezelfde maand een jaar eerder ernaast: die staat buiten het periodefilter.
+            const trendSeriesAll = groupTrendSeries(trendPointsAll);
             const trendFilteredOut =
                 trendPointsAll.length > 0 && trendPoints.length === 0;
 
@@ -558,7 +560,13 @@ export function useKpiScreenModel(
                     : null,
                 eenheid: oordeelRow?.eenheid ? String(oordeelRow.eenheid) : null,
                 trendSeries,
+                trendSeriesAll,
                 trendFilteredOut,
+                richting: oordeelRow?.richting ? String(oordeelRow.richting) : null,
+                doel:
+                    oordeelRow?.doel != null && oordeelRow.doel !== ''
+                        ? Number(oordeelRow.doel)
+                        : null,
                 trendPeriode: periode,
                 drillViews: row.drill_views
                     ? String(row.drill_views)

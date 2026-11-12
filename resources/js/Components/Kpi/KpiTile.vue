@@ -2,7 +2,7 @@
 import { leesbaar } from '@/utils/leesbaar';
 import KpiInfo from '@/Components/Kpi/KpiInfo.vue';
 import KpiTileFooter from '@/Components/Kpi/KpiTileFooter.vue';
-import KpiTrendSparkline from '@/Components/Kpi/KpiTrendSparkline.vue';
+import KpiTegelGrafiek from '@/Components/Kpi/KpiTegelGrafiek.vue';
 import { computed } from 'vue';
 
 const props = defineProps({
@@ -173,17 +173,21 @@ const goalChip = {
 
             <!-- Een onbetrouwbaar cijfer krijgt ook geen trendlijn: de historie heeft hetzelfde probleem. -->
             <div v-if="tile.resolved.state === 'onbetrouwbaar'" class="mt-auto" />
-            <KpiTrendSparkline
+            <KpiTegelGrafiek
                 v-else
-                :series="tile.trendSeries"
+                :series="tile.trendSeriesAll ?? tile.trendSeries"
+                :periode="tile.trendPeriode ?? 'all'"
+                :kpi-code="tile.kpiCode"
                 :eenheid="tile.oordeelRow?.eenheid ?? 'ratio'"
+                :richting="tile.richting"
+                :doel="tile.doel"
                 :empty-text="
                     tile.trendFilteredOut
                         ? `Geen punten in ${tile.trendPeriode}`
                         : 'Nog geen maandhistorie'
                 "
-                height-class="h-[4.5rem]"
-                class="mt-auto pt-5"
+                height-class="h-20"
+                class="mt-auto pt-4"
             />
         </div>
 

@@ -296,7 +296,7 @@ class KpiScreenFixtureProvider
             $this->status('enps', '', 'wacht_op_invoer', 'Nog geen eNPS ingevoerd voor dit kwartaal.'),
             $this->status('ab_players', '', 'wacht_op_invoer', 'Nog geen A/B Players ingevoerd voor dit kwartaal.', 'Daphne'),
             $this->meet('time_to_onboarding', 'alaw', 66.7, null, null, 'dagen', 'lager_beter', $sep),
-            $this->meet('dock_to_stock', 'alaw', 88.4, 77.4, 11.0, 'procent', 'hoger_beter', $aug),
+            [...$this->meet('dock_to_stock', 'alaw', 88.4, 77.4, 11.0, 'procent', 'hoger_beter', $aug), 'doel' => 90],
             $this->meet('acc_dossiers', 'acco', 7345, null, null, 'aantal', 'neutraal', $sep),
             $this->betrouwbaarheid(
                 $this->meet('throughput', 'alaw', null, null, null, 'aantal', 'hoger_beter', $aug, 'onbetrouwbaar', self::REDEN_THROUGHPUT),
@@ -412,35 +412,108 @@ class KpiScreenFixtureProvider
      */
     private function trendsForScherm(string $scherm): array
     {
+        // Per scherm de KPI's met een trendlijn: [kpi, scope, start, eind, seizoen, ruis, stap].
+        $reeksen = [
+            'strategisch' => [
+                ['bruto_marge_per_loonkosten', 'concern', 2.95, 2.40, 0.04, 0.05, 1],
+                ['triple_lob', 'concern', 6.2, 8.2, 0.05, 0.04, 1],
+                ['winrate', 'Verkooppijplijn', 74.0, 42.1, 0.0, 0.03, 1],
+                ['churn', 'concern', 4, 30, 0.0, 0.5, 3],
+                ['ebitda', 'concern', 1_270_000, 1_190_000, 0.12, 0.05, 1],
+                ['omzet_brug', 'concern', 16_300_000, 19_040_000, 0.0, 0.005, 1],
+            ],
+            'operationeel' => [
+                ['winrate', 'Verkooppijplijn', 74.0, 42.1, 0.0, 0.03, 1],
+                ['time_to_onboarding', 'alaw', 105, 66.7, 0.0, 0.25, 3],
+                ['dock_to_stock', 'alaw', 80.0, 88.4, 0.02, 0.03, 1],
+                ['churn', 'concern', 4, 30, 0.0, 0.5, 3],
+            ],
+            'awc' => [
+                ['bruto_marge_per_loonkosten', 'alaw', 2.80, 2.21, 0.02, 0.02, 1],
+                ['ebitda', 'alaw', 520_000, 499_000, 0.2, 0.08, 1],
+                ['omzet_brug', 'alaw', 8_900_000, 12_044_000, 0.0, 0.004, 1],
+                ['dock_to_stock', 'alaw', 80.0, 88.4, 0.02, 0.03, 1],
+                ['damage_rate', 'alaw', 1.2, 4.6, 0.15, 0.35, 1],
+            ],
+            'afc' => [
+                ['bruto_marge_per_loonkosten', 'pgl1', 3.9, 3.6, 0.05, 0.08, 1],
+                ['ebitda', 'pgl1', 650_000, 577_000, 0.15, 0.08, 1],
+                ['omzet_brug', 'pgl1', 7_200_000, 6_780_000, 0.03, 0.01, 1],
+                ['afc_zendingen', 'pgl1', 980, 1117, 0.12, 0.09, 1],
+                ['afc_modal_split', 'pgl1', 92.0, 88.7, 0.02, 0.02, 1],
+                ['afc_marge_per_zending', 'pgl1', 118, 152.9, 0.06, 0.06, 1],
+                ['afc_quote_conversie', 'pgl1', 63.0, 47.4, 0.0, 0.03, 1],
+            ],
+            'acc' => [
+                ['bruto_marge_per_loonkosten', 'acco', 3.0, 2.51, 0.03, 0.04, 1],
+                ['ebitda', 'acco', 97_000, 119_000, 0.1, 0.07, 1],
+                ['omzet_brug', 'acco', 146_000, 214_800, 0.0, 0.01, 1],
+                ['acc_doorlooptijd', 'acco', 1.9, 2.8, 0.1, 0.15, 1],
+            ],
+        ];
+
         $trends = [];
-
-        if ($scherm === 'strategisch') {
-            $trends[] = $this->trend('ebitda', 'concern', '2026-07-01', 1_194_998, 'definitief', 1);
-            $trends[] = $this->trend('ebitda', 'concern', '2026-08-01', 1_050_000, 'voorlopig', 2);
-            $trends[] = $this->trend('bruto_marge_per_loonkosten', 'concern', '2026-07-01', 2.4, 'definitief', 1);
+        foreach ($reeksen[$scherm] ?? [] as [$kpi, $scope, $start, $eind, $seizoen, $ruis, $stap]) {
+            array_push($trends, ...$this->demoReeks($kpi, $scope, $start, $eind, $seizoen, $ruis, $stap));
         }
 
-        if (in_array($scherm, ['operationeel', 'awc'], true)) {
-            $trends[] = $this->trend('dock_to_stock', 'alaw', '2026-09-01', 86.9, 'voorlopig', 3);
-        }
-        if ($scherm === 'afc') {
-            $trends[] = $this->trend('afc_zendingen', 'pgl1', '2026-08-01', 1015, 'definitief', 1);
-            $trends[] = $this->trend('afc_zendingen', 'pgl1', '2026-09-01', 1219, 'definitief', 2);
-            $trends[] = $this->trend('afc_zendingen', 'pgl1', '2026-10-01', 1117, 'definitief', 3);
-            $trends[] = $this->trend('afc_zendingen', 'pgl1', '2026-11-01', 363, 'voorlopig', 4);
-            $trends[] = $this->trend('afc_quote_conversie', 'pgl1', '2026-08-01', 45.2, 'definitief', 1);
-            $trends[] = $this->trend('afc_quote_conversie', 'pgl1', '2026-09-01', 46.0, 'definitief', 2);
-            $trends[] = $this->trend('afc_quote_conversie', 'pgl1', '2026-10-01', 47.4, 'definitief', 3);
-            $trends[] = $this->trend('afc_quote_conversie', 'pgl1', '2026-11-01', 48.0, 'voorlopig', 4);
-        }
         if (in_array($scherm, ['operationeel', 'acc'], true)) {
-            $trends[] = $this->trend('acc_dossiers', 'acco', '2026-09-01', 224, 'voorlopig', 1, 'Export');
-            $trends[] = $this->trend('acc_dossiers', 'acco', '2026-09-01', 177, 'voorlopig', 1, 'Overig');
-            $trends[] = $this->trend('acc_dossiers', 'acco', '2026-09-01', 160, 'voorlopig', 1, 'Import');
-            $trends[] = $this->trend('acc_dossiers', 'acco', '2026-09-01', 16, 'voorlopig', 1, 'Consult');
+            foreach (['Export' => 300, 'Import' => 360, 'Overig' => 200, 'Consult' => 40] as $serie => $niveau) {
+                array_push($trends, ...$this->demoReeks('acc_dossiers', 'acco', $niveau * 0.7, $niveau, 0.15, 0.12, 1, $serie));
+            }
         }
 
         return $trends;
+    }
+
+    /**
+     * Demo-historie: 24 maanden (dec 2024 t/m nov 2026) met trend, seizoen en vaste ruis.
+     * De laatste maand is lopend; bij tellingen is die maar deels gevuld.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function demoReeks(
+        string $kpi,
+        string $scope,
+        float $start,
+        float $eind,
+        float $seizoen,
+        float $ruis,
+        int $stap = 1,
+        string $serie = '',
+    ): array {
+        $rows = [];
+        $n = 24;
+        $telling = in_array($kpi, ['afc_zendingen', 'acc_dossiers', 'throughput', 'churn'], true);
+        for ($i = 0; $i < $n; $i++) {
+            $maand = (11 + $i) % 12; // 0 = januari; dec 2024 is index 11
+            $jaar = 2024 + intdiv(11 + $i, 12);
+            if ($stap === 3 && $maand % 3 !== 0) {
+                continue;
+            }
+            $t = $i / ($n - 1);
+            $basis = $start + ($eind - $start) * $t;
+            $golf = 1 + $seizoen * sin(2 * M_PI * ($maand - 2) / 12);
+            // Vaste pseudo-ruis, zodat de demo bij elke laadbeurt hetzelfde oogt.
+            $hash = sin(($i + 1) * 12.9898 + strlen($kpi.$serie) * 78.233) * 43758.5453;
+            $r = ($hash - floor($hash)) * 2 - 1;
+            $waarde = max(0, $basis * $golf * (1 + $ruis * $r));
+            $lopend = $i >= $n - $stap;
+            if ($lopend && $telling) {
+                $waarde *= 0.4;
+            }
+            $rows[] = $this->trend(
+                $kpi,
+                $scope,
+                sprintf('%04d-%02d-01', $jaar, $maand + 1),
+                round($waarde, $telling || $waarde >= 100 ? 0 : 2),
+                $lopend ? 'voorlopig' : 'definitief',
+                $i + 1,
+                $serie,
+            );
+        }
+
+        return $rows;
     }
 
     /**
@@ -633,19 +706,20 @@ class KpiScreenFixtureProvider
     private function entiteitTrendRows(): array
     {
         $reeksen = [
-            'bruto_marge_per_loonkosten' => ['alaw' => [2.30, 2.28, 2.21], 'pgl1' => [4.15, 4.09, 3.92], 'acco' => [2.20, 2.27, 2.51]],
-            'ebitda' => ['alaw' => [910_000, 892_583, 499_121], 'pgl1' => [760_000, 755_740, 576_602], 'acco' => [105_000, 107_143, 119_275]],
-            'omzet_brug' => ['alaw' => [11_700_000, 11_900_000, 12_044_618], 'pgl1' => [6_900_000, 6_850_000, 6_781_148], 'acco' => [200_000, 207_000, 214_800]],
+            ['bruto_marge_per_loonkosten', 'alaw', 2.80, 2.21, 0.02, 0.02],
+            ['bruto_marge_per_loonkosten', 'pgl1', 3.9, 3.6, 0.05, 0.08],
+            ['bruto_marge_per_loonkosten', 'acco', 3.0, 2.51, 0.03, 0.04],
+            ['ebitda', 'alaw', 520_000, 499_000, 0.2, 0.08],
+            ['ebitda', 'pgl1', 650_000, 577_000, 0.15, 0.08],
+            ['ebitda', 'acco', 97_000, 119_000, 0.1, 0.07],
+            ['omzet_brug', 'alaw', 8_900_000, 12_044_000, 0.0, 0.004],
+            ['omzet_brug', 'pgl1', 7_200_000, 6_780_000, 0.03, 0.01],
+            ['omzet_brug', 'acco', 146_000, 214_800, 0.0, 0.01],
         ];
-        $maanden = ['2026-05-01', '2026-06-01', '2026-07-01'];
 
         $rows = [];
-        foreach ($reeksen as $kpi => $perScope) {
-            foreach ($perScope as $scope => $waarden) {
-                foreach ($waarden as $i => $waarde) {
-                    $rows[] = $this->trend($kpi, $scope, $maanden[$i], $waarde, 'definitief', $i + 1);
-                }
-            }
+        foreach ($reeksen as [$kpi, $scope, $start, $eind, $seizoen, $ruis]) {
+            array_push($rows, ...$this->demoReeks($kpi, $scope, $start, $eind, $seizoen, $ruis));
         }
 
         return $rows;

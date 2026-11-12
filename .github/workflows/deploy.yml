@@ -1,7 +1,9 @@
-# Ploi-style deploy: build on GitHub, rsync public/build, git pull + Composer on server.
+# Build runs on every push (artifact: public/build).
+# deploy job uses SSH — only works if the server accepts connections FROM GitHub (often blocked on VPS).
+# If ssh-keyscan fails: use .github/scripts/server-deploy-from-actions.sh on the server (outbound to GitHub).
+#
 #   dev  → environment "development"
 #   main → environment "production"
-# Secrets per environment: SSH_HOST, SSH_USER, SSH_PASSWORD, SSH_PORT, DEPLOY_PATH (+ optional PHP_BIN)
 
 name: Build & deploy
 
@@ -40,15 +42,12 @@ jobs:
           fi
           echo "environment=${ENV}" >> "$GITHUB_OUTPUT"
 
-  build-and-deploy:
-    needs: resolve-environment
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    environment: ${{ needs.resolve-environment.outputs.environment }}
+    timeout-minutes: 20
     concurrency:
-      group: deploy-${{ needs.resolve-environment.outputs.environment }}
+      group: build-${{ github.ref }}
       cancel-in-progress: true
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -79,7 +78,26 @@ jobs:
         with:
           name: vite-build-${{ github.ref_name }}
           path: public/build/
-          retention-days: 7
+          retention-days: 14
+
+  deploy:
+    needs: [resolve-environment, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: ${{ needs.resolve-environment.outputs.environment }}
+    continue-on-error: true
+    concurrency:
+      group: deploy-${{ needs.resolve-environment.outputs.environment }}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: vite-build-${{ github.ref_name }}
+          path: public/build/
 
       - name: Install SSH client tools
         run: sudo apt-get update -qq && sudo apt-get install -y -qq sshpass openssh-client
@@ -101,21 +119,19 @@ jobs:
           done
           PORT="${SSH_PORT:-22}"
           if ! [[ "$PORT" =~ ^[0-9]+$ ]]; then
-            echo "::error::SSH_PORT must be numeric (use 22). Check the development environment secret."
+            echo "::error::SSH_PORT must be numeric (use 22)."
             exit 1
           fi
           echo "Target: ${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/public/build/ (port ${PORT})"
           mkdir -p ~/.ssh
           if ! ssh-keyscan -p "$PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>ssh-keyscan.err; then
-            echo "::error::ssh-keyscan failed (host unreachable or wrong host/port)"
+            echo "::error::ssh-keyscan failed — GitHub cannot reach this host (firewall). Use server-deploy-from-actions.sh on the VPS instead."
             cat ssh-keyscan.err
             exit 1
           fi
           SSH_COMMON=( -p "$PORT" -o StrictHostKeyChecking=yes -o ConnectTimeout=30 )
-          echo "Testing SSH login…"
           if ! sshpass -e ssh "${SSH_COMMON[@]}" "${SSH_USER}@${SSH_HOST}" "echo SSH OK"; then
-            echo "::error::SSH login failed (timeout = firewall blocks GitHub; denied = user/password/port/path)"
-            echo "Build was uploaded as workflow artifact 'vite-build-${{ github.ref_name }}' if you need to deploy manually."
+            echo "::error::SSH login failed."
             exit 1
           fi
           sshpass -e ssh "${SSH_COMMON[@]}" "${SSH_USER}@${SSH_HOST}" \

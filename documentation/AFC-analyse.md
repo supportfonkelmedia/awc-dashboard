@@ -167,7 +167,7 @@ from afc_control_center.afc_resultaat_maand_afc_control_center
 
 Aangemaakt op 12-11-2026 in `"My Queries"` (dw_2401):
 
-| View | table_id | Rijen bij aanmaken |
+| View (query in Peliqan heet nu `<view>_my_queries`) | table_id | Rijen bij aanmaken |
 |---|---|---|
 | kpi_afc_zending_maand | 1579280 | 299 |
 | kpi_afc_eigenaar_maand | 1579281 | 660 |
@@ -176,10 +176,18 @@ Aangemaakt op 12-11-2026 in `"My Queries"` (dw_2401):
 | kpi_afc_klant_retentie_jaar | 1579284 | 4 |
 | kpi_afc_resultaat_maand | 1579285 | 36 |
 
-## Nog te doen voor live
+De handler leest `"My Queries".<view>_my_queries`. In plaats van een replica (kopie per uur) zijn
+de zes queries als **databaseview** aangemaakt (`create_as_view`) en hernoemd naar `<view>_my_queries`.
+In Peliqan heten de query-tabellen dus `kpi_afc_..._my_queries`; dat is bewust, zo heet de view in
+de database precies zoals de handler hem zoekt. Een view rekent bij elke aanvraag op de replica's van
+`afc_control_center` (dagelijks 08:30 tot 09:15 UTC ververst); Laravel cachet het antwoord een uur.
+Zet hier geen replica op: die zou `..._my_queries_my_queries` heten en niet gelezen worden.
 
-1. Per view de replica aanzetten: elk uur, naar `"My Queries"`, tabelnaam `<view>_my_queries`
-   (kan niet via de MCP-koppeling, alleen in de Peliqan-interface).
-2. Namen toevoegen aan `ALLOWED_DRILL_VIEWS` in de Peliqan API-handler (zie `peliqan_kpi_api_handler.py`) en die opnieuw deployen.
-3. `kpi_afc_sprinter_maand` herbouwen op `afc_zending`, zodat er één Sprinter-keten is.
-4. Teams: de teamleads krijgen later een eigen dashboard met tegels uit dit scherm; eigenaar → team volgt.
+Handler: app 17395 (`/kpi/data`) op v8 (`2026-11-12-kpi-v8-afc-analyse`), gelijk aan
+`peliqan_kpi_api_handler.py`. De vorige versie (v7) staat in de commit ervoor.
+
+## Nog te doen
+
+1. Eind-tot-eind controleren op de testserver (lokaal ontbreekt de Peliqan-JWT).
+2. `kpi_afc_sprinter_maand` herbouwen op `afc_zending`, zodat er één Sprinter-keten is.
+3. Teams: de teamleads krijgen later een eigen dashboard met tegels uit dit scherm; eigenaar → team volgt.

@@ -1,0 +1,70 @@
+-- Peliqan "My Queries".kpi_tegel_config (table_id 1419150), stand 2026-11-12 vóór de AFC-tegelwijziging
+SELECT
+  scherm,
+  positie,
+  pijler,
+  titel,
+  kpi_code,
+  scope_code,
+  waarde_bron,
+  vaste_staat,
+  vaste_tekst,
+  trend_kpi_code,
+  trend_scope_code,
+  drill_views,
+  bron_label,
+  CASE
+    WHEN scherm = 'header'
+    THEN 'header'
+    WHEN pijler = 'sectie'
+    THEN 'sectie'
+    WHEN pijler = 'banner'
+    THEN 'banner'
+    ELSE 'tegel'
+  END AS element
+FROM (VALUES
+  ('header', 1, 'header', 'Datacontroles', CAST(NULL AS TEXT), CAST(NULL AS TEXT), 'kpi_controles', CAST(NULL AS TEXT), 'Telling van status fout, let_op en ok uit kpi_controles; klik gaat naar Tactisch, sectie Datakwaliteit.', CAST(NULL AS TEXT), CAST(NULL AS TEXT), 'kpi_controles', 'Alle bronnen'),
+  ('strategisch', 0, 'banner', 'Omzetbrug', 'omzet_brug', 'concern', 'kpi_oordeel', NULL, 'Brede balk boven de tegels: start, nieuw, gegroeid, gekrompen, verloren, eind uit kpi_omzetbrug (scope Concern).', 'omzet_brug', 'concern', 'kpi_omzetbrug, kpi_omzetbrug_top, kpi_omzetbrug_klant', 'Cashweb · omzet per klant'),
+  ('strategisch', 1, 'Financiële gezondheid', 'Bruto marge per loonkosten', 'bruto_marge_per_loonkosten', 'concern', 'kpi_oordeel', NULL, NULL, 'bruto_marge_per_loonkosten', 'concern', 'kpi_bm_maand', 'Cashweb · grootboek'),
+  ('strategisch', 2, 'Waarde', '% Triple LOB', 'triple_lob', 'concern', 'kpi_oordeel', NULL, NULL, 'triple_lob', 'concern', 'kpi_triple_lob_maand, kpi_triple_lob_te_controleren', 'Cashweb · omzet per klant'),
+  ('strategisch', 3, 'Commercieel', 'Winrate Verkooppijplijn', 'winrate', 'Verkooppijplijn', 'kpi_oordeel', NULL, NULL, 'winrate', 'Verkooppijplijn', 'kpi_winrate_maand, kpi_winrate_fases', 'HubSpot · deals'),
+  ('strategisch', 4, 'Retentie', 'Churn', 'churn', 'concern', 'kpi_oordeel', NULL, NULL, 'churn', 'concern', 'kpi_churn_kwartaal', 'HubSpot · bedrijven'),
+  ('strategisch', 5, 'Operatie', 'OTIF', 'otif', '', 'kpi_oordeel', NULL, NULL, NULL, NULL, NULL, '7T'),
+  ('strategisch', 6, 'Financiële gezondheid', 'EBITDA', 'ebitda', 'concern', 'kpi_oordeel', NULL, NULL, 'ebitda', 'concern', 'kpi_ebitda_maand, kpi_kosten_maand, kpi_handmatig', 'Cashweb · grootboek'),
+  ('operationeel', 1, '1 · Bewustwording', 'ICP-interacties', NULL, NULL, 'vast', 'in_opbouw', 'Voorstel, nog te bouwen. Proxy: deals per week; ICP-tag in HubSpot nog te definiëren.', NULL, NULL, NULL, 'HubSpot'),
+  ('operationeel', 2, '2 · Overweging', 'Client requests per LOB', NULL, NULL, 'vast', 'in_opbouw', 'Nog niet gemeten.', NULL, NULL, NULL, 'HubSpot'),
+  ('operationeel', 3, '3 · Besluit', 'Winrate Verkooppijplijn', 'winrate', 'Verkooppijplijn', 'kpi_oordeel', NULL, NULL, 'winrate', 'Verkooppijplijn', 'kpi_winrate_maand', 'HubSpot · deals'),
+  ('operationeel', 4, '4 · Onboarding', 'Time to onboarding', 'time_to_onboarding', 'alaw', 'kpi_oordeel', NULL, NULL, 'time_to_onboarding', 'alaw', 'kpi_onboarding_kwartaal', 'HubSpot · tickets'),
+  ('operationeel', 5, '5 · Adoptie', 'Dock-to-stock binnen 24 uur', 'dock_to_stock', 'alaw', 'kpi_oordeel', NULL, NULL, 'dock_to_stock', 'alaw', 'kpi_d2s_maand', '7T · inslag'),
+  ('operationeel', 6, '5 · Adoptie', 'Bezettingsgraad', NULL, NULL, 'vast', 'in_validatie', 'Het juiste cijfer staat in space.amsterdamwarehouse.com; koppeling volgt.', NULL, NULL, NULL, 'space.amsterdamwarehouse.com'),
+  ('operationeel', 7, '5 · Adoptie', 'On-time delivery', NULL, NULL, 'vast', 'in_opbouw', 'Definitie van op tijd nog vast te leggen.', NULL, NULL, NULL, 'Sprinter3000'),
+  ('operationeel', 8, '6 · Retentie', 'Churn', 'churn', 'concern', 'kpi_oordeel', NULL, NULL, 'churn', 'concern', 'kpi_churn_kwartaal', 'HubSpot · bedrijven'),
+  ('operationeel', 9, '6 · Retentie', 'Dossiers per soort', 'acc_dossiers', 'acco', 'kpi_oordeel', NULL, NULL, 'acc_dossiers', 'acco', 'kpi_acc_dossiers_maand', 'HubSpot · tickets'),
+  ('tactisch', 1, 'Mensen', 'eNPS', 'enps', 'concern', 'kpi_oordeel', NULL, NULL, NULL, NULL, 'kpi_handmatig', 'Handmatige invoer'),
+  ('tactisch', 2, 'sectie', 'Handmatige invoer', NULL, NULL, 'kpi_registry', NULL, 'Rijen uit kpi_registry met bouwstatus handmatig, plus de laatste invoer per KPI uit kpi_handmatig.', NULL, NULL, 'kpi_registry, kpi_handmatig', 'kpi_invoer'),
+  ('tactisch', 3, 'sectie', 'Datakwaliteit', NULL, NULL, 'kpi_controles', NULL, 'Alle rijen uit kpi_controles, gesorteerd op volgorde.', NULL, NULL, 'kpi_controles', 'Alle bronnen'),
+  ('tactisch', 4, 'sectie', 'Gepland voor 2027', NULL, NULL, 'kpi_oordeel', NULL, 'Rijen uit kpi_oordeel met weergave gepland_2027; alleen naam en leeg_reden.', NULL, NULL, NULL, 'Geen'),
+  ('awc', 1, 'Financieel', 'Bruto marge per loonkosten, AWC', 'bruto_marge_per_loonkosten', 'alaw', 'kpi_oordeel', NULL, NULL, 'bruto_marge_per_loonkosten', 'alaw', 'kpi_bm_maand', 'Cashweb · grootboek'),
+  ('awc', 2, 'Financieel', 'EBITDA, AWC', 'ebitda', 'alaw', 'kpi_oordeel', NULL, NULL, 'ebitda', 'alaw', 'kpi_kosten_maand', 'Cashweb · grootboek'),
+  ('awc', 3, 'Financieel', 'Omzet en klanten, AWC', 'omzet_brug', 'alaw', 'kpi_oordeel', NULL, NULL, 'omzet_brug', 'alaw', 'kpi_omzetbrug, kpi_omzetbrug_klant', 'Cashweb · omzet per klant'),
+  ('awc', 4, 'Inslag', 'Dock-to-stock binnen 24 uur', 'dock_to_stock', 'alaw', 'kpi_oordeel', NULL, NULL, 'dock_to_stock', 'alaw', 'kpi_d2s_maand', '7T · inslag'),
+  ('awc', 5, 'Voorraad', 'Inventory accuracy', NULL, NULL, 'vast', 'in_validatie', 'Rekenregel voor een goede telregel ligt bij Edo; tot die tijd geen getal tonen.', NULL, NULL, NULL, '7T · tellingen'),
+  ('awc', 6, 'Uitslag', 'Throughput', 'throughput', 'alaw', 'kpi_oordeel', NULL, NULL, 'throughput', 'alaw', 'kpi_awc_ops_maand', '7T · inslag en uitslag'),
+  ('awc', 7, 'Inslag', 'Damage rate', 'damage_rate', 'alaw', 'kpi_oordeel', NULL, NULL, 'damage_rate', 'alaw', 'kpi_awc_ops_maand, kpi_awc_schade_klant', '7T · manco-registratie'),
+  ('awc', 8, 'Uitslag', 'Perfect order rate', NULL, NULL, 'vast', 'in_opbouw', 'Volgt zodra OTIF is vastgesteld.', NULL, NULL, NULL, '7T'),
+  ('awc', 9, 'Opslag', 'Storage lead time', NULL, NULL, 'vast', 'niet_meetbaar', '59% van de uitleveringen komt van een standaardpartij zonder ontvangstdatum; niet betrouwbaar te meten.', NULL, NULL, NULL, '7T · partijen'),
+  ('afc', 1, 'Financieel', 'Bruto marge per loonkosten, AFC', 'bruto_marge_per_loonkosten', 'pgl1', 'kpi_oordeel', NULL, NULL, 'bruto_marge_per_loonkosten', 'pgl1', 'kpi_bm_maand', 'Cashweb · grootboek'),
+  ('afc', 2, 'Financieel', 'EBITDA, AFC', 'ebitda', 'pgl1', 'kpi_oordeel', NULL, NULL, 'ebitda', 'pgl1', 'kpi_kosten_maand', 'Cashweb · grootboek'),
+  ('afc', 3, 'Financieel', 'Omzet en klanten, AFC', 'omzet_brug', 'pgl1', 'kpi_oordeel', NULL, NULL, 'omzet_brug', 'pgl1', 'kpi_omzetbrug, kpi_omzetbrug_klant', 'Cashweb · omzet per klant'),
+  ('afc', 4, 'Commercieel', 'Winrate AFC Verkooplijn', 'winrate', 'AFC - Verkooplijn', 'kpi_oordeel', NULL, NULL, 'winrate', 'AFC - Verkooplijn', 'kpi_winrate_maand', 'HubSpot · deals'),
+  ('afc', 5, 'Volume', 'Zendingen', 'afc_zendingen', 'pgl1', 'kpi_oordeel', NULL, NULL, 'afc_zendingen', 'pgl1', 'kpi_afc_sprinter_maand', 'Sprinter3000 · zendingen'),
+  ('afc', 6, 'Volume', 'Modal split', 'afc_modal_split', 'pgl1', 'kpi_oordeel', NULL, NULL, 'afc_modal_split', 'pgl1', 'kpi_afc_sprinter_maand', 'Sprinter3000 · zendingen'),
+  ('afc', 7, 'Marge', 'Marge per zending', 'afc_marge_per_zending', 'pgl1', 'kpi_oordeel', NULL, NULL, 'afc_marge_per_zending', 'pgl1', 'kpi_afc_sprinter_maand', 'Sprinter3000 · zendingen'),
+  ('afc', 8, 'Commercieel', 'Quote conversion', NULL, NULL, 'vast', 'in_opbouw', 'Offertes zijn er sinds de eigen Sprinter-sync (sprinter_api.quotations); definitie van conversie nog vast te leggen.', NULL, NULL, NULL, 'Sprinter3000 · offertes'),
+  ('afc', 9, 'Levering', 'On-time delivery', NULL, NULL, 'vast', 'in_opbouw', 'Definitie van op tijd nog vast te leggen.', NULL, NULL, NULL, 'Sprinter3000'),
+  ('acc', 1, 'Financieel', 'Bruto marge per loonkosten, ACC', 'bruto_marge_per_loonkosten', 'acco', 'kpi_oordeel', NULL, NULL, 'bruto_marge_per_loonkosten', 'acco', 'kpi_bm_maand', 'Cashweb · grootboek'),
+  ('acc', 2, 'Financieel', 'EBITDA, ACC', 'ebitda', 'acco', 'kpi_oordeel', NULL, NULL, 'ebitda', 'acco', 'kpi_kosten_maand', 'Cashweb · grootboek'),
+  ('acc', 3, 'Financieel', 'Omzet en klanten, ACC', 'omzet_brug', 'acco', 'kpi_oordeel', NULL, NULL, 'omzet_brug', 'acco', 'kpi_omzetbrug, kpi_omzetbrug_klant', 'Cashweb · omzet per klant'),
+  ('acc', 4, 'Volume', 'Dossiers per soort', 'acc_dossiers', 'acco', 'kpi_oordeel', NULL, NULL, 'acc_dossiers', 'acco', 'kpi_acc_dossiers_maand', 'HubSpot · tickets'),
+  ('acc', 5, 'Doorlooptijd', 'Doorlooptijd dossier', 'acc_doorlooptijd', 'acco', 'kpi_oordeel', NULL, NULL, 'acc_doorlooptijd', 'acco', 'kpi_acc_doorlooptijd_maand', 'HubSpot · tickets'),
+  ('acc', 6, 'Kwaliteit', 'First time right', NULL, NULL, 'vast', 'in_opbouw', 'Nog niet gemeten.', NULL, NULL, NULL, 'HubSpot')) AS v(scherm, positie, pijler, titel, kpi_code, scope_code, waarde_bron, vaste_staat, vaste_tekst, trend_kpi_code, trend_scope_code, drill_views, bron_label)

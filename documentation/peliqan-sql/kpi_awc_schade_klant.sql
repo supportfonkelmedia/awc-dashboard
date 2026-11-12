@@ -1,9 +1,13 @@
--- Peliqan "My Queries".kpi_awc_schade_klant (table_id 1419084), stand 2026-11-12
-WITH jaar AS (
-  SELECT relatie_id, MAX(klant) AS klant, SUM(inbounds) AS inbounds, SUM(beschadigd_geleverd) AS beschadigd
-  FROM kpi_data.awc_schade_klant_maand
-  WHERE maand >= CAST(DATE_TRUNC('year', CURRENT_DATE) AS date)
-  GROUP BY relatie_id
+-- Peliqan "My Queries".kpi_awc_schade_klant (table_id 1419084), stand 2026-11-12 na jaarwisselingsfix: in januari het hele vorige jaar (CTE p) in plaats van alleen de lopende januari. Vorige versie: commit 66cd6a6.
+WITH p AS (
+  SELECT CAST(DATE_TRUNC('year', CURRENT_DATE - INTERVAL '1 month') AS date) AS van,
+    CAST(DATE_TRUNC('year', CURRENT_DATE - INTERVAL '1 month') + INTERVAL '1 year' AS date) AS tot
+),
+jaar AS (
+  SELECT s.relatie_id, MAX(s.klant) AS klant, SUM(s.inbounds) AS inbounds, SUM(s.beschadigd_geleverd) AS beschadigd
+  FROM kpi_data.awc_schade_klant_maand AS s, p
+  WHERE s.maand >= p.van AND s.maand < p.tot
+  GROUP BY s.relatie_id
 ),
 tot AS (SELECT SUM(beschadigd) AS alle_schade, SUM(inbounds) AS alle_inbounds FROM jaar)
 SELECT j.relatie_id, j.klant, j.inbounds, j.beschadigd,

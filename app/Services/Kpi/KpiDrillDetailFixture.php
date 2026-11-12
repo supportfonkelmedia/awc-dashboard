@@ -18,6 +18,7 @@ class KpiDrillDetailFixture
         return match ($view) {
             'kpi_churn_klant' => $this->churnKlant(),
             'kpi_winrate_deal' => $this->winrateDeal(),
+            'kpi_ebitda_maand' => $this->ebitdaMaand(),
             default => null,
         };
     }
@@ -57,6 +58,39 @@ class KpiDrillDetailFixture
                 'nu_weer_klant' => $weer,
                 'company_id' => (string) (9_000_000_000 + $i),
             ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * EBITDA per maand per scope, inclusief een maand na vandaag zoals Peliqan die levert bij
+     * vooruitgedateerde boekingen (de drawer verbergt die met een melding).
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function ebitdaMaand(): array
+    {
+        $volgende = date('Y-m-01', strtotime('first day of next month'));
+        $maanden = [
+            [$volgende, 0, -167_763, false],
+            [date('Y-m-01'), 349_762, 67_086, false],
+            [date('Y-m-01', strtotime('first day of last month')), 1_348_311, 225_410, false],
+            [date('Y-m-01', strtotime('first day of -2 months')), 1_339_474, 61_208, true],
+        ];
+        $out = [];
+        foreach (['alaw' => 'AWC', 'pgl1' => 'AFC', 'acco' => 'ACC', 'concern' => 'Concern (AWC, AFC, ACC)'] as $code => $label) {
+            foreach ($maanden as [$maand, $omzet, $ebitda, $afgesloten]) {
+                $out[] = [
+                    'scope_code' => $code,
+                    'scope_label' => $label,
+                    'maand' => $maand,
+                    'omzet' => $omzet,
+                    'ebitda' => $ebitda,
+                    'ebitda_marge_pct' => $omzet ? round(100 * $ebitda / $omzet, 1) : null,
+                    'afgesloten' => $afgesloten,
+                ];
+            }
         }
 
         return $out;

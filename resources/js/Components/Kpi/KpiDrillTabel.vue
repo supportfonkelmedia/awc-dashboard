@@ -38,10 +38,24 @@ watch(
     { immediate: true },
 );
 
+/**
+ * Maanden na de huidige maand bestaan alleen door vooruitgedateerde boekingen (bijv. december-INK
+ * in november). Die horen niet bovenaan een maandtabel; we verbergen ze en zeggen dat erbij.
+ */
+const huidigeMaand = (() => {
+    const d = new Date();
+
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+})();
+const isToekomst = (r) =>
+    typeof r.maand === 'string' && r.maand.slice(0, 10) > huidigeMaand;
+const toekomst = computed(() => props.rows.filter(isToekomst).length);
+
 const zichtbaar = computed(() =>
-    venster.value
+    (venster.value
         ? props.rows.filter((r) => String(r.tegelvenster ?? '') === venster.value)
-        : props.rows,
+        : props.rows
+    ).filter((r) => !isToekomst(r)),
 );
 
 const kolommen = computed(() =>
@@ -108,5 +122,9 @@ const afgekapt = computed(() =>
         </DataTable>
         <p v-else class="text-sm text-gray-500">Geen rijen.</p>
         <p v-if="afgekapt" class="mt-1 text-xs text-gray-500">{{ afgekapt }}</p>
+        <p v-if="toekomst" class="mt-1 text-xs text-gray-500">
+            {{ toekomst }} {{ toekomst === 1 ? 'rij' : 'rijen' }} met een maand na deze maand verborgen
+            (vooruitgedateerde boekingen).
+        </p>
     </div>
 </template>

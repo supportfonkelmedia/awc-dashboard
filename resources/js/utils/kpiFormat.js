@@ -272,4 +272,5 @@ export const STATE_LABELS = {
     data_onvolledig: 'Data onvolledig',
     niet_meetbaar: 'Niet meetbaar',
     data_ontbreekt: 'Data ontbreekt',
+    onbetrouwbaar: 'Cijfer niet betrouwbaar',
 };

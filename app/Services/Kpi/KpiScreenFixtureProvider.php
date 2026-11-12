@@ -284,7 +284,11 @@ class KpiScreenFixtureProvider
             $this->meet('winrate', 'Verkooppijplijn', 42.1, 38.7, 3.4, 'procent', 'hoger_beter', $sep),
             $this->meet('winrate', 'AFC Verkooplijn', null, null, null, 'procent', 'hoger_beter', $sep, 'te_weinig_data', 'Te weinig deals in deze pijplijn.'),
             $this->meet('churn', 'concern', 64, 47, 17, 'aantal', 'lager_beter', $sep),
-            $this->meet('ebitda', 'concern', 1_194_998, 1_755_466, -560_468, 'euro', 'hoger_beter', $jul),
+            $this->betrouwbaarheid(
+                $this->meet('ebitda', 'concern', 1_194_998, 1_755_466, -560_468, 'euro', 'hoger_beter', $jul),
+                'let_op',
+                'Correcties met een datum buiten het boekjaar vallen in januari of december. Maanden rond de jaarwisseling zijn minder betrouwbaar.',
+            ),
             $this->meet('ebitda', 'alaw', 499_121, 892_583, -393_462, 'euro', 'hoger_beter', $jul),
             $this->meet('ebitda', 'pgl1', 576_602, 755_740, -179_138, 'euro', 'hoger_beter', $jul),
             $this->meet('ebitda', 'acco', 119_275, 107_143, 12_132, 'euro', 'hoger_beter', $jul),
@@ -294,7 +298,11 @@ class KpiScreenFixtureProvider
             $this->meet('time_to_onboarding', 'alaw', 66.7, null, null, 'dagen', 'lager_beter', $sep),
             $this->meet('dock_to_stock', 'alaw', 88.4, 77.4, 11.0, 'procent', 'hoger_beter', $aug),
             $this->meet('acc_dossiers', 'acco', 7345, null, null, 'aantal', 'neutraal', $sep),
-            $this->meet('throughput', 'alaw', 13_588, 16_384, -2_796, 'aantal', 'hoger_beter', $aug),
+            $this->betrouwbaarheid(
+                $this->meet('throughput', 'alaw', null, null, null, 'aantal', 'hoger_beter', $aug, 'onbetrouwbaar', self::REDEN_THROUGHPUT),
+                'onbetrouwbaar',
+                self::REDEN_THROUGHPUT,
+            ),
             $this->meet('damage_rate', 'alaw', 4.6, 1.5, 3.1, 'procent', 'lager_beter', $aug),
             $this->meet('acc_doorlooptijd', 'acco', 2.8, null, null, 'dagen', 'lager_beter', $sep),
             $this->meet('afc_zendingen', 'pgl1', 1117, 1219, -102, 'aantal', 'neutraal', '2026-10-01'),
@@ -318,6 +326,19 @@ class KpiScreenFixtureProvider
                 'tonen_op_dashboard' => true,
             ],
         ];
+    }
+
+    private const REDEN_THROUGHPUT = 'Telt ook de factuurorders die 7T bij het factureren aanmaakt. De nieuwe telling wacht op akkoord van Edo.';
+
+    /**
+     * Zelfde velden als kpi_oordeel uit kpi_betrouwbaarheid (let_op of onbetrouwbaar).
+     *
+     * @param  array<string, mixed>  $row
+     * @return array<string, mixed>
+     */
+    private function betrouwbaarheid(array $row, string $niveau, string $reden): array
+    {
+        return [...$row, 'betrouwbaarheid' => $niveau, 'betrouwbaarheid_reden' => $reden];
     }
 
     /**

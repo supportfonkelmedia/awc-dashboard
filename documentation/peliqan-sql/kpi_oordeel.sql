@@ -1,4 +1,4 @@
--- Peliqan "My Queries".kpi_oordeel (table_id 1416385), stand 2026-11-12 vóór de AFC-tegelwijziging
+-- Peliqan "My Queries".kpi_oordeel (table_id 1416385), stand 2026-11-12 na fase 0: join op kpi_betrouwbaarheid (weergave onbetrouwbaar, kolommen betrouwbaarheid en betrouwbaarheid_reden). Vorige versie: commit 91d3f66.
 WITH tegels AS (
   SELECT
     kpi_code,
@@ -203,6 +203,13 @@ WITH tegels AS (
     kpi_code,
     scope_code,
     geldig_vanaf DESC
+), betr AS (
+  SELECT
+    kpi_code,
+    scope_code,
+    niveau,
+    reden
+  FROM "My Queries".kpi_betrouwbaarheid
 )
 SELECT
   r.volgorde,
@@ -219,17 +226,19 @@ SELECT
   t.scope_code,
   t.scope_label,
   CASE
+    WHEN COALESCE(bs.niveau, ba.niveau) = 'onbetrouwbaar'
+    THEN NULL
     WHEN r.bouwstatus IN ('live', 'handmatig') AND COALESCE(t.n, 0) >= r.min_n
     THEN t.waarde
   END AS waarde,
-  CASE WHEN r.bouwstatus IN ('live', 'handmatig') THEN t.waarde_vorige_maand END AS waarde_vorige,
-  CASE WHEN r.bouwstatus IN ('live', 'handmatig') THEN t.delta END AS delta,
+  CASE WHEN r.bouwstatus IN ('live', 'handmatig') AND COALESCE(bs.niveau, ba.niveau, '') <> 'onbetrouwbaar' THEN t.waarde_vorige_maand END AS waarde_vorige,
+  CASE WHEN r.bouwstatus IN ('live', 'handmatig') AND COALESCE(bs.niveau, ba.niveau, '') <> 'onbetrouwbaar' THEN t.delta END AS delta,
   t.n,
   r.min_n,
   d.doel,
   CASE WHEN NOT d.doel IS NULL AND NOT t.waarde IS NULL THEN t.waarde - d.doel END AS afstand_tot_doel,
   CASE
-    WHEN d.doel IS NULL OR t.waarde IS NULL OR NOT r.bouwstatus IN ('live', 'handmatig')
+    WHEN d.doel IS NULL OR t.waarde IS NULL OR NOT r.bouwstatus IN ('live', 'handmatig') OR COALESCE(bs.niveau, ba.niveau) = 'onbetrouwbaar'
     THEN NULL
     WHEN (
       r.richting = 'hoger_beter' AND t.waarde >= d.doel
@@ -249,6 +258,8 @@ SELECT
     THEN 'tbd'
     WHEN r.bouwstatus = 'in_ontwikkeling'
     THEN 'in_ontwikkeling'
+    WHEN COALESCE(bs.niveau, ba.niveau) = 'onbetrouwbaar'
+    THEN 'onbetrouwbaar'
     WHEN r.bouwstatus = 'handmatig' AND t.waarde IS NULL
     THEN 'wacht_op_invoer'
     WHEN t.waarde IS NULL OR COALESCE(t.n, 0) < r.min_n
@@ -265,6 +276,8 @@ SELECT
     THEN 'Definitie nog niet vastgesteld'
     WHEN r.bouwstatus = 'in_ontwikkeling'
     THEN 'Nog in opbouw'
+    WHEN COALESCE(bs.niveau, ba.niveau) = 'onbetrouwbaar'
+    THEN COALESCE(bs.reden, ba.reden)
     WHEN r.bouwstatus = 'handmatig' AND t.waarde IS NULL
     THEN 'Wacht op invoer door ' || r.eigenaar
     WHEN t.leeg_reden IS NULL AND COALESCE(t.n, 0) < r.min_n
@@ -283,9 +296,15 @@ SELECT
   r.wijziging,
   t.toelichting,
   r.kanttekening,
-  r.aanname
+  r.aanname,
+  COALESCE(bs.niveau, ba.niveau) AS betrouwbaarheid,
+  COALESCE(bs.reden, ba.reden) AS betrouwbaarheid_reden
 FROM "My Queries".kpi_registry AS r
 LEFT JOIN tegels_actueel AS t
   ON t.kpi_code = r.kpi_code
 LEFT JOIN doel_actueel AS d
   ON d.kpi_code = t.kpi_code AND d.scope_code = t.scope_code
+LEFT JOIN betr AS bs
+  ON bs.kpi_code = r.kpi_code AND bs.scope_code = t.scope_code
+LEFT JOIN betr AS ba
+  ON ba.kpi_code = r.kpi_code AND ba.scope_code IS NULL

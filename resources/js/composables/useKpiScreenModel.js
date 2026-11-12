@@ -264,6 +264,16 @@ function resolveTile(configRow, oordeelRow) {
         return { display: 'hidden' };
     }
 
+    // kpi_betrouwbaarheid: een onbetrouwbaar cijfer nooit tonen, ook als weergave nog meetwaarde zegt.
+    if (oordeelRow.betrouwbaarheid === 'onbetrouwbaar') {
+        return {
+            display: 'status',
+            state: 'onbetrouwbaar',
+            bodyText: String(oordeelRow.betrouwbaarheid_reden ?? oordeelRow.leeg_reden ?? ''),
+            showValue: false,
+        };
+    }
+
     const weergave = String(oordeelRow.weergave ?? '');
 
     if (weergave === 'meetwaarde') {
@@ -511,6 +521,12 @@ export function useKpiScreenModel(
                 sectionKey,
                 themeLabel,
                 aanname: oordeelRow?.aanname ? String(oordeelRow.aanname) : null,
+                betrouwbaarheid: oordeelRow?.betrouwbaarheid
+                    ? String(oordeelRow.betrouwbaarheid)
+                    : null,
+                betrouwbaarheidReden: oordeelRow?.betrouwbaarheid_reden
+                    ? String(oordeelRow.betrouwbaarheid_reden)
+                    : null,
                 kanttekening: oordeelRow?.kanttekening
                     ? String(oordeelRow.kanttekening)
                     : null,
@@ -533,7 +549,10 @@ export function useKpiScreenModel(
                 valueUnit,
                 deltaFormatted,
                 deltaTone,
-                goalStatus: oordeelRow?.status ? String(oordeelRow.status) : null,
+                goalStatus:
+                    resolved.state !== 'onbetrouwbaar' && oordeelRow?.status
+                        ? String(oordeelRow.status)
+                        : null,
                 goalDoelTekst: oordeelRow?.doel_tekst
                     ? String(oordeelRow.doel_tekst)
                     : null,

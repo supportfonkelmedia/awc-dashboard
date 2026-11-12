@@ -17,6 +17,7 @@ const stateBoxClass = {
     data_ontbreekt: 'bg-red-50 text-red-700',
     in_validatie: 'bg-awc-blue/10 text-gray-900',
     wacht_op_invoer: 'bg-amber-50 text-amber-800',
+    onbetrouwbaar: 'bg-red-50 text-red-700',
 };
 
 function boxClass(state) {
@@ -140,7 +141,19 @@ const goalChip = {
                 </button>
             </template>
 
+            <!-- Bekende kanttekening bij de data (kpi_betrouwbaarheid, niveau let_op). -->
+            <p
+                v-if="tile.betrouwbaarheid === 'let_op' && tile.betrouwbaarheidReden"
+                class="mt-2 flex gap-1.5 rounded-md bg-amber-50 px-2.5 py-1.5 text-[11px] leading-snug text-amber-800"
+            >
+                <i class="pi pi-exclamation-triangle mt-px text-[10px]" aria-hidden="true" />
+                <span><span class="font-semibold">Let op:</span> {{ tile.betrouwbaarheidReden }}</span>
+            </p>
+
+            <!-- Een onbetrouwbaar cijfer krijgt ook geen trendlijn: de historie heeft hetzelfde probleem. -->
+            <div v-if="tile.resolved.state === 'onbetrouwbaar'" class="mt-auto" />
             <KpiTrendSparkline
+                v-else
                 :series="tile.trendSeries"
                 :eenheid="tile.oordeelRow?.eenheid ?? 'ratio'"
                 :empty-text="

@@ -13,6 +13,12 @@ class KpiScreenService
 {
     private const BUNDLES = ['screen', 'controles', 'drill', 'registry'];
 
+    /** Een antwoord met mislukte tabellen blijft kort in de cache, zodat een herstel snel zichtbaar is. */
+    private const ONVOLLEDIG_TTL = 60;
+
+    /** Laatste volledige antwoord, als terugval wanneer Peliqan niet antwoordt. */
+    private const LAATST_GOED_TTL = 7 * 24 * 3600;
+
     public function __construct(
         protected PeliqanClient $peliqan,
         protected KpiScreenFixtureProvider $fixtures,
@@ -106,22 +112,21 @@ class KpiScreenService
         $timeout = (int) config('peliqan.timeout', 60);
 
         try {
-            if ($ttl > 0) {
-                $cached = Cache::get($cacheKey);
-                if ($cached !== null) {
-                    if (config('peliqan.http_log') && config('peliqan.http_log_cache_hits')) {
-                        Log::channel('peliqan')->debug('Peliqan KPI cache hit (no HTTP request)', [
-                            'cache_key' => $cacheKey,
-                            'request_query' => $filtered,
-                            'ttl_seconds' => $ttl,
-                        ]);
-                    }
-                    $payload = $cached;
-                } else {
-                    $payload = Cache::remember($cacheKey, $ttl, fn () => $this->peliqan->fetchKpi($filtered));
+            $cached = $ttl > 0 ? Cache::get($cacheKey) : null;
+            if (is_array($cached)) {
+                if (config('peliqan.http_log') && config('peliqan.http_log_cache_hits')) {
+                    Log::channel('peliqan')->debug('Peliqan KPI cache hit (no HTTP request)', [
+                        'cache_key' => $cacheKey,
+                        'request_query' => $filtered,
+                        'ttl_seconds' => $ttl,
+                    ]);
                 }
+                $payload = $cached;
             } else {
                 $payload = $this->peliqan->fetchKpi($filtered);
+                if ($ttl > 0) {
+                    $this->bewaar($cacheKey, $payload, $ttl);
+                }
             }
 
             if (isset($payload['error']) && is_string($payload['error'])) {
@@ -150,9 +155,57 @@ class KpiScreenService
     /**
      * @return array{payload: array<string, mixed>|null, status: int, error: string|null}
      */
+    /**
+     * Alleen een volledig antwoord gaat een uur de cache in (en wordt de terugval bij storing).
+     * Een foutantwoord gaat de cache niet in; een antwoord met mislukte tabellen maar kort.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function bewaar(string $cacheKey, array $payload, int $ttl): void
+    {
+        if (isset($payload['error'])) {
+            return;
+        }
+
+        if ($this->heeftMislukteTabellen($payload)) {
+            Cache::put($cacheKey, $payload, min($ttl, self::ONVOLLEDIG_TTL));
+
+            return;
+        }
+
+        Cache::put($cacheKey, $payload, $ttl);
+        Cache::put($this->laatstGoedKey($cacheKey), $payload, self::LAATST_GOED_TTL);
+    }
+
+    /**
+     * Waarschuwingen (zoals truncated_to_N_rows) tellen niet; alleen regels met een error.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function heeftMislukteTabellen(array $payload): bool
+    {
+        $errors = $payload['errors'] ?? [];
+        if (! is_array($errors)) {
+            return false;
+        }
+
+        foreach ($errors as $err) {
+            if (is_array($err) && isset($err['error'])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function laatstGoedKey(string $cacheKey): string
+    {
+        return $cacheKey.':laatst_goed';
+    }
+
     private function staleOrError(string $cacheKey, string $message, int $status): array
     {
-        $stale = Cache::get($cacheKey);
+        $stale = Cache::get($this->laatstGoedKey($cacheKey));
         if (is_array($stale)) {
             return [
                 'payload' => [

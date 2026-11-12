@@ -9,7 +9,7 @@ defineProps({
     },
     bijgewerktLabel: {
         type: String,
-        default: '—',
+        default: 'onbekend',
     },
     controles: {
         type: Object,
@@ -38,7 +38,7 @@ const tactischControlesUrl = `${route('kpi.screen', { scherm: 'tactisch' })}#dat
                 </div>
                 <div class="min-w-0">
                     <p
-                        class="truncate text-[11px] font-semibold uppercase tracking-wide text-white/90"
+                        class="truncate text-sm font-semibold text-white"
                     >
                         Amsterdam Warehouse Company
                     </p>
@@ -51,14 +51,14 @@ const tactischControlesUrl = `${route('kpi.screen', { scherm: 'tactisch' })}#dat
             >
                 <span
                     v-if="fixture"
-                    class="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-200 ring-1 ring-amber-400/40"
+                    class="rounded-full bg-amber-500/20 px-2 py-0.5 text-[11px] font-medium text-amber-200 ring-1 ring-amber-400/40"
                     title="Acceptatie-fixture; geen live Peliqan-data"
                 >
                     Demo-data
                 </span>
                 <span
                     v-if="stale"
-                    class="rounded-full bg-orange-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-200 ring-1 ring-orange-400/40"
+                    class="rounded-full bg-orange-500/20 px-2 py-0.5 text-[11px] font-medium text-orange-200 ring-1 ring-orange-400/40"
                     title="Gecachte data; Peliqan niet bereikbaar"
                 >
                     Cache

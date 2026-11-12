@@ -106,7 +106,7 @@ async function zetStatus(row, status) {
 </script>
 
 <template>
-    <Head title="KPI — Feedback" />
+    <Head title="Feedback" />
 
     <KpiStandaloneLayout>
         <header class="bg-[#1a1a1a] text-white">
@@ -114,7 +114,7 @@ async function zetStatus(row, status) {
                 class="mx-auto flex max-w-[1440px] items-center justify-between gap-3 px-4 py-3 lg:px-8"
             >
                 <div class="min-w-0">
-                    <p class="truncate text-[11px] font-semibold uppercase tracking-wide text-white/90">
+                    <p class="truncate text-sm font-semibold text-white">
                         Amsterdam Warehouse Company
                     </p>
                     <p class="text-xs text-white/60">MT-dashboard</p>
@@ -130,10 +130,7 @@ async function zetStatus(row, status) {
         </header>
 
         <main class="mx-auto max-w-[1440px] px-4 py-6 lg:px-8">
-            <p class="text-[11px] font-semibold uppercase tracking-wider text-[#ff7020]">
-                Beheer
-            </p>
-            <h1 class="mt-0.5 text-xl font-bold text-gray-900">Feedback</h1>
+            <h1 class="text-xl font-bold text-gray-900">Feedback</h1>
             <p class="mt-1 max-w-3xl text-xs text-gray-600">
                 Meldingen uit de feedbackknop. Zet een melding op ‘In behandeling’ zodra je
                 ermee bezig bent en op ‘Afgerond’ als het is opgelost of beantwoord.

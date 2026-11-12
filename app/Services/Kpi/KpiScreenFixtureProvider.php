@@ -86,7 +86,7 @@ class KpiScreenFixtureProvider
                 $this->cfgTegel('% Triple LOB', 'triple_lob', 'concern', 'WAARDE', 'kpi_triple_lob_maand,kpi_triple_lob_te_controleren', 'triple_lob', 'concern', 'Cashweb'),
                 $this->cfgTegel('Winrate Verkooppijplijn', 'winrate', 'Verkooppijplijn', 'COMMERCIEEL', 'kpi_winrate_maand,kpi_winrate_fases', 'winrate', 'Verkooppijplijn', 'HubSpot'),
                 $this->cfgTegel('Churn', 'churn', 'concern', 'RETENTIE', 'kpi_churn_kwartaal', 'churn', 'concern', 'Cashweb'),
-                $this->cfgTegel('OTIF', 'otif', '', 'OPERATIE', null, null, null, '—'),
+                $this->cfgTegel('OTIF', 'otif', '', 'OPERATIE', null, null, null, 'Nog geen bron'),
                 $this->cfgTegel('EBITDA', 'ebitda', 'concern', 'FINANCIËLE GEZONDHEID', 'kpi_ebitda_maand,kpi_kosten_maand,kpi_handmatig', 'ebitda', 'concern', 'Cashweb + handmatig'),
                 $this->cfgBanner('Omzetbrug', 'omzet_brug', 'concern', 'WAARDE', 'kpi_omzetbrug,kpi_omzetbrug_top,kpi_omzetbrug_klant', 'omzet_brug', 'concern', 'Cashweb'),
                 $this->cfgTegel('A/B Players', 'ab_players', '', 'MENSEN', 'kpi_handmatig', null, null, 'Handmatig'),
@@ -124,9 +124,9 @@ class KpiScreenFixtureProvider
                 $this->cfgTegel('EBITDA, AFC', 'ebitda', 'pgl1', '', 'kpi_kosten_maand', 'ebitda', 'pgl1', 'Cashweb'),
                 $this->cfgBanner('Omzet en klanten, AFC', 'omzet_brug', 'pgl1', '', 'kpi_omzetbrug,kpi_omzetbrug_klant', 'omzet_brug', 'pgl1', 'Cashweb'),
                 $this->cfgTegel('Winrate AFC Verkooplijn', 'winrate', 'AFC Verkooplijn', '', 'kpi_winrate_maand', 'winrate', 'AFC Verkooplijn', 'HubSpot'),
-                $this->cfgTegel('Zendingen', 'afc_zendingen', 'pgl1', 'Volume', 'kpi_afc_sprinter_maand', 'afc_zendingen', 'pgl1', 'Sprinter3000 · zendingen'),
-                $this->cfgTegel('Modal split', 'afc_modal_split', 'pgl1', 'Volume', 'kpi_afc_sprinter_maand', 'afc_modal_split', 'pgl1', 'Sprinter3000 · zendingen'),
-                $this->cfgTegel('Marge per zending', 'afc_marge_per_zending', 'pgl1', 'Marge', 'kpi_afc_sprinter_maand', 'afc_marge_per_zending', 'pgl1', 'Sprinter3000 · zendingen'),
+                $this->cfgTegel('Zendingen', 'afc_zendingen', 'pgl1', 'Volume', 'kpi_afc_sprinter_maand', 'afc_zendingen', 'pgl1', 'Sprinter'),
+                $this->cfgTegel('Modal split', 'afc_modal_split', 'pgl1', 'Volume', 'kpi_afc_sprinter_maand', 'afc_modal_split', 'pgl1', 'Sprinter'),
+                $this->cfgTegel('Marge per zending', 'afc_marge_per_zending', 'pgl1', 'Marge', 'kpi_afc_sprinter_maand', 'afc_marge_per_zending', 'pgl1', 'Sprinter'),
                 $this->cfgVast('Quote conversion', 'in_opbouw', 'Definitie en bron in opbouw.'),
                 $this->cfgVast('First time right', 'in_opbouw', 'Definitie en bron in opbouw.'),
             ],
@@ -218,7 +218,7 @@ class KpiScreenFixtureProvider
             'waarde_bron' => 'vast',
             'vaste_staat' => $staat,
             'vaste_tekst' => $tekst,
-            'bron_label' => '—',
+            'bron_label' => '',
         ];
     }
 
@@ -585,7 +585,7 @@ class KpiScreenFixtureProvider
                 'kpi_handmatig' => [],
                 'kpi_trend' => $this->entiteitTrendRows(),
                 default => [
-                    ['periode' => '2026-07-01', 'waarde' => 0, 'status' => 'definitief', 'notitie' => 'Fixture — deploy Peliqan voor echte drill.'],
+                    ['periode' => '2026-07-01', 'waarde' => 0, 'status' => 'definitief', 'notitie' => 'Demo-data. Echte cijfers komen uit Peliqan.'],
                 ],
             };
         }

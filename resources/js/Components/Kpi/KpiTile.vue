@@ -1,4 +1,5 @@
 <script setup>
+import { leesbaar } from '@/utils/leesbaar';
 import KpiTileFooter from '@/Components/Kpi/KpiTileFooter.vue';
 import KpiTrendSparkline from '@/Components/Kpi/KpiTrendSparkline.vue';
 
@@ -48,10 +49,8 @@ const goalChip = {
         <div class="flex flex-1 flex-col px-4 pt-4">
             <!-- Eyebrow + owner -->
             <div class="flex items-start justify-between gap-2">
-                <p
-                    class="min-h-[0.875rem] text-[10px] font-semibold uppercase tracking-[0.08em] text-[#ff7020]"
-                >
-                    {{ tile.themeLabel ?? '' }}
+                <p class="min-h-[1rem] text-[11px] text-gray-500">
+                    {{ leesbaar(tile.themeLabel) }}
                 </p>
                 <span
                     v-if="tile.eigenaar"

@@ -1,6 +1,6 @@
 <script setup>
 /**
- * Operationeel mockup — fase-indicators (geen KPI-berekening).
+ * Operationeel mockup: fase-indicators (geen KPI-berekening).
  */
 const phases = [
     { n: 1, title: 'Bewustwording', hint: '1 tegel · in opbouw' },
@@ -22,9 +22,7 @@ const phases = [
             :key="phase.n"
             class="rounded-md border border-gray-200 bg-white px-3 py-2 text-center shadow-sm"
         >
-            <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-                {{ phase.n }}
-            </p>
+            <p class="text-[11px] text-gray-400">Fase {{ phase.n }}</p>
             <p class="text-xs font-semibold text-gray-900">{{ phase.title }}</p>
             <p class="mt-0.5 text-[10px] text-gray-500">{{ phase.hint }}</p>
         </div>

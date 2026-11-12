@@ -1,4 +1,5 @@
 <script setup>
+import { leesbaar } from '@/utils/leesbaar';
 import KpiTrendSparkline from '@/Components/Kpi/KpiTrendSparkline.vue';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
@@ -105,9 +106,9 @@ function tableColumns(rows) {
             <div>
                 <p
                     v-if="tile?.pijler"
-                    class="text-[10px] font-semibold uppercase tracking-wider text-[#ff7020]"
+                    class="text-xs text-gray-500"
                 >
-                    {{ tile.pijler }}
+                    {{ leesbaar(tile.pijler) }}
                 </p>
                 <h2 class="text-lg font-semibold text-gray-900">
                     {{ tile?.titel }}
@@ -129,7 +130,7 @@ function tableColumns(rows) {
         </div>
 
         <div v-if="tile?.trendSeries?.length" class="mb-4">
-            <h3 class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+            <h3 class="mb-2 text-sm font-semibold text-gray-900">
                 Trend
             </h3>
             <KpiTrendSparkline
@@ -161,7 +162,7 @@ function tableColumns(rows) {
         </div>
 
         <div v-if="metaRows.length" class="mb-4">
-            <h3 class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+            <h3 class="mb-2 text-sm font-semibold text-gray-900">
                 Waar komt dit cijfer vandaan
             </h3>
             <dl class="grid grid-cols-[minmax(0,8rem)_1fr] gap-x-3 gap-y-1 text-xs">
@@ -179,7 +180,7 @@ function tableColumns(rows) {
 
         <div v-else class="space-y-6">
             <div v-for="(rows, viewName) in tables" :key="viewName">
-                <h3 class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                <h3 class="mb-2 text-sm font-semibold text-gray-900">
                     {{ viewName }}
                 </h3>
                 <DataTable

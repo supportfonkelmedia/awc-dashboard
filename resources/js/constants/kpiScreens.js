@@ -23,33 +23,27 @@ export const KPI_TEAM_TABS = [
 
 export const KPI_SCREEN_META = {
     strategisch: {
-        eyebrow: 'Strategisch',
         title: "MT-KPI's",
         subtitle: null,
     },
     operationeel: {
-        eyebrow: 'Operationeel',
         title: 'De klantreis',
         subtitle:
             'Tegels zijn gegroepeerd op fase in de klantreis en voeden de MT-KPI’s.',
     },
     tactisch: {
-        eyebrow: 'Tactisch',
         title: 'Tactisch en ondersteunend',
         subtitle: null,
     },
     awc: {
-        eyebrow: 'Team — AWC Warehouse',
         title: 'Inslag, voorraad en uitslag',
         subtitle: 'Bronnen: 7T en Cashweb.',
     },
     afc: {
-        eyebrow: 'Team — AFC Freight',
         title: 'Zendingen, marge en offertes',
-        subtitle: 'Bronnen: Sprinter3000, Cashweb en HubSpot.',
+        subtitle: 'Bronnen: Sprinter, Cashweb en HubSpot.',
     },
     acc: {
-        eyebrow: 'Team — ACC Customs',
         title: 'Douanedossiers en doorlooptijd',
         subtitle: 'Bronnen: HubSpot en Cashweb.',
     },

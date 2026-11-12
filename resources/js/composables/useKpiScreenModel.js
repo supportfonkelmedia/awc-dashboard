@@ -25,7 +25,7 @@ function normScope(row) {
 
 /**
  * `pijler` uit config. Live warehouse: alleen het thema ("Financiële gezondheid",
- * "Waarde", "1 · Bewustwording") → eyebrow op de tegel. Optioneel "SECTIE: thema"
+ * "Waarde", "1 · Bewustwording") komt als thema op de tegel. Optioneel "SECTIE: thema"
  * om een expliciete schermsectie af te dwingen.
  *
  * @param {string} pijlerRaw
@@ -137,7 +137,7 @@ export function findOordeelRow(oordelen, kpiCode, scopeCode) {
     if (!kpiCode) {
         return null;
     }
-    // Overdracht: match on kpi_code + COALESCE(scope_code, '') — exact only.
+    // Overdracht: match on kpi_code + COALESCE(scope_code, ''), exact only.
     // No fallback to "the only row for this kpi_code": that would show e.g. the
     // concern winrate on the AFC tile. A missing row must become data_ontbreekt.
     const scope = scopeCode == null ? '' : String(scopeCode);
@@ -355,8 +355,8 @@ function applyEntiteit(row, oordelen, entiteit) {
 
 /**
  * @param {import('vue').Ref<object|null>} payloadRef
- * @param {import('vue').Ref<string>} [periodeRef] 'all' | '2026' — alleen voor trendlijnen
- * @param {import('vue').Ref<string>} [entiteitRef] scope_code of 'concern' — alleen strategisch
+ * @param {import('vue').Ref<string>} [periodeRef] 'all' | '2026', alleen voor trendlijnen
+ * @param {import('vue').Ref<string>} [entiteitRef] scope_code of 'concern', alleen strategisch
  * @param {import('vue').Ref<Array<object>>} [extraTrendsRef] trendrijen voor andere entiteiten
  */
 export function useKpiScreenModel(
@@ -488,7 +488,7 @@ export function useKpiScreenModel(
             const pijlerRaw = row.pijler ? String(row.pijler) : '';
             const parsedPijler = parsePijlerParts(pijlerRaw);
             const explicitSection = parsedPijler.sectionKey;
-            // Warehouse zet soms het elementtype in pijler ("banner") — geen thema.
+            // Warehouse zet soms het elementtype in pijler ("banner"), geen thema.
             const themeLabel =
                 parsedPijler.themeLabel &&
                 parsedPijler.themeLabel.toLowerCase() !== element
@@ -574,7 +574,7 @@ export function useKpiScreenModel(
     );
 
     /**
-     * Rows for the main grid in config order: banners are not all rendered first —
+     * Rows for the main grid in config order: banners are not all rendered first:
      * they stay in `positie` with tegels (mockup: strategische tegels, then Omzetbrug banner + A/B).
      *
      * @type {import('vue').ComputedRef<Array<{ pijler: string, items: object[] }>>}

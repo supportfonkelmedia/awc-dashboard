@@ -16,7 +16,7 @@ class KpiFormatServiceTest extends TestCase
         $this->fmt = new KpiFormatService;
     }
 
-    /** Acceptatietest Overdracht — strategisch omzetbrug concern (juli 2026). */
+    /** Acceptatietest Overdracht: strategisch omzetbrug concern (juli 2026). */
     public function test_euro_mln_acceptatie_omzetbrug(): void
     {
         $this->assertSame(

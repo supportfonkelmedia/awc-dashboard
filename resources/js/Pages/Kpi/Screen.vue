@@ -168,7 +168,7 @@ function isOmzetbrugBanner(banner) {
 </script>
 
 <template>
-    <Head :title="`KPI — ${meta.title}`" />
+    <Head :title="meta.title" />
 
     <KpiStandaloneLayout>
         <div class="min-h-full bg-[#f4f4f4]">
@@ -190,10 +190,7 @@ function isOmzetbrugBanner(banner) {
                     class="mb-6"
                 />
 
-                <p class="text-[11px] font-semibold uppercase tracking-wider text-[#ff7020]">
-                    {{ meta.eyebrow }}
-                </p>
-                <h1 class="mt-0.5 text-xl font-bold text-gray-900">
+                <h1 class="text-xl font-bold text-gray-900">
                     {{ meta.title }}
                 </h1>
                 <p v-if="meta.subtitle" class="mt-1 max-w-3xl text-xs text-sky-700">

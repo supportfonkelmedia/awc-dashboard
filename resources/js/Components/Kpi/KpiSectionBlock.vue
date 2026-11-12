@@ -54,7 +54,7 @@ const statusDotClass = (status) => {
         class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
     >
         <div class="flex flex-wrap items-center justify-between gap-2">
-            <h2 class="text-sm font-semibold uppercase tracking-wider text-gray-900">
+            <h2 class="text-base font-semibold text-gray-900">
                 {{ title }}
             </h2>
             <Button
@@ -113,7 +113,7 @@ const statusDotClass = (status) => {
             class="mt-4 space-y-2 text-sm text-gray-700"
         >
             <li v-for="row in gepland2027" :key="row.kpi_code">
-                <strong>{{ row.naam }}</strong> — {{ row.leeg_reden }}
+                <strong>{{ row.naam }}</strong>: {{ row.leeg_reden }}
             </li>
         </ul>
 

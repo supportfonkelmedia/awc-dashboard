@@ -4,7 +4,7 @@ namespace App\Services\Kpi;
 
 /**
  * Server-side KPI display formatting (mirrors resources/js/utils/kpiFormat.js).
- * Used for exports, tests, and future SSR — not for live Vue tiles.
+ * Used for exports, tests, and future SSR, not for live Vue tiles.
  */
 class KpiFormatService
 {

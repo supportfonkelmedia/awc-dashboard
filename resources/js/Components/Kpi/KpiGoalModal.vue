@@ -142,7 +142,7 @@ function close() {
     <Dialog
         :visible="visible"
         modal
-        :header="tile ? `Doel — ${tile.titel}` : 'Doel instellen'"
+        :header="tile ? `Doel voor ${tile.titel}` : 'Doel instellen'"
         class="w-full max-w-lg"
         @update:visible="emit('update:visible', $event)"
     >
@@ -151,7 +151,7 @@ function close() {
         </p>
         <p class="mb-4 text-xs text-gray-500">{{ eenheidHint }}</p>
 
-        <label class="mb-1 block text-xs font-semibold uppercase text-gray-500">
+        <label class="mb-1 block text-sm font-medium text-gray-700">
             Geldig vanaf (1e van de maand)
         </label>
         <input
@@ -160,17 +160,17 @@ function close() {
             class="mb-3 w-full rounded border border-gray-300 px-3 py-2 text-sm"
         />
 
-        <label class="mb-1 block text-xs font-semibold uppercase text-gray-500">
+        <label class="mb-1 block text-sm font-medium text-gray-700">
             Doel
         </label>
         <InputNumber v-model="doel" class="mb-3 w-full" />
 
-        <label class="mb-1 block text-xs font-semibold uppercase text-gray-500">
+        <label class="mb-1 block text-sm font-medium text-gray-700">
             Marge „bijna” (optioneel)
         </label>
         <InputNumber v-model="margeBijna" class="mb-3 w-full" />
 
-        <label class="mb-1 block text-xs font-semibold uppercase text-gray-500">
+        <label class="mb-1 block text-sm font-medium text-gray-700">
             Opmerking (optioneel)
         </label>
         <Textarea v-model="opmerking" rows="2" class="mb-3 w-full" />

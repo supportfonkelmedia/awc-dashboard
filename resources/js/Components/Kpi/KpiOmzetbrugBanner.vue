@@ -1,4 +1,5 @@
 <script setup>
+import { leesbaar } from '@/utils/leesbaar';
 import KpiTileFooter from '@/Components/Kpi/KpiTileFooter.vue';
 import { fetchKpiDrill } from '@/composables/useKpiDrillFetch';
 import ProgressSpinner from 'primevue/progressspinner';
@@ -138,7 +139,7 @@ const waterfallRows = computed(() => {
 
 function fmtBedrag(seg) {
     if (seg.row?.bedrag == null) {
-        return '—';
+        return 'n.b.';
     }
     const v = Number(seg.row.bedrag);
     if (seg.isTotal) {
@@ -193,8 +194,8 @@ function valueClass(seg) {
     >
         <div class="flex items-start justify-between gap-4 px-4 pt-3.5">
             <div>
-                <p class="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#ff7020]">
-                    {{ tile.themeLabel || 'Waarde' }}
+                <p class="text-[11px] text-gray-500">
+                    {{ leesbaar(tile.themeLabel || 'Waarde') }}
                 </p>
                 <h3 class="mt-1 text-[13px] font-bold text-gray-900">
                     {{ tile.titel }}

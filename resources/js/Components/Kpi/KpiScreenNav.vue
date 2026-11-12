@@ -22,7 +22,7 @@ defineProps({
         >
             <!-- Same box as the tabs (h-12 + 2px transparent border) so text centers identically -->
             <span
-                class="flex h-12 items-center border-b-2 border-transparent pr-5 text-xs font-semibold uppercase leading-5 tracking-wider text-gray-500"
+                class="flex h-12 items-center border-b-2 border-transparent pr-4 text-sm leading-5 text-gray-400"
             >
                 Concern
             </span>
@@ -53,7 +53,7 @@ defineProps({
             </span>
 
             <span
-                class="flex h-12 items-center border-b-2 border-transparent pr-5 text-xs font-semibold uppercase leading-5 tracking-wider text-gray-500"
+                class="flex h-12 items-center border-b-2 border-transparent pr-4 text-sm leading-5 text-gray-400"
             >
                 Teams
             </span>

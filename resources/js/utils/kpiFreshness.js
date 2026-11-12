@@ -46,8 +46,8 @@ export function oldestBronBijgewerktLabel(elements) {
     }
 
     if (oldest == null) {
-        return '—';
+        return 'onbekend';
     }
 
-    return formatBronBijgewerkt(new Date(oldest).toISOString()) ?? '—';
+    return formatBronBijgewerkt(new Date(oldest).toISOString()) ?? 'onbekend';
 }

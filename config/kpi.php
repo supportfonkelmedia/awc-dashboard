@@ -4,7 +4,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Fixture data (Acceptatietest 22 sep 2026 — local UI zonder Peliqan)
+    | Fixture data (Acceptatietest 22 sep 2026: local UI zonder Peliqan)
     |--------------------------------------------------------------------------
     |
     | KPI_USE_FIXTURE=true  → altijd fixtures.

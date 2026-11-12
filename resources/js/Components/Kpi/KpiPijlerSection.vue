@@ -1,4 +1,5 @@
 <script setup>
+import { leesbaar } from '@/utils/leesbaar';
 import { computed } from 'vue';
 
 const props = defineProps({
@@ -8,27 +9,19 @@ const props = defineProps({
     },
 });
 
-const parts = computed(() => {
+// Van "AANVULLEND: Omzet en mensen" blijft "Omzet en mensen" over. Zonder
+// dubbele punt wordt de hele titel in gewone zinsletters gezet.
+const heading = computed(() => {
     const idx = props.title.indexOf(':');
 
-    if (idx === -1) {
-        return { lead: props.title, rest: null };
-    }
-
-    return {
-        lead: props.title.slice(0, idx).trim(),
-        rest: props.title.slice(idx + 1).trim(),
-    };
+    return leesbaar(idx === -1 ? props.title : props.title.slice(idx + 1));
 });
 </script>
 
 <template>
-    <div class="col-span-full mt-4">
-        <p class="text-[11px] font-semibold uppercase tracking-wider text-[#ff7020]">
-            {{ parts.lead }}
-        </p>
-        <h2 v-if="parts.rest" class="mt-0.5 text-xl font-bold text-gray-900">
-            {{ parts.rest }}
+    <div class="col-span-full mt-6">
+        <h2 class="text-lg font-bold text-gray-900">
+            {{ heading }}
         </h2>
     </div>
 </template>

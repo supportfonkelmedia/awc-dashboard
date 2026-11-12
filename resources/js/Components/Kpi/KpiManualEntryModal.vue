@@ -152,13 +152,13 @@ function close() {
 
         <div class="mb-3 grid grid-cols-2 gap-3">
             <div>
-                <label class="mb-1 block text-xs font-semibold uppercase text-gray-500">
+                <label class="mb-1 block text-sm font-medium text-gray-700">
                     Jaar
                 </label>
                 <InputNumber v-model="year" :use-grouping="false" class="w-full" />
             </div>
             <div>
-                <label class="mb-1 block text-xs font-semibold uppercase text-gray-500">
+                <label class="mb-1 block text-sm font-medium text-gray-700">
                     Kwartaal
                 </label>
                 <div class="flex gap-1">
@@ -174,19 +174,19 @@ function close() {
             </div>
         </div>
 
-        <label class="mb-1 block text-xs font-semibold uppercase text-gray-500">
+        <label class="mb-1 block text-sm font-medium text-gray-700">
             {{ isEbitda ? 'EBITDA over dit kwartaal (€)' : 'Waarde' }}
         </label>
         <InputNumber v-model="waarde" class="mb-3 w-full" />
 
         <template v-if="!isEbitda">
-            <label class="mb-1 block text-xs font-semibold uppercase text-gray-500">
+            <label class="mb-1 block text-sm font-medium text-gray-700">
                 Aantal respondenten / beoordeelden (n)
             </label>
             <InputNumber v-model="nRespondents" :min="1" class="mb-3 w-full" />
         </template>
 
-        <label class="mb-1 block text-xs font-semibold uppercase text-gray-500">
+        <label class="mb-1 block text-sm font-medium text-gray-700">
             Toelichting (optioneel)
         </label>
         <Textarea v-model="opmerking" rows="2" class="mb-3 w-full" />

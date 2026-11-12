@@ -35,7 +35,7 @@ const alert = computed(() => {
         severity: fout ? 'error' : 'warn',
         summary: fout
             ? 'Sprinter-cijfers zijn mogelijk onvolledig'
-            : 'Sprinter-cijfers — let op',
+            : 'Let op bij de Sprinter-cijfers',
         detail,
     };
 });

@@ -35,7 +35,7 @@ const emit = defineEmits(['update:modelValue', 'update:entiteit']);
     >
         <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
             <label class="flex items-center gap-2">
-                <span class="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <span class="text-sm font-medium text-gray-700">
                     Periode
                 </span>
                 <select
@@ -51,7 +51,7 @@ const emit = defineEmits(['update:modelValue', 'update:entiteit']);
             <div class="flex items-center gap-2">
                 <span
                     id="kpi-entiteit-label"
-                    class="text-xs font-semibold uppercase tracking-wide text-gray-500"
+                    class="text-sm font-medium text-gray-700"
                 >
                     Entiteit
                 </span>

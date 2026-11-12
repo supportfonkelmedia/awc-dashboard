@@ -1,4 +1,4 @@
--- Peliqan "My Queries".kpi_oordeel (table_id 1416385), stand 2026-11-12 na fase 0: join op kpi_betrouwbaarheid (weergave onbetrouwbaar, kolommen betrouwbaarheid en betrouwbaarheid_reden). Vorige versie: commit 91d3f66.
+-- Peliqan "My Queries".kpi_oordeel (table_id 1416385), stand 2026-11-12: join op kpi_betrouwbaarheid (fase 0) en eigenaar per scope voor omzet_brug (v1 22-09: AWC Mark, AFC Floor, ACC Mesut). Vorige versie: commit 91d3f66.
 WITH tegels AS (
   SELECT
     kpi_code,
@@ -210,6 +210,14 @@ WITH tegels AS (
     niveau,
     reden
   FROM "My Queries".kpi_betrouwbaarheid
+), eigenaar_scope AS (
+  SELECT
+    *
+  FROM (VALUES
+    ('omzet_brug', 'alaw', 'Mark'),
+    ('omzet_brug', 'pgl1', 'Floor'),
+    ('omzet_brug', 'acco', 'Mesut')
+  ) AS v(kpi_code, scope_code, eigenaar)
 )
 SELECT
   r.volgorde,
@@ -217,7 +225,7 @@ SELECT
   r.naam,
   r.niveau,
   r.pijler,
-  r.eigenaar,
+  COALESCE(es.eigenaar, r.eigenaar) AS eigenaar,
   r.validator,
   r.bron,
   r.eenheid,
@@ -308,3 +316,5 @@ LEFT JOIN betr AS bs
   ON bs.kpi_code = r.kpi_code AND bs.scope_code = t.scope_code
 LEFT JOIN betr AS ba
   ON ba.kpi_code = r.kpi_code AND ba.scope_code IS NULL
+LEFT JOIN eigenaar_scope AS es
+  ON es.kpi_code = r.kpi_code AND es.scope_code = t.scope_code

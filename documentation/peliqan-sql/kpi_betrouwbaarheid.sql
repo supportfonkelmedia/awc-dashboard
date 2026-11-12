@@ -9,7 +9,7 @@ SELECT
   *
 FROM (VALUES
   ('throughput', 'alaw', 'let_op', 'Sinds 12 november telt een order alleen mee met een orderpicker, pallets of een pickscan; de factuurorders van 7T tellen niet meer mee. Edo bevestigt nog of dit alle fysieke uitleveringen zijn.', CAST('2026-11-12' AS DATE)),
-  ('winrate', 'Verkooppijplijn', 'let_op', 'De trendlijn is opgebouwd uit de huidige stand van de deals. De opschoning in augustus vertekent de punten van 2025 en 2026.', CAST('2026-11-12' AS DATE)),
+  ('winrate', 'Verkooppijplijn', 'let_op', 'De trendlijn vóór augustus 2026 ligt te hoog: deals die al lang stillagen telden als open, tot de opschoning ze in augustus op verloren zette. Een definitie voor slapende deals ligt bij Mark.', CAST('2026-11-12' AS DATE)),
   ('bruto_marge_per_loonkosten', 'pgl1', 'let_op', 'De loonkosten missen rekening 4000 (ongeveer 48% van de AFC-loonkosten). Zolang Frits niet heeft besloten of die meetelt, kan de ratio te hoog liggen.', CAST('2026-11-12' AS DATE)),
   ('bruto_marge_per_loonkosten', 'acco', 'let_op', 'De loonkosten missen rekening 4000 (ongeveer 37% van de ACC-loonkosten). Zolang Frits niet heeft besloten of die meetelt, kan de ratio te hoog liggen.', CAST('2026-11-12' AS DATE)),
   ('bruto_marge_per_loonkosten', 'concern', 'let_op', 'De loonkosten van AFC en ACC missen rekening 4000. Zolang Frits niet heeft besloten of die meetelt, kan de ratio te hoog liggen.', CAST('2026-11-12' AS DATE)),

@@ -157,12 +157,29 @@ from c
 Resultaat volgens Cash per maand. Rechtstreeks uit `afc_resultaat_maand` (boekjaar leidend).
 
 ```sql
-select * from afc_control_center.afc_resultaat_maand_afc_control_center
+select periode_id, boekjaar, maandnummer, maand, omzet, invoerrechten_doorbelast, omzet_incl_invoerrechten,
+  btw_verkoop, kostprijs, kostprijs_sim_cargo, kostprijs_svz, brutomarge, brutomarge_pct, bedrijfskosten,
+  resultaat_humber, resultaat_voor_belasting, vennootschapsbelasting, resultaat_na_belasting, periode_afwijkend
+from afc_control_center.afc_resultaat_maand_afc_control_center
 ```
+
+## Stand in Peliqan
+
+Aangemaakt op 12-11-2026 in `"My Queries"` (dw_2401):
+
+| View | table_id | Rijen bij aanmaken |
+|---|---|---|
+| kpi_afc_zending_maand | 1579280 | 299 |
+| kpi_afc_eigenaar_maand | 1579281 | 660 |
+| kpi_afc_klant_jaar | 1579282 | 1321 |
+| kpi_afc_klant | 1579283 | 641 |
+| kpi_afc_klant_retentie_jaar | 1579284 | 4 |
+| kpi_afc_resultaat_maand | 1579285 | 36 |
 
 ## Nog te doen voor live
 
-1. Views 1 t/m 6 aanmaken in `"My Queries"` met replica elk uur (na akkoord; Peliqan heeft geen testomgeving).
+1. Per view de replica aanzetten: elk uur, naar `"My Queries"`, tabelnaam `<view>_my_queries`
+   (kan niet via de MCP-koppeling, alleen in de Peliqan-interface).
 2. Namen toevoegen aan `ALLOWED_DRILL_VIEWS` in de Peliqan API-handler (zie `peliqan_kpi_api_handler.py`) en die opnieuw deployen.
 3. `kpi_afc_sprinter_maand` herbouwen op `afc_zending`, zodat er één Sprinter-keten is.
 4. Teams: de teamleads krijgen later een eigen dashboard met tegels uit dit scherm; eigenaar → team volgt.

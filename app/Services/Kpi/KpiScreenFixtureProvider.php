@@ -124,9 +124,9 @@ class KpiScreenFixtureProvider
                 $this->cfgTegel('EBITDA, AFC', 'ebitda', 'pgl1', '', 'kpi_kosten_maand', 'ebitda', 'pgl1', 'Cashweb'),
                 $this->cfgBanner('Omzet en klanten, AFC', 'omzet_brug', 'pgl1', '', 'kpi_omzetbrug,kpi_omzetbrug_klant', 'omzet_brug', 'pgl1', 'Cashweb'),
                 $this->cfgTegel('Winrate AFC Verkooplijn', 'winrate', 'AFC Verkooplijn', '', 'kpi_winrate_maand', 'winrate', 'AFC Verkooplijn', 'HubSpot'),
-                $this->cfgVast('Zendingen', 'data_onvolledig', 'Sprinter-koppeling onvolledig; trend april–sep open.'),
-                $this->cfgVast('Modal split', 'data_onvolledig', 'Sprinter-koppeling onvolledig.'),
-                $this->cfgVast('Marge per zending', 'data_onvolledig', 'Sprinter-koppeling onvolledig.'),
+                $this->cfgTegel('Zendingen', 'afc_zendingen', 'pgl1', 'Volume', 'kpi_afc_sprinter_maand', 'afc_zendingen', 'pgl1', 'Sprinter3000 · zendingen'),
+                $this->cfgTegel('Modal split', 'afc_modal_split', 'pgl1', 'Volume', 'kpi_afc_sprinter_maand', 'afc_modal_split', 'pgl1', 'Sprinter3000 · zendingen'),
+                $this->cfgTegel('Marge per zending', 'afc_marge_per_zending', 'pgl1', 'Marge', 'kpi_afc_sprinter_maand', 'afc_marge_per_zending', 'pgl1', 'Sprinter3000 · zendingen'),
                 $this->cfgVast('Quote conversion', 'in_opbouw', 'Definitie en bron in opbouw.'),
                 $this->cfgVast('First time right', 'in_opbouw', 'Definitie en bron in opbouw.'),
             ],
@@ -247,7 +247,7 @@ class KpiScreenFixtureProvider
             'operationeel' => ['winrate', 'time_to_onboarding', 'dock_to_stock', 'churn', 'acc_dossiers'],
             'tactisch' => ['enps', 'nps_2027', 'automatisering_2027'],
             'awc' => ['bruto_marge_per_loonkosten', 'ebitda', 'omzet_brug', 'dock_to_stock', 'throughput', 'damage_rate'],
-            'afc' => ['bruto_marge_per_loonkosten', 'ebitda', 'omzet_brug', 'winrate'],
+            'afc' => ['bruto_marge_per_loonkosten', 'ebitda', 'omzet_brug', 'winrate', 'afc_zendingen', 'afc_modal_split', 'afc_marge_per_zending'],
             'acc' => ['bruto_marge_per_loonkosten', 'ebitda', 'omzet_brug', 'acc_doorlooptijd'],
         ];
         $want = $codesByScherm[$scherm] ?? [];
@@ -297,6 +297,9 @@ class KpiScreenFixtureProvider
             $this->meet('throughput', 'alaw', 13_588, 16_384, -2_796, 'aantal', 'hoger_beter', $aug),
             $this->meet('damage_rate', 'alaw', 4.6, 1.5, 3.1, 'procent', 'lager_beter', $aug),
             $this->meet('acc_doorlooptijd', 'acco', 2.8, null, null, 'dagen', 'lager_beter', $sep),
+            $this->meet('afc_zendingen', 'pgl1', 1117, 1219, -102, 'aantal', 'neutraal', '2026-10-01'),
+            $this->meet('afc_modal_split', 'pgl1', 88.7, 91.1, -2.4, 'procent', 'neutraal', '2026-10-01'),
+            $this->meet('afc_marge_per_zending', 'pgl1', 152.87, 168.53, -15.66, 'euro', 'hoger_beter', '2026-10-01'),
             [
                 'kpi_code' => 'nps_2027',
                 'scope_code' => '',
@@ -399,8 +402,10 @@ class KpiScreenFixtureProvider
             $trends[] = $this->trend('dock_to_stock', 'alaw', '2026-09-01', 86.9, 'voorlopig', 3);
         }
         if ($scherm === 'afc') {
-            $trends[] = $this->trend('afc_zendingen', 'pgl1', '2026-06-01', 559, 'definitief', 1);
-            $trends[] = $this->trend('afc_zendingen', 'pgl1', '2026-08-01', 50, 'onvolledig', 2);
+            $trends[] = $this->trend('afc_zendingen', 'pgl1', '2026-08-01', 1015, 'definitief', 1);
+            $trends[] = $this->trend('afc_zendingen', 'pgl1', '2026-09-01', 1219, 'definitief', 2);
+            $trends[] = $this->trend('afc_zendingen', 'pgl1', '2026-10-01', 1117, 'definitief', 3);
+            $trends[] = $this->trend('afc_zendingen', 'pgl1', '2026-11-01', 363, 'voorlopig', 4);
         }
         if (in_array($scherm, ['operationeel', 'acc'], true)) {
             $trends[] = $this->trend('acc_dossiers', 'acco', '2026-09-01', 224, 'voorlopig', 1, 'Export');
@@ -442,7 +447,7 @@ class KpiScreenFixtureProvider
     {
         return [
             ['status' => 'fout', 'controle' => 'Triple LOB reconciliatie', 'waarde' => 'Afwijking', 'norm' => '0', 'toelichting' => 'Steekproef klantlijst.'],
-            ['status' => 'let_op', 'controle' => 'Sprinter augustus', 'waarde' => 'Onvolledig', 'norm' => 'Volledig', 'toelichting' => 'Koppeling in opbouw.'],
+            ['status' => 'ok', 'controle' => 'Volume Sprinter3000', 'bron' => 'Sprinter3000', 'waarde' => '1117', 'norm' => 'Minimaal 50% van gemiddelde', 'toelichting' => 'Eigen Sprinter-sync, dagelijks.'],
             ['status' => 'let_op', 'controle' => 'HubSpot winrate', 'waarde' => 'Voorlopig', 'norm' => 'Definitief', 'toelichting' => 'Peildatum recent.'],
             ...array_fill(0, 11, ['status' => 'ok', 'controle' => 'Standaard controle', 'waarde' => 'OK', 'norm' => 'OK', 'toelichting' => 'Geen actie.']),
         ];

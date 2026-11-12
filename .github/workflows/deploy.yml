@@ -1,6 +1,5 @@
-# Build runs on every push (artifact: public/build).
-# deploy job uses SSH — only works if the server accepts connections FROM GitHub (often blocked on VPS).
-# If ssh-keyscan fails: use .github/scripts/server-deploy-from-actions.sh on the server (outbound to GitHub).
+# Build on every push (artifact: public/build).
+# deploy job uses SSH when the server allows GitHub Actions IPs (CSF / firewall).
 #
 #   dev  → environment "development"
 #   main → environment "production"
@@ -125,7 +124,7 @@ jobs:
           echo "Target: ${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/public/build/ (port ${PORT})"
           mkdir -p ~/.ssh
           if ! ssh-keyscan -p "$PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>ssh-keyscan.err; then
-            echo "::error::ssh-keyscan failed — GitHub cannot reach this host (firewall). Use server-deploy-from-actions.sh on the VPS instead."
+            echo "::error::ssh-keyscan failed — host unreachable from GitHub (check CSF/firewall or SSH_HOST/SSH_PORT)."
             cat ssh-keyscan.err
             exit 1
           fi

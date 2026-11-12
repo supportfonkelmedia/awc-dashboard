@@ -76,14 +76,15 @@ jobs:
 
       - name: Create deployment archive
         run: |
-          tar czf deploy.tar.gz \
-            --exclude='./.git' \
-            --exclude='./node_modules' \
-            --exclude='./vendor' \
-            --exclude='./.env' \
-            --exclude='./.env.*' \
-            --exclude='./deploy.tar.gz' \
-            .
+          ARCHIVE="${{ runner.temp }}/deploy.tar.gz"
+          tar czf "$ARCHIVE" \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='vendor' \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            -C "$GITHUB_WORKSPACE" .
+          cp "$ARCHIVE" "$GITHUB_WORKSPACE/deploy.tar.gz"
 
       - name: Upload archive to server
         uses: appleboy/scp-action@v0.1.7

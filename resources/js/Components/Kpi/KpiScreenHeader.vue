@@ -19,8 +19,6 @@ defineProps({
     fixture: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['feedback']);
-
 const page = usePage();
 const isFeedbackAdmin = computed(() => Boolean(page.props.auth?.isFeedbackAdmin));
 
@@ -85,14 +83,6 @@ const tactischControlesUrl = `${route('kpi.screen', { scherm: 'tactisch' })}#dat
                 >
                     Feedbackoverzicht
                 </Link>
-                <button
-                    type="button"
-                    class="inline-flex items-center gap-1.5 rounded-full bg-[#ff7020] px-3 py-1 text-xs font-semibold text-white transition hover:bg-[#e8621a] focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                    @click="emit('feedback')"
-                >
-                    <i class="pi pi-comment text-[11px]" aria-hidden="true" />
-                    Feedback
-                </button>
             </div>
         </div>
     </header>

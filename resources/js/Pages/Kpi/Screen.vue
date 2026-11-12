@@ -3,7 +3,7 @@ import KpiAfcSprinterAlert from '@/Components/Kpi/KpiAfcSprinterAlert.vue';
 import KpiCustomerJourneyBar from '@/Components/Kpi/KpiCustomerJourneyBar.vue';
 import KpiPijlerSection from '@/Components/Kpi/KpiPijlerSection.vue';
 import KpiDrillDownDrawer from '@/Components/Kpi/KpiDrillDownDrawer.vue';
-import KpiFeedbackModal from '@/Components/Kpi/KpiFeedbackModal.vue';
+import KpiFeedbackWidget from '@/Components/Kpi/KpiFeedbackWidget.vue';
 import KpiGoalModal from '@/Components/Kpi/KpiGoalModal.vue';
 import KpiManualEntryModal from '@/Components/Kpi/KpiManualEntryModal.vue';
 import KpiOmzetbrugBanner from '@/Components/Kpi/KpiOmzetbrugBanner.vue';
@@ -129,12 +129,13 @@ const invoerKpiCode = ref('enps');
 const doelOpen = ref(false);
 const doelTile = ref(null);
 
-const feedbackOpen = ref(false);
+// Zwevende feedbackknop rechtsonder; het tegelicoon opent hem met die tegel als context.
 const feedbackTile = ref(null);
+const feedbackSignal = ref(0);
 
-function openFeedback(tile = null) {
+function openFeedback(tile) {
     feedbackTile.value = tile;
-    feedbackOpen.value = true;
+    feedbackSignal.value += 1;
 }
 
 function openDetails(tile) {
@@ -177,11 +178,10 @@ function isOmzetbrugBanner(banner) {
                 :controles="payload?.controles_summary ?? { fout: 0, let_op: 0, ok: 0 }"
                 :stale="Boolean(payload?.meta?.stale)"
                 :fixture="kpiUsesFixture || Boolean(payload?.meta?.fixture)"
-                @feedback="openFeedback()"
             />
             <KpiScreenNav :scherm="scherm" />
 
-            <div class="mx-auto max-w-[1440px] px-4 py-6 lg:px-8">
+            <div class="mx-auto max-w-[1440px] px-4 pb-24 pt-6 lg:px-8">
                 <KpiStrategischPeriodBar
                     v-if="scherm === 'strategisch'"
                     v-model="periode"
@@ -285,11 +285,12 @@ function isOmzetbrugBanner(banner) {
             @saved="reload"
         />
 
-        <KpiFeedbackModal
-            v-model:visible="feedbackOpen"
+        <KpiFeedbackWidget
             :scherm="scherm"
             :entiteit="effectiveEntiteit"
             :tile="feedbackTile"
+            :open-signal="feedbackSignal"
+            @clear-tile="feedbackTile = null"
         />
 
         <KpiGoalModal

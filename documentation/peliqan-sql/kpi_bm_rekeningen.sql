@@ -1,0 +1,26 @@
+-- Peliqan "My Queries".kpi_bm_rekeningen (table_id 1416336), stand 2026-11-12
+SELECT * FROM (VALUES
+ ('alaw','AWC','4000','loon','Frits, gecorrigeerde lijst'),
+ ('alaw','AWC','4001','loon','Frits, gecorrigeerde lijst'),
+ ('alaw','AWC','4010','loon','Frits, gecorrigeerde lijst'),
+ ('alaw','AWC','40100','loon','Frits, gecorrigeerde lijst'),
+ ('alaw','AWC','40101','loon','Frits, gecorrigeerde lijst'),
+ ('alaw','AWC','4110','loon','Frits, gecorrigeerde lijst'),
+ ('alaw','AWC','4130','loon','Frits, gecorrigeerde lijst'),
+ ('alaw','AWC','4514','loon','Frits, gecorrigeerde lijst'),
+ ('alaw','AWC','4517','inhuur','MT-besluit: uitzendkrachten en zzp tellen mee'),
+ ('pgl1','AFC','4010','loon','Frits, gecorrigeerde lijst'),
+ ('pgl1','AFC','4011','loon','Frits, gecorrigeerde lijst'),
+ ('pgl1','AFC','4110','loon','Frits, gecorrigeerde lijst'),
+ ('pgl1','AFC','41100','loon','Frits, gecorrigeerde lijst'),
+ ('pgl1','AFC','4130','loon_deels','Frits: deels loon (pensioen werkgeversdeel)'),
+ ('pgl1','AFC','4512','loon_deels','Frits: deels loon (reis en verblijf)'),
+ ('pgl1','AFC','4514','loon','Frits, gecorrigeerde lijst'),
+ ('acco','ACC','4010','loon','Frits, gecorrigeerde lijst'),
+ ('acco','ACC','4011','loon','Frits, gecorrigeerde lijst'),
+ ('acco','ACC','4110','loon','Frits, gecorrigeerde lijst'),
+ ('acco','ACC','41100','loon','Frits, gecorrigeerde lijst'),
+ ('acco','ACC','4130','loon_deels','Frits: deels loon (pensioen werkgeversdeel)'),
+ ('acco','ACC','4512','loon_deels','Frits: deels loon (reis en verblijf)'),
+ ('acco','ACC','4514','loon','Frits, gecorrigeerde lijst')
+) v(admin_code, entiteit, account_number, rol, bron)

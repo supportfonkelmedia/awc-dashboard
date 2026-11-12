@@ -1,7 +1,7 @@
 <script setup>
 import AfcFinancieel from '@/Components/Kpi/AfcAnalyse/AfcFinancieel.vue';
 import AfcEigenaren from '@/Components/Kpi/AfcAnalyse/AfcEigenaren.vue';
-import AfcInfo from '@/Components/Kpi/AfcAnalyse/AfcInfo.vue';
+import AfcInfo from '@/Components/Kpi/KpiInfo.vue';
 import AfcKaart from '@/Components/Kpi/AfcAnalyse/AfcKaart.vue';
 import AfcKeuze from '@/Components/Kpi/AfcAnalyse/AfcKeuze.vue';
 import AfcKlantbehoud from '@/Components/Kpi/AfcAnalyse/AfcKlantbehoud.vue';

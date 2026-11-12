@@ -2,7 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, ref } from 'vue';
 
 /**
- * Info-icoon met uitleg bij hover, focus (toetsenbord) en tik (telefoon). Escape of scrollen sluit.
+ * Info-icoon met uitleg (gedeeld door tegels en de AFC-analyse) bij hover, focus (toetsenbord) en tik (telefoon). Escape of scrollen sluit.
  * De uitleg staat vast in beeld (position: fixed) en wordt binnen het scherm geschoven.
  * `tekst` mag een string of een lijst alinea's zijn.
  */
@@ -11,8 +11,9 @@ const props = defineProps({
     label: { type: String, default: 'Uitleg' },
 });
 
-const id = `afc-info-${Math.random().toString(36).slice(2, 8)}`;
+const id = `kpi-info-${Math.random().toString(36).slice(2, 8)}`;
 const knop = ref(null);
+const uitleg = ref(null);
 const open = ref(false);
 const vast = ref(false);
 const positie = ref({ top: '0px', left: '0px' });
@@ -39,6 +40,11 @@ async function toon() {
     }
     open.value = true;
     await nextTick();
+    // Past de uitleg niet onder het icoon (onderaan het scherm), dan erboven.
+    const h = uitleg.value?.offsetHeight ?? 0;
+    if (r && r.bottom + 6 + h > window.innerHeight - MARGE && r.top - 6 - h > MARGE) {
+        positie.value = { ...positie.value, top: `${Math.round(r.top - 6 - h)}px` };
+    }
     scrollStart = window.scrollY;
     window.addEventListener('scroll', opScroll, { passive: true });
 }
@@ -84,6 +90,7 @@ onBeforeUnmount(() => window.removeEventListener('scroll', opScroll));
         </button>
         <span
             v-show="open"
+            ref="uitleg"
             :id="id"
             role="tooltip"
             class="fixed z-50 space-y-1.5 rounded-md bg-awc-black px-3 py-2 text-left text-xs font-normal normal-case leading-relaxed text-white shadow-lg"

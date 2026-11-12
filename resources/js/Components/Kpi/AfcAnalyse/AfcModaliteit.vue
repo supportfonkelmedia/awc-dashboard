@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue';
 import AfcBlok from './AfcBlok.vue';
 import AfcGrafiek from './AfcGrafiek.vue';
-import AfcInfo from './AfcInfo.vue';
+import AfcInfo from '@/Components/Kpi/KpiInfo.vue';
 import AfcKeuze from './AfcKeuze.vue';
 import AfcTabel from './AfcTabel.vue';
 import { MAANDEN_KORT, maandModaliteitReeks, perModaliteit } from '@/utils/afcAnalyse';

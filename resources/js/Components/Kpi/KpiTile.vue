@@ -1,13 +1,35 @@
 <script setup>
 import { leesbaar } from '@/utils/leesbaar';
+import KpiInfo from '@/Components/Kpi/KpiInfo.vue';
 import KpiTileFooter from '@/Components/Kpi/KpiTileFooter.vue';
 import KpiTrendSparkline from '@/Components/Kpi/KpiTrendSparkline.vue';
+import { computed } from 'vue';
 
-defineProps({
+const props = defineProps({
     tile: {
         type: Object,
         required: true,
     },
+});
+
+/** Statussen waarvan de reden zichtbaar blijft: er is actie of voorzichtigheid nodig. */
+const REDEN_ZICHTBAAR = new Set(['onbetrouwbaar', 'wacht_op_invoer', 'data_ontbreekt', 'data_onvolledig']);
+
+const redenZichtbaar = computed(
+    () => props.tile.resolved.display !== 'value' && REDEN_ZICHTBAAR.has(props.tile.resolved.state),
+);
+
+/** Uitleg achter het info-icoon naast de titel. */
+const uitleg = computed(() => {
+    const t = props.tile;
+    const delen = [];
+    if (t.resolved.display === 'value' && t.toelichting) {
+        delen.push(t.toelichting);
+    }
+    if (t.resolved.display !== 'value' && t.resolved.bodyText && !redenZichtbaar.value) {
+        delen.push(t.resolved.bodyText);
+    }
+    return delen;
 });
 
 const emit = defineEmits(['details', 'invoer', 'doel', 'feedback']);
@@ -63,8 +85,9 @@ const goalChip = {
 
             <!-- Title + goal chip -->
             <div class="mt-1 flex items-start justify-between gap-2">
-                <h3 class="text-[13px] font-semibold leading-snug text-gray-900">
+                <h3 class="flex items-center gap-1 text-[13px] font-semibold leading-snug text-gray-900">
                     {{ tile.titel }}
+                    <KpiInfo v-if="uitleg.length" :tekst="uitleg" :label="`Uitleg bij ${tile.titel}`" />
                 </h3>
                 <span
                     v-if="tile.goalStatus && goalChip[tile.goalStatus]"
@@ -112,9 +135,6 @@ const goalChip = {
                     </button>
                 </div>
 
-                <p v-if="tile.toelichting" class="mt-1.5 text-[11px] leading-snug text-gray-500">
-                    {{ tile.toelichting }}
-                </p>
             </template>
 
             <!-- Status state -->
@@ -126,7 +146,7 @@ const goalChip = {
                     {{ tile.stateLabel ?? tile.resolved.state }}
                 </div>
                 <p
-                    v-if="tile.resolved.bodyText"
+                    v-if="tile.resolved.bodyText && redenZichtbaar"
                     class="mt-2 text-[11px] leading-snug text-gray-500"
                 >
                     {{ tile.resolved.bodyText }}
@@ -144,10 +164,11 @@ const goalChip = {
             <!-- Bekende kanttekening bij de data (kpi_betrouwbaarheid, niveau let_op). -->
             <p
                 v-if="tile.betrouwbaarheid === 'let_op' && tile.betrouwbaarheidReden"
-                class="mt-2 flex gap-1.5 rounded-md bg-amber-50 px-2.5 py-1.5 text-[11px] leading-snug text-amber-800"
+                class="mt-2 inline-flex items-center gap-1 self-start rounded-full bg-amber-50 py-0.5 pl-2 pr-1 text-[11px] font-semibold text-amber-800 ring-1 ring-amber-200"
             >
-                <i class="pi pi-exclamation-triangle mt-px text-[10px]" aria-hidden="true" />
-                <span><span class="font-semibold">Let op:</span> {{ tile.betrouwbaarheidReden }}</span>
+                <i class="pi pi-exclamation-triangle text-[10px]" aria-hidden="true" />
+                Let op
+                <KpiInfo :tekst="tile.betrouwbaarheidReden" :label="`Let op bij ${tile.titel}`" />
             </p>
 
             <!-- Een onbetrouwbaar cijfer krijgt ook geen trendlijn: de historie heeft hetzelfde probleem. -->

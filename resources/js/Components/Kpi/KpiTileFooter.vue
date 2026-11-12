@@ -1,8 +1,11 @@
 <script setup>
+import KpiInfo from '@/Components/Kpi/KpiInfo.vue';
+import { computed } from 'vue';
+
 /**
- * Mockup footer: venster / "Bron: … · stand …" lines left, Details button right.
+ * Voet: stand links met venster en bron achter een info-icoon, Details rechts.
  */
-defineProps({
+const props = defineProps({
     tile: {
         type: Object,
         required: true,
@@ -14,22 +17,20 @@ defineProps({
 });
 
 const emit = defineEmits(['details', 'feedback']);
+
+const bronUitleg = computed(() =>
+    [props.tile.venster, props.tile.bronLabel ? `Bron: ${props.tile.bronLabel}` : ''].filter(Boolean),
+);
 </script>
 
 <template>
     <footer
         class="mt-3 flex items-center justify-between gap-3 border-t border-gray-100 px-4 py-2.5"
     >
-        <div class="min-w-0 text-[10px] leading-[1.5] text-gray-500">
-            <p v-if="tile.venster" class="truncate">{{ tile.venster }}</p>
-            <p v-if="tile.bronLabel || tile.standPer" class="flex items-center gap-1 truncate">
-                <i class="pi pi-database text-[9px]" aria-hidden="true" />
-                <span class="truncate">
-                    <span v-if="tile.bronLabel">Bron: {{ tile.bronLabel }}</span>
-                    <span v-if="tile.bronLabel && tile.standPer"> · </span>
-                    <span v-if="tile.standPer">stand {{ tile.standPer }}</span>
-                </span>
-            </p>
+        <div class="flex min-w-0 items-center gap-1 text-[10px] leading-[1.5] text-gray-500">
+            <span v-if="tile.standPer" class="truncate">Stand {{ tile.standPer }}</span>
+            <span v-else-if="tile.bronLabel" class="truncate">{{ tile.bronLabel }}</span>
+            <KpiInfo v-if="bronUitleg.length" :tekst="bronUitleg" :label="`Venster en bron van ${tile.titel ?? 'deze tegel'}`" />
         </div>
         <div class="flex shrink-0 items-center gap-1.5">
             <button

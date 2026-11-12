@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue';
 import AfcBlok from './AfcBlok.vue';
-import AfcInfo from './AfcInfo.vue';
+import AfcInfo from '@/Components/Kpi/KpiInfo.vue';
 import AfcKeuze from './AfcKeuze.vue';
 import AfcTabel from './AfcTabel.vue';
 import { KLANTSTATUSSEN, klantenMetStatus, statusOverzicht } from '@/utils/afcAnalyse';

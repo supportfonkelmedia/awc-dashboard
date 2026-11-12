@@ -1,4 +1,5 @@
 <script setup>
+import KpiInfo from '@/Components/Kpi/KpiInfo.vue';
 import Column from 'primevue/column';
 import DataTable from 'primevue/datatable';
 import Button from 'primevue/button';
@@ -54,8 +55,9 @@ const statusDotClass = (status) => {
         class="rounded-lg border border-gray-200 bg-white p-6 shadow-sm"
     >
         <div class="flex flex-wrap items-center justify-between gap-2">
-            <h2 class="text-base font-semibold text-gray-900">
+            <h2 class="flex items-center gap-1.5 text-base font-semibold text-gray-900">
                 {{ title }}
+                <KpiInfo v-if="section.configRow?.vaste_tekst" :tekst="section.configRow.vaste_tekst" />
             </h2>
             <Button
                 v-if="waardeBron === 'kpi_registry'"
@@ -65,12 +67,6 @@ const statusDotClass = (status) => {
                 @click="emit('open-invoer')"
             />
         </div>
-        <p
-            v-if="section.configRow?.vaste_tekst"
-            class="mt-1 text-sm text-gray-600"
-        >
-            {{ section.configRow.vaste_tekst }}
-        </p>
 
         <DataTable
             v-if="waardeBron === 'kpi_controles' && controlesRows.length"

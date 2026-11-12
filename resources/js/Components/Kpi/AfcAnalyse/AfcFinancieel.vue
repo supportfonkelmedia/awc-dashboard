@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import AfcInfo from './AfcInfo.vue';
+import AfcInfo from '@/Components/Kpi/KpiInfo.vue';
 import AfcKaart from './AfcKaart.vue';
 import AfcTabel from './AfcTabel.vue';
 import { MAANDEN_KORT, aansluiting, ketenPerJaar } from '@/utils/afcAnalyse';

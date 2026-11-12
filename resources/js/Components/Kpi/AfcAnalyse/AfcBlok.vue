@@ -1,5 +1,5 @@
 <script setup>
-import AfcInfo from './AfcInfo.vue';
+import AfcInfo from '@/Components/Kpi/KpiInfo.vue';
 
 defineProps({
     titel: { type: String, required: true },

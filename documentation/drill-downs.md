@@ -52,9 +52,26 @@ klant / deal, met `tegelvenster` (welke rijen de tegel telt) en `bulkdag` (10 of
 | ACC doorlooptijd | 2,7 dagen, n=5692 | acc_doorlooptijd_maand: 5692 afgerond | n gelijk; mediaan over het jaar, drill per maand |
 | Time to onboarding | 53,9 dagen, n=46 | onboarding_kwartaal: 46 afgerond | n gelijk |
 
-Trendlijnen (`kpi_trend`) eindigen op de tegelwaarde voor alle KPI's met hetzelfde venster;
-omzetbrug AWC en concern wijken 20 euro af (afronding). ACC-doorlooptijd, dossiers, churn en
+Trendlijnen (`kpi_trend`) eindigen op de tegelwaarde voor alle KPI's met hetzelfde venster
+(hercontrole 19:52-snapshot). Omzetbrug AWC en concern: trend 20 euro lager (vorig jaar 398 euro).
+Geen afronding maar definitie: kpi_omzetbrug laat klanten weg met netto omzet <= 0 in beide
+vensters (`WHERE vorig > 0 OR nu > 0`, vooral creditnota's); kpi_trend telt ze mee. ACC-doorlooptijd, dossiers, churn en
 onboarding hebben bewust een ander venster in de trend (maand of kwartaal) dan op de tegel.
+
+Hercontroles na de laatste commit (19:52-snapshot):
+- EBITDA = omzet - kostengroepen: AWC 0, AFC -2, ACC +4, concern +2 euro. Afronding bewezen: alle
+  599 rijen in kpi_kosten_maand zijn hele euro's (per maand en groep afgerond); ACC rechtstreeks uit
+  cashweb op book_period_ledger is exact 111.710 = tegel.
+- Peliqan-kant end-to-end: de 42 queries die handler v10 bouwt voor elke (drill-view, scope) uit de
+  live tegelconfig draaien allemaal foutloos op dw_2401 en geven rijen terug (max 723, onder de limiet
+  2000, dus niets afgekapt). Niet getest: de HTTP-route met JWT vanaf de testserver (deploy geblokkeerd;
+  sinds v10 geen API-aanroepen in de endpointlog).
+- Periodewissel voor omzet: kpi_klant_omzet_maand staat sinds 18:37 op book_period_ledger. Omzetbrug
+  bleef gelijk, en dat klopt: 8xxx-omzet verschuift alleen bij AWC, met een document van 30.000 euro
+  (511420, doorbelasting aan Amsterdam Customs Company, zoek CUSTOMS). Dat staat op de
+  intercompany-lijst en telt in brug en trend niet mee.
+- OTIF en de vaste tegels tonen geen getal (kpi_oordeel.waarde leeg, staat in opbouw / in validatie /
+  niet meetbaar); er is niets om naar door te klikken of op te tellen.
 
 Noten:
 - Throughput zakte op 12-11 van 15.729 naar 6.085 orders: `kpi_7t_naar_warehouse` (app 13737)

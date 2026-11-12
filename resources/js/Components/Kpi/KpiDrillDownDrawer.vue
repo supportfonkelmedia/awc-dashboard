@@ -1,12 +1,11 @@
 <script setup>
 import { leesbaar } from '@/utils/leesbaar';
 import KpiTegelGrafiek from '@/Components/Kpi/KpiTegelGrafiek.vue';
-import Column from 'primevue/column';
-import DataTable from 'primevue/datatable';
+import KpiDrillTabel from '@/Components/Kpi/KpiDrillTabel.vue';
+import { Link } from '@inertiajs/vue3';
 import Drawer from 'primevue/drawer';
 import ProgressSpinner from 'primevue/progressspinner';
 import { computed, ref, watch } from 'vue';
-import { drillColumnHeader } from '@/utils/kpiDrillColumns';
 import { formatBronBijgewerkt } from '@/utils/kpiFreshness';
 
 const props = defineProps({
@@ -20,6 +19,13 @@ const loading = ref(false);
 const error = ref(null);
 /** @type {import('vue').Ref<Record<string, Array<object>>>} */
 const tables = ref({});
+/** @type {import('vue').Ref<Record<string, object>>} */
+const tableMeta = ref({});
+
+/** AFC-tegels verwijzen door naar de AFC-analyse (klanten, eigenaren, modaliteit). */
+const toonAfcAnalyse = computed(
+    () => props.tile?.configRow?.scherm === 'afc' || props.tile?.scopeCode === 'pgl1',
+);
 
 const metaRows = computed(() => {
     const o = props.tile?.oordeelRow;
@@ -54,12 +60,17 @@ watch(
         loading.value = true;
         error.value = null;
         tables.value = {};
+        tableMeta.value = {};
 
         try {
             const params = new URLSearchParams({
                 bundle: 'drill',
                 views: tile.drillViews.join(','),
             });
+            // Alleen de rijen van de entiteit of pijplijn van deze tegel (handler v10).
+            if (tile.scopeCode) {
+                params.set('scope', String(tile.scopeCode));
+            }
             const res = await fetch(`${route('kpi.peliqan')}?${params}`, {
                 headers: { Accept: 'application/json' },
                 credentials: 'same-origin',
@@ -74,6 +85,7 @@ watch(
                 return;
             }
             tables.value = json.tables ?? {};
+            tableMeta.value = json.table_meta ?? {};
         } catch (e) {
             error.value = e?.message ?? 'Drill-down laden mislukt';
         } finally {
@@ -84,14 +96,6 @@ watch(
 
 function close() {
     emit('update:visible', false);
-}
-
-function tableColumns(rows) {
-    if (!rows?.length) {
-        return [];
-    }
-
-    return Object.keys(rows[0]);
 }
 </script>
 
@@ -184,28 +188,23 @@ function tableColumns(rows) {
         <p v-else-if="error" class="text-sm text-red-600">{{ error }}</p>
 
         <div v-else class="space-y-6">
-            <div v-for="(rows, viewName) in tables" :key="viewName">
-                <h3 class="mb-2 text-sm font-semibold text-gray-900">
-                    {{ viewName }}
-                </h3>
-                <DataTable
-                    v-if="rows.length"
-                    :value="rows"
-                    size="small"
-                    scrollable
-                    scroll-height="280px"
-                    class="text-xs"
-                >
-                    <Column
-                        v-for="col in tableColumns(rows)"
-                        :key="col"
-                        :field="col"
-                        :header="drillColumnHeader(col)"
-                    />
-                </DataTable>
-                <p v-else class="text-sm text-gray-500">Geen rijen.</p>
-            </div>
+            <KpiDrillTabel
+                v-for="(rows, viewName) in tables"
+                :key="viewName"
+                :view="String(viewName)"
+                :rows="rows"
+                :meta="tableMeta[viewName] ?? null"
+            />
         </div>
+
+        <Link
+            v-if="toonAfcAnalyse"
+            :href="route('kpi.afc.analyse')"
+            class="mt-6 inline-flex items-center gap-1 text-sm font-medium text-awc-orange hover:underline"
+        >
+            Verder in de AFC-analyse
+            <i class="pi pi-arrow-right text-xs" aria-hidden="true" />
+        </Link>
 
         <template #footer>
             <button

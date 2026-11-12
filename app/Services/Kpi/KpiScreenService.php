@@ -102,7 +102,7 @@ class KpiScreenService
 
         $filtered = array_filter(
             $query,
-            fn ($v, $k) => in_array($k, ['bundle', 'scherm', 'views', 'limit'], true)
+            fn ($v, $k) => in_array($k, ['bundle', 'scherm', 'views', 'limit', 'scope'], true)
                 && $v !== null && $v !== '',
             ARRAY_FILTER_USE_BOTH,
         );

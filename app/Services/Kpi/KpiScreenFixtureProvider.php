@@ -25,7 +25,7 @@ class KpiScreenFixtureProvider
                 'kpi_registry' => $this->registryRows(),
                 'meta' => $this->meta('registry'),
             ],
-            'drill' => $this->drill((string) ($query['views'] ?? '')),
+            'drill' => $this->drill((string) ($query['views'] ?? ''), (string) ($query['scope'] ?? '')),
             default => null,
         };
     }
@@ -84,8 +84,8 @@ class KpiScreenFixtureProvider
                 // Order matches mockup 01: strategische tegels first, then AANVULLEND (Omzetbrug + A/B Players).
                 $this->cfgTegel('Bruto marge per loonkosten', 'bruto_marge_per_loonkosten', 'concern', 'FINANCIËLE GEZONDHEID', 'kpi_bm_maand', 'bruto_marge_per_loonkosten', 'concern', 'Cashweb'),
                 $this->cfgTegel('% Triple LOB', 'triple_lob', 'concern', 'WAARDE', 'kpi_triple_lob_maand,kpi_triple_lob_te_controleren', 'triple_lob', 'concern', 'Cashweb'),
-                $this->cfgTegel('Winrate Verkooppijplijn', 'winrate', 'Verkooppijplijn', 'COMMERCIEEL', 'kpi_winrate_maand,kpi_winrate_fases', 'winrate', 'Verkooppijplijn', 'HubSpot'),
-                $this->cfgTegel('Churn', 'churn', 'concern', 'RETENTIE', 'kpi_churn_kwartaal', 'churn', 'concern', 'Cashweb'),
+                $this->cfgTegel('Winrate Verkooppijplijn', 'winrate', 'Verkooppijplijn', 'COMMERCIEEL', 'kpi_winrate_deal,kpi_winrate_maand,kpi_winrate_fases', 'winrate', 'Verkooppijplijn', 'HubSpot'),
+                $this->cfgTegel('Churn', 'churn', 'concern', 'RETENTIE', 'kpi_churn_klant,kpi_churn_kwartaal', 'churn', 'concern', 'Cashweb'),
                 $this->cfgTegel('OTIF', 'otif', '', 'OPERATIE', null, null, null, 'Nog geen bron'),
                 $this->cfgTegel('EBITDA', 'ebitda', 'concern', 'FINANCIËLE GEZONDHEID', 'kpi_ebitda_maand,kpi_kosten_maand,kpi_handmatig', 'ebitda', 'concern', 'Cashweb + handmatig'),
                 $this->cfgBanner('Omzetbrug', 'omzet_brug', 'concern', 'WAARDE', 'kpi_omzetbrug,kpi_omzetbrug_top,kpi_omzetbrug_klant', 'omzet_brug', 'concern', 'Cashweb'),
@@ -94,12 +94,12 @@ class KpiScreenFixtureProvider
             'operationeel' => [
                 $this->cfgVast('ICP-interacties', 'in_opbouw', 'Definitie en bron in opbouw.'),
                 $this->cfgVast('Client requests per LOB', 'in_opbouw', 'Definitie en bron in opbouw.'),
-                $this->cfgTegel('Winrate Verkooppijplijn', 'winrate', 'Verkooppijplijn', '', 'kpi_winrate_maand', 'winrate', 'Verkooppijplijn', 'HubSpot'),
+                $this->cfgTegel('Winrate Verkooppijplijn', 'winrate', 'Verkooppijplijn', '', 'kpi_winrate_deal,kpi_winrate_maand', 'winrate', 'Verkooppijplijn', 'HubSpot'),
                 $this->cfgTegel('Time to onboarding', 'time_to_onboarding', 'alaw', '', 'kpi_onboarding_kwartaal', 'time_to_onboarding', 'alaw', 'HubSpot'),
                 $this->cfgTegel('Dock-to-stock binnen 24 uur', 'dock_to_stock', 'alaw', '', 'kpi_d2s_maand', 'dock_to_stock', 'alaw', '7T'),
                 $this->cfgVast('Bezettingsgraad', 'in_validatie', 'Definitie wordt gevalideerd.'),
                 $this->cfgVast('On-time delivery', 'in_opbouw', 'Definitie en bron in opbouw.'),
-                $this->cfgTegel('Churn', 'churn', 'concern', '', 'kpi_churn_kwartaal', 'churn', 'concern', 'Cashweb'),
+                $this->cfgTegel('Churn', 'churn', 'concern', '', 'kpi_churn_klant,kpi_churn_kwartaal', 'churn', 'concern', 'Cashweb'),
                 $this->cfgTegel('Dossiers per soort', 'acc_dossiers', 'acco', '', 'kpi_acc_dossiers_maand', 'acc_dossiers', 'acco', 'HubSpot'),
             ],
             'tactisch' => [
@@ -110,7 +110,7 @@ class KpiScreenFixtureProvider
             ],
             'awc' => [
                 $this->cfgTegel('Bruto marge per loonkosten, AWC', 'bruto_marge_per_loonkosten', 'alaw', '', 'kpi_bm_maand', 'bruto_marge_per_loonkosten', 'alaw', 'Cashweb'),
-                $this->cfgTegel('EBITDA, AWC', 'ebitda', 'alaw', '', 'kpi_kosten_maand', 'ebitda', 'alaw', 'Cashweb'),
+                $this->cfgTegel('EBITDA, AWC', 'ebitda', 'alaw', '', 'kpi_ebitda_maand,kpi_kosten_maand', 'ebitda', 'alaw', 'Cashweb'),
                 $this->cfgBanner('Omzet en klanten, AWC', 'omzet_brug', 'alaw', '', 'kpi_omzetbrug,kpi_omzetbrug_klant', 'omzet_brug', 'alaw', 'Cashweb'),
                 $this->cfgTegel('Dock-to-stock binnen 24 uur', 'dock_to_stock', 'alaw', '', 'kpi_d2s_maand', 'dock_to_stock', 'alaw', '7T'),
                 $this->cfgVast('Inventory accuracy', 'in_validatie', 'Definitie wordt gevalideerd.'),
@@ -121,9 +121,9 @@ class KpiScreenFixtureProvider
             ],
             'afc' => [
                 $this->cfgTegel('Bruto marge per loonkosten, AFC', 'bruto_marge_per_loonkosten', 'pgl1', '', 'kpi_bm_maand', 'bruto_marge_per_loonkosten', 'pgl1', 'Cashweb'),
-                $this->cfgTegel('EBITDA, AFC', 'ebitda', 'pgl1', '', 'kpi_kosten_maand', 'ebitda', 'pgl1', 'Cashweb'),
+                $this->cfgTegel('EBITDA, AFC', 'ebitda', 'pgl1', '', 'kpi_ebitda_maand,kpi_kosten_maand', 'ebitda', 'pgl1', 'Cashweb'),
                 $this->cfgBanner('Omzet en klanten, AFC', 'omzet_brug', 'pgl1', '', 'kpi_omzetbrug,kpi_omzetbrug_klant', 'omzet_brug', 'pgl1', 'Cashweb'),
-                $this->cfgTegel('Winrate AFC Verkooplijn', 'winrate', 'AFC Verkooplijn', '', 'kpi_winrate_maand', 'winrate', 'AFC Verkooplijn', 'HubSpot'),
+                $this->cfgTegel('Winrate AFC Verkooplijn', 'winrate', 'AFC - Verkooplijn', '', 'kpi_winrate_deal,kpi_winrate_maand', 'winrate', 'AFC - Verkooplijn', 'HubSpot'),
                 $this->cfgTegel('Zendingen', 'afc_zendingen', 'pgl1', 'Volume', 'kpi_afc_sprinter_maand', 'afc_zendingen', 'pgl1', 'Sprinter'),
                 $this->cfgTegel('Modal split', 'afc_modal_split', 'pgl1', 'Volume', 'kpi_afc_sprinter_maand', 'afc_modal_split', 'pgl1', 'Sprinter'),
                 $this->cfgTegel('Marge per zending', 'afc_marge_per_zending', 'pgl1', 'Marge', 'kpi_afc_sprinter_maand', 'afc_marge_per_zending', 'pgl1', 'Sprinter'),
@@ -132,7 +132,7 @@ class KpiScreenFixtureProvider
             ],
             'acc' => [
                 $this->cfgTegel('Bruto marge per loonkosten, ACC', 'bruto_marge_per_loonkosten', 'acco', '', 'kpi_bm_maand', 'bruto_marge_per_loonkosten', 'acco', 'Cashweb'),
-                $this->cfgTegel('EBITDA, ACC', 'ebitda', 'acco', '', 'kpi_kosten_maand', 'ebitda', 'acco', 'Cashweb'),
+                $this->cfgTegel('EBITDA, ACC', 'ebitda', 'acco', '', 'kpi_ebitda_maand,kpi_kosten_maand', 'ebitda', 'acco', 'Cashweb'),
                 $this->cfgBanner('Omzet en klanten, ACC', 'omzet_brug', 'acco', '', 'kpi_omzetbrug,kpi_omzetbrug_klant', 'omzet_brug', 'acco', 'Cashweb'),
                 $this->cfgTegel('Doorlooptijd dossier', 'acc_doorlooptijd', 'acco', '', 'kpi_acc_doorlooptijd_maand', 'acc_doorlooptijd', 'acco', 'HubSpot'),
                 $this->cfgVast('First time right', 'in_opbouw', 'Definitie en bron in opbouw.'),
@@ -282,7 +282,7 @@ class KpiScreenFixtureProvider
             $this->meet('bruto_marge_per_loonkosten', 'acco', 2.51, 2.27, 0.24, 'ratio', 'hoger_beter', $jul),
             $this->meet('triple_lob', 'concern', 8.2, 8.4, -0.2, 'procent', 'hoger_beter', $jul),
             $this->meet('winrate', 'Verkooppijplijn', 42.1, 38.7, 3.4, 'procent', 'hoger_beter', $sep),
-            $this->meet('winrate', 'AFC Verkooplijn', null, null, null, 'procent', 'hoger_beter', $sep, 'te_weinig_data', 'Te weinig deals in deze pijplijn.'),
+            $this->meet('winrate', 'AFC - Verkooplijn', null, null, null, 'procent', 'hoger_beter', $sep, 'te_weinig_data', 'Te weinig deals in deze pijplijn.'),
             $this->meet('churn', 'concern', 64, 47, 17, 'aantal', 'lager_beter', $sep),
             $this->betrouwbaarheid(
                 $this->meet('ebitda', 'concern', 1_194_998, 1_755_466, -560_468, 'euro', 'hoger_beter', $jul),
@@ -672,7 +672,7 @@ class KpiScreenFixtureProvider
     /**
      * @return array<string, mixed>
      */
-    private function drill(string $viewsRaw): array
+    private function drill(string $viewsRaw, string $scope = ''): array
     {
         $views = array_values(array_filter(array_map('trim', explode(',', $viewsRaw))));
         $tables = [];
@@ -683,10 +683,16 @@ class KpiScreenFixtureProvider
                 'kpi_omzetbrug' => $this->omzetbrugRows(),
                 'kpi_handmatig' => [],
                 'kpi_trend' => $this->entiteitTrendRows(),
-                default => (new AfcAnalyseFixture)->rows($view) ?? [
+                default => (new AfcAnalyseFixture)->rows($view) ?? (new KpiDrillDetailFixture)->rows($view) ?? [
                     ['periode' => '2026-07-01', 'waarde' => 0, 'status' => 'definitief', 'notitie' => 'Demo-data. Echte cijfers komen uit Peliqan.'],
                 ],
             };
+        }
+
+        if ($scope !== '') {
+            foreach ($tables as $view => $rows) {
+                $tables[$view] = $this->filterScope($rows, $scope);
+            }
         }
 
         return [
@@ -696,6 +702,30 @@ class KpiScreenFixtureProvider
             'errors' => [],
             'meta' => $this->meta('drill'),
         ];
+    }
+
+    /**
+     * Zelfde scopefilter als de Peliqan-handler (v10): scope_code, admin_code of pipeline;
+     * concern zonder eigen rijen betekent alle entiteiten. Rijen zonder scopekolom blijven staan.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @return list<array<string, mixed>>
+     */
+    private function filterScope(array $rows, string $scope): array
+    {
+        $kolom = null;
+        foreach (['scope_code', 'admin_code', 'pipeline'] as $k) {
+            if ($rows !== [] && array_key_exists($k, $rows[0])) {
+                $kolom = $k;
+                break;
+            }
+        }
+        if ($kolom === null) {
+            return $rows;
+        }
+        $gefilterd = array_values(array_filter($rows, fn ($r) => (string) ($r[$kolom] ?? '') === $scope));
+
+        return $gefilterd === [] && $scope === 'concern' ? $rows : $gefilterd;
     }
 
     /**

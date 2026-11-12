@@ -13,7 +13,7 @@
 #   scope       = optional drill filter on scope_code / scope (only views that have that column)
 #   periode_van = optional drill filter YYYY, YYYY-MM or YYYY-MM-DD on the view's period column
 #
-# Drill (v7): rows are ordered in SQL (period column DESC where the view has one, else a stable key,
+# Drill (v7; v10 adds scope via admin_code/pipeline and the kpi_churn_klant / kpi_winrate_deal views): rows are ordered in SQL (period column DESC where the view has one, else a stable key,
 # with the full row text as final tie-breaker) and LIMIT is applied in SQL after ordering.
 # Additive response key `table_meta` per view: row_count, truncated, total_count, limit, order_by, filters.
 # Existing keys (bundle, views, tables, errors, meta) are unchanged; truncation still also adds the
@@ -31,7 +31,7 @@ import pandas as pd
 
 WAREHOUSE_DW = "dw_2401"
 KPI_SCHEMA = '"My Queries"'
-HANDLER_VERSION = "2026-11-12-kpi-v9-afc-offertes"
+HANDLER_VERSION = "2026-11-12-kpi-v10-drill-detail-scope"
 
 SCREENS = frozenset(
     {"strategisch", "operationeel", "tactisch", "awc", "afc", "acc"}
@@ -51,6 +51,9 @@ ALLOWED_DRILL_VIEWS = frozenset(
         "kpi_winrate_maand",
         "kpi_winrate_fases",
         "kpi_churn_kwartaal",
+        # v10: detail-drills onder Churn en Winrate (één rij per klant / deal)
+        "kpi_churn_klant",
+        "kpi_winrate_deal",
         "kpi_acc_dossiers_maand",
         "kpi_acc_doorlooptijd_maand",
         "kpi_onboarding_kwartaal",
@@ -93,6 +96,12 @@ DRILL_ORDER = {
     "kpi_winrate_maand": ("peildatum", "t.peildatum DESC, t.pipeline, t.soort"),
     "kpi_winrate_fases": (None, "t.pipeline, t.fase"),
     "kpi_churn_kwartaal": ("kwartaal", "t.kwartaal DESC"),
+    "kpi_churn_klant": ("vertrekdatum", "t.vertrekdatum DESC, t.klant"),
+    "kpi_winrate_deal": (
+        "aangemaakt",
+        "CASE t.tegelvenster WHEN 'telt mee' THEN 0 WHEN 'nog open' THEN 1 ELSE 2 END, "
+        "t.beslisdatum DESC NULLS LAST, t.aangemaakt DESC, t.deal",
+    ),
     "kpi_acc_dossiers_maand": ("maand", "t.maand DESC, t.soort"),
     "kpi_acc_doorlooptijd_maand": ("maand", "t.maand DESC"),
     "kpi_onboarding_kwartaal": ("kwartaal", "t.kwartaal DESC, t.pijplijn"),
@@ -120,10 +129,19 @@ DRILL_ORDER = {
 # Optional `scope` drill filter: views with a scope_code column, and the omzetbrug views whose
 # `scope` column holds labels (Concern/AWC/AFC/ACC) instead of codes.
 DRILL_SCOPE_CODE_VIEWS = frozenset(
-    {"kpi_ebitda_maand", "kpi_kosten_maand", "kpi_handmatig", "kpi_doelen", "kpi_oordeel", "kpi_trend"}
+    {"kpi_ebitda_maand", "kpi_kosten_maand", "kpi_handmatig", "kpi_doelen", "kpi_oordeel", "kpi_trend",
+     "kpi_churn_klant", "kpi_winrate_deal"}
 )
 DRILL_SCOPE_LABEL_VIEWS = frozenset({"kpi_omzetbrug", "kpi_omzetbrug_top", "kpi_omzetbrug_klant"})
 SCOPE_CODE_TO_LABEL = {"concern": "Concern", "alaw": "AWC", "pgl1": "AFC", "acco": "ACC"}
+# v10: views whose scope sits in another column than scope_code (bm: admin_code, winrate: pipeline).
+DRILL_SCOPE_OTHER_COLUMN = {
+    "kpi_bm_maand": "admin_code",
+    "kpi_winrate_maand": "pipeline",
+    "kpi_winrate_fases": "pipeline",
+}
+# v10: views without concern rows (concern = sum of the entities): scope=concern means "all rows".
+DRILL_CONCERN_IS_ALL = frozenset({"kpi_bm_maand", "kpi_kosten_maand"})
 
 _dbconn = None
 
@@ -512,7 +530,13 @@ def _drill_where(view, scope, periode_van):
     """Build WHERE clauses for the optional filters; returns (clauses, applied, ignored)."""
     clauses, applied, ignored = [], {}, {}
     if scope:
-        if view in DRILL_SCOPE_CODE_VIEWS:
+        if scope.lower() == "concern" and view in DRILL_CONCERN_IS_ALL:
+            applied["scope"] = "concern (alle entiteiten)"
+        elif view in DRILL_SCOPE_OTHER_COLUMN:
+            col = DRILL_SCOPE_OTHER_COLUMN[view]
+            clauses.append(f"COALESCE(t.{col}, '') = {sql_str_literal(scope)}")
+            applied["scope"] = scope
+        elif view in DRILL_SCOPE_CODE_VIEWS:
             clauses.append(f"COALESCE(t.scope_code, '') = {sql_str_literal(scope)}")
             applied["scope"] = scope
         elif view in DRILL_SCOPE_LABEL_VIEWS:

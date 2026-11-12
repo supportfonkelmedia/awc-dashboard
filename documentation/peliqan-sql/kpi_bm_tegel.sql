@@ -1,10 +1,10 @@
--- Peliqan "My Queries".kpi_bm_tegel (table_id 1416338), stand 2026-11-12
+-- Peliqan "My Queries".kpi_bm_tegel (table_id 1416338), stand 2026-11-12 na jaarwisselingsfix: venster vanaf vorig jaar, sommen per jaar van de laatste afgesloten maand. Vorige versie: commit 66cd6a6.
 WITH m AS (
   SELECT
     *
   FROM "My Queries".kpi_bm_maand
   WHERE
-    maand >= DATE_TRUNC('YEAR', CURRENT_DATE - INTERVAL '1 MONTH')
+    maand >= DATE_TRUNC('YEAR', CURRENT_DATE) - INTERVAL '1 YEAR'
 ), eerste_open AS (
   SELECT
     admin_code,
@@ -42,13 +42,13 @@ WITH m AS (
     s.admin_code,
     s.entiteit,
     s.t_m,
-    SUM(CASE WHEN m.maand <= s.t_m THEN m.bruto_marge END) AS bm_ytd,
-    SUM(CASE WHEN m.maand <= s.t_m THEN m.loonkosten END) AS lk_ytd,
-    SUM(CASE WHEN m.maand <= s.t_m THEN m.inhuur END) AS inhuur_ytd,
-    SUM(CASE WHEN m.maand <= s.t_m THEN m.loon_deels END) AS loon_deels_ytd,
-    SUM(CASE WHEN m.maand <= s.t_m - INTERVAL '1 MONTH' THEN m.bruto_marge END) AS bm_vorig,
-    SUM(CASE WHEN m.maand <= s.t_m - INTERVAL '1 MONTH' THEN m.loonkosten END) AS lk_vorig,
-    COUNT(DISTINCT CASE WHEN m.maand <= s.t_m THEN m.maand END) AS n_maanden,
+    SUM(CASE WHEN m.maand <= s.t_m AND DATE_TRUNC('YEAR', m.maand) = DATE_TRUNC('YEAR', s.t_m) THEN m.bruto_marge END) AS bm_ytd,
+    SUM(CASE WHEN m.maand <= s.t_m AND DATE_TRUNC('YEAR', m.maand) = DATE_TRUNC('YEAR', s.t_m) THEN m.loonkosten END) AS lk_ytd,
+    SUM(CASE WHEN m.maand <= s.t_m AND DATE_TRUNC('YEAR', m.maand) = DATE_TRUNC('YEAR', s.t_m) THEN m.inhuur END) AS inhuur_ytd,
+    SUM(CASE WHEN m.maand <= s.t_m AND DATE_TRUNC('YEAR', m.maand) = DATE_TRUNC('YEAR', s.t_m) THEN m.loon_deels END) AS loon_deels_ytd,
+    SUM(CASE WHEN m.maand <= s.t_m - INTERVAL '1 MONTH' AND DATE_TRUNC('YEAR', m.maand) = DATE_TRUNC('YEAR', s.t_m - INTERVAL '1 MONTH') THEN m.bruto_marge END) AS bm_vorig,
+    SUM(CASE WHEN m.maand <= s.t_m - INTERVAL '1 MONTH' AND DATE_TRUNC('YEAR', m.maand) = DATE_TRUNC('YEAR', s.t_m - INTERVAL '1 MONTH') THEN m.loonkosten END) AS lk_vorig,
+    COUNT(DISTINCT CASE WHEN m.maand <= s.t_m AND DATE_TRUNC('YEAR', m.maand) = DATE_TRUNC('YEAR', s.t_m) THEN m.maand END) AS n_maanden,
     MAX(m.laatst_gesynct) AS bron_bijgewerkt
   FROM scope AS s
   JOIN m

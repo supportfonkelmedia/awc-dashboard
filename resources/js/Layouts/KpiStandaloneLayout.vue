@@ -6,7 +6,7 @@
 </script>
 
 <template>
-    <div class="min-h-screen bg-[#f4f4f4] font-sans antialiased">
+    <div class="min-h-screen bg-awc-platinum font-sans antialiased">
         <slot />
     </div>
 </template>

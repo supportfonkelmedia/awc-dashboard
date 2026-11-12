@@ -282,7 +282,7 @@ async function verstuur() {
         >
             <div class="mb-2 flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <i class="pi pi-comment text-[13px] text-[#ff7020]" aria-hidden="true" />
+                    <i class="pi pi-comment text-[13px] text-awc-orange" aria-hidden="true" />
                     <h2 :id="titleId" class="text-xs font-semibold text-gray-900">Feedback</h2>
                 </div>
                 <button
@@ -311,10 +311,10 @@ async function verstuur() {
                     type="button"
                     role="radio"
                     :aria-checked="type === t.value"
-                    class="flex flex-col items-center gap-1 rounded-md border px-2 py-2 text-[11px] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7020]"
+                    class="flex flex-col items-center gap-1 rounded-md border px-2 py-2 text-[11px] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-awc-orange"
                     :class="
                         type === t.value
-                            ? 'border-[#1a1a1a] bg-[#1a1a1a] text-white'
+                            ? 'border-awc-black bg-awc-black text-white'
                             : 'border-gray-200 bg-white text-gray-700 hover:border-gray-400'
                     "
                     @click="type = t.value"
@@ -332,7 +332,7 @@ async function verstuur() {
                 aria-label="Je melding"
                 placeholder="Wat zie je, of wat zou je willen?"
                 :disabled="saving"
-                class="mb-2 block w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-[#ff7020] focus:outline-none focus:ring-1 focus:ring-[#ff7020]"
+                class="mb-2 block w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-awc-orange focus:outline-none focus:ring-1 focus:ring-awc-orange"
             />
 
             <div v-if="previewUrl" class="relative mb-2 inline-block">
@@ -368,7 +368,7 @@ async function verstuur() {
                 class="mb-2 flex w-full flex-col items-center gap-0.5 rounded-md border border-dashed px-3 py-3 text-center transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                 :class="
                     dragging
-                        ? 'border-[#ff7020] bg-orange-50'
+                        ? 'border-awc-orange bg-awc-orange/10'
                         : 'border-gray-300 bg-gray-50 hover:border-gray-500'
                 "
                 @click="fileRef?.click()"
@@ -389,7 +389,7 @@ async function verstuur() {
                 <button
                     type="button"
                     :disabled="!canSubmit"
-                    class="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-[#ff7020] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#e8621a] disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1a1a1a]"
+                    class="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-awc-orange px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-awc-orange-dark disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-awc-black"
                     @click="verstuur"
                 >
                     <i
@@ -421,13 +421,13 @@ async function verstuur() {
             <button
                 ref="triggerRef"
                 type="button"
-                class="inline-flex items-center gap-2 rounded-full bg-[#1a1a1a] px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7020] focus-visible:ring-offset-2"
+                class="inline-flex items-center gap-2 rounded-full bg-awc-black px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-awc-orange focus-visible:ring-offset-2"
                 aria-label="Feedback geven"
                 :aria-expanded="open"
                 :aria-controls="open ? panelId : undefined"
                 @click="open ? sluiten(true) : openen()"
             >
-                <i class="pi pi-comment text-[13px] text-[#ff7020]" aria-hidden="true" />
+                <i class="pi pi-comment text-[13px] text-awc-orange" aria-hidden="true" />
                 Feedback
             </button>
         </div>

@@ -34,7 +34,7 @@ const emit = defineEmits(['details', 'feedback']);
         <div class="flex shrink-0 items-center gap-1.5">
             <button
                 type="button"
-                class="inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7020]"
+                class="inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-awc-orange"
                 :aria-label="`Feedback over ${tile.titel ?? 'deze tegel'}`"
                 title="Feedback over deze tegel"
                 @click="emit('feedback')"

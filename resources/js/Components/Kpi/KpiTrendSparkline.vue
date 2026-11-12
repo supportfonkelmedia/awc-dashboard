@@ -23,7 +23,8 @@ const props = defineProps({
     },
 });
 
-const colors = ['#2563eb', '#0ea5e9', '#6366f1', '#14b8a6'];
+// AWC-huisstijl: Celestial Blue eerst, dan Black, grijs en Pumpkin Orange.
+const colors = ['#0496FF', '#000000', '#8C8C8C', '#FF6700'];
 
 const chartData = computed(() => {
     const datasets = props.series.map((s, idx) => {

@@ -161,7 +161,7 @@ function barClass(seg) {
         return 'bg-gray-400';
     }
     if (seg.component === 'eind') {
-        return 'bg-gray-900';
+        return 'bg-awc-black';
     }
     if (seg.isPositive) {
         return 'bg-emerald-700';
@@ -197,14 +197,14 @@ function valueClass(seg) {
                 <p class="text-[11px] text-gray-500">
                     {{ leesbaar(tile.themeLabel || 'Waarde') }}
                 </p>
-                <h3 class="mt-1 text-[13px] font-bold text-gray-900">
+                <h3 class="mt-1 text-[13px] font-semibold text-gray-900">
                     {{ tile.titel }}
                 </h3>
             </div>
             <div class="text-right">
                 <p
                     v-if="tile.valueFormatted"
-                    class="text-lg font-bold leading-tight text-gray-900"
+                    class="text-lg font-semibold leading-tight text-gray-900"
                 >
                     {{ tile.valueFormatted }}
                 </p>

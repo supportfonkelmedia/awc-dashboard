@@ -15,7 +15,7 @@ const emit = defineEmits(['details', 'invoer', 'doel', 'feedback']);
 const stateBoxClass = {
     data_onvolledig: 'bg-red-50 text-red-700',
     data_ontbreekt: 'bg-red-50 text-red-700',
-    in_validatie: 'bg-sky-50 text-sky-800',
+    in_validatie: 'bg-awc-blue/10 text-gray-900',
     wacht_op_invoer: 'bg-amber-50 text-amber-800',
 };
 
@@ -62,7 +62,7 @@ const goalChip = {
 
             <!-- Title + goal chip -->
             <div class="mt-1 flex items-start justify-between gap-2">
-                <h3 class="text-[13px] font-bold leading-snug text-gray-900">
+                <h3 class="text-[13px] font-semibold leading-snug text-gray-900">
                     {{ tile.titel }}
                 </h3>
                 <span
@@ -81,7 +81,7 @@ const goalChip = {
             <!-- Value state -->
             <template v-if="tile.resolved.display === 'value'">
                 <div class="mt-2.5 flex items-baseline gap-1.5">
-                    <p class="text-[28px] font-bold leading-none tracking-tight text-gray-900">
+                    <p class="text-[28px] font-semibold leading-none tracking-tight text-gray-900">
                         {{ tile.valueNumber ?? tile.valueFormatted }}
                     </p>
                     <span v-if="tile.valueUnit" class="text-[11px] text-gray-500">

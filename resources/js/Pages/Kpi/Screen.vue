@@ -171,7 +171,7 @@ function isOmzetbrugBanner(banner) {
     <Head :title="meta.title" />
 
     <KpiStandaloneLayout>
-        <div class="min-h-full bg-[#f4f4f4]">
+        <div class="min-h-full bg-awc-platinum">
             <KpiScreenHeader
                 :scherm="scherm"
                 :bijgewerkt-label="bijgewerktLabel"
@@ -190,10 +190,10 @@ function isOmzetbrugBanner(banner) {
                     class="mb-6"
                 />
 
-                <h1 class="text-xl font-bold text-gray-900">
+                <h1 class="text-xl font-semibold text-gray-900">
                     {{ meta.title }}
                 </h1>
-                <p v-if="meta.subtitle" class="mt-1 max-w-3xl text-xs text-sky-700">
+                <p v-if="meta.subtitle" class="mt-1 max-w-3xl text-xs text-gray-600">
                     {{ meta.subtitle }}
                 </p>
 

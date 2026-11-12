@@ -20,7 +20,7 @@ const heading = computed(() => {
 
 <template>
     <div class="col-span-full mt-6">
-        <h2 class="text-lg font-bold text-gray-900">
+        <h2 class="text-lg font-semibold text-gray-900">
             {{ heading }}
         </h2>
     </div>

@@ -40,7 +40,7 @@ const emit = defineEmits(['update:modelValue', 'update:entiteit']);
                 </span>
                 <select
                     :value="modelValue"
-                    class="w-28 rounded border border-gray-300 bg-white py-1 pl-2 pr-8 text-sm text-gray-800 focus:border-[#ff7020] focus:outline-none focus:ring-1 focus:ring-[#ff7020]"
+                    class="w-28 rounded border border-gray-300 bg-white py-1 pl-2 pr-8 text-sm text-gray-800 focus:border-awc-orange focus:outline-none focus:ring-1 focus:ring-awc-orange"
                     @change="emit('update:modelValue', $event.target.value)"
                 >
                     <option value="all">Alles</option>
@@ -65,11 +65,11 @@ const emit = defineEmits(['update:modelValue', 'update:entiteit']);
                         :key="e.scope"
                         type="button"
                         :aria-pressed="entiteit === e.scope"
-                        class="px-2.5 py-1 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#ff7020]"
+                        class="px-2.5 py-1 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-awc-orange"
                         :class="[
                             i > 0 ? 'border-l border-gray-300' : '',
                             entiteit === e.scope
-                                ? 'bg-[#ff7020] font-semibold text-white'
+                                ? 'bg-awc-orange font-semibold text-white'
                                 : 'bg-white text-gray-700 hover:bg-gray-50',
                         ]"
                         @click="emit('update:entiteit', e.scope)"

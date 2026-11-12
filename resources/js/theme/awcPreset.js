@@ -3,10 +3,11 @@ import Aura from '@primeuix/themes/aura';
 
 export default definePreset(Aura, {
     primitive: {
+        // Pumpkin Orange uit de AWC-huisstijl, met donkerder tinten voor hover/active.
         orange: {
-            500: '#ff7020',
-            600: '#e86518',
-            700: '#c65312',
+            500: '#FF6700',
+            600: '#E05A00',
+            700: '#B84A00',
         },
     },
     semantic: {

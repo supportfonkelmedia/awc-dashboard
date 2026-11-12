@@ -37,7 +37,7 @@ defineProps({
                     :class="[
                         'flex h-12 items-center border-b-2 px-3 leading-5 transition',
                         isKpiTabActive(tab.scherm, scherm)
-                            ? 'border-[#ff7020] text-[#ff7020]'
+                            ? 'border-awc-orange text-awc-orange'
                             : 'border-transparent text-gray-600 hover:text-gray-900',
                     ]"
                 >
@@ -69,7 +69,7 @@ defineProps({
                     :class="[
                         'flex h-12 items-center border-b-2 px-3 leading-5 transition',
                         isKpiTabActive(tab.scherm, scherm)
-                            ? 'border-[#ff7020] text-[#ff7020]'
+                            ? 'border-awc-orange text-awc-orange'
                             : 'border-transparent text-gray-600 hover:text-gray-900',
                     ]"
                 >

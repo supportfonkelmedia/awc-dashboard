@@ -123,7 +123,7 @@ function tableColumns(rows) {
             v-if="tile?.resolved?.display === 'value' && tile?.valueFormatted"
             class="mb-4 rounded-md bg-gray-50 px-3 py-2"
         >
-            <p class="text-2xl font-bold text-gray-900">{{ tile.valueFormatted }}</p>
+            <p class="text-2xl font-semibold text-gray-900">{{ tile.valueFormatted }}</p>
             <p v-if="tile.standPer" class="text-xs text-gray-500">
                 Stand: {{ tile.standPer }}
             </p>
@@ -155,9 +155,9 @@ function tableColumns(rows) {
 
         <div
             v-if="tile?.oordeelRow?.aanname"
-            class="mb-4 rounded-md border border-[#ff7020]/30 bg-[#ff7020]/5 p-3 text-sm"
+            class="mb-4 rounded-md border border-awc-orange/30 bg-awc-orange/5 p-3 text-sm"
         >
-            <h3 class="mb-1 font-semibold text-[#ff7020]">Aanname</h3>
+            <h3 class="mb-1 font-semibold text-awc-orange">Aanname</h3>
             <p>{{ tile.oordeelRow.aanname }}</p>
         </div>
 

@@ -26,16 +26,12 @@ const tactischControlesUrl = `${route('kpi.screen', { scherm: 'tactisch' })}#dat
 </script>
 
 <template>
-    <header class="bg-[#1a1a1a] text-white">
+    <header class="bg-awc-black text-white">
         <div
             class="mx-auto flex max-w-[1440px] flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between lg:px-8"
         >
             <div class="flex min-w-0 items-center gap-3">
-                <div
-                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-[#ff7020]/20 text-[#ff7020]"
-                >
-                    <i class="pi pi-box text-xl" aria-hidden="true" />
-                </div>
+                <!-- Hier komt het AWC-logo (SVG uit de Figma-stijlgids); geen nagetekend icoon. -->
                 <div class="min-w-0">
                     <p
                         class="truncate text-sm font-semibold text-white"
@@ -58,7 +54,7 @@ const tactischControlesUrl = `${route('kpi.screen', { scherm: 'tactisch' })}#dat
                 </span>
                 <span
                     v-if="stale"
-                    class="rounded-full bg-orange-500/20 px-2 py-0.5 text-[11px] font-medium text-orange-200 ring-1 ring-orange-400/40"
+                    class="rounded-full bg-awc-orange/100/20 px-2 py-0.5 text-[11px] font-medium text-orange-200 ring-1 ring-orange-400/40"
                     title="Gecachte data; Peliqan niet bereikbaar"
                 >
                     Cache
@@ -69,7 +65,7 @@ const tactischControlesUrl = `${route('kpi.screen', { scherm: 'tactisch' })}#dat
                 </span>
                 <Link
                     :href="tactischControlesUrl"
-                    class="flex flex-wrap items-center gap-2 rounded-full bg-black/30 px-3 py-1 text-xs ring-1 ring-white/10 transition hover:bg-black/50"
+                    class="flex flex-wrap items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs ring-1 ring-white/10 transition hover:bg-white/20"
                 >
                     <span class="text-white/80">Datacontroles</span>
                     <span class="text-red-400">{{ controles.fout }} fout</span>

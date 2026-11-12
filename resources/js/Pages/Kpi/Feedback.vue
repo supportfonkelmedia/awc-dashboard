@@ -21,7 +21,7 @@ const STATUS_LABEL = {
 };
 const TYPE_CHIP = {
     fout: { label: 'Fout', cls: 'bg-red-50 text-red-700' },
-    verbetering: { label: 'Verbetering', cls: 'bg-sky-50 text-sky-800' },
+    verbetering: { label: 'Verbetering', cls: 'bg-awc-blue/10 text-gray-900' },
     vraag: { label: 'Vraag', cls: 'bg-amber-50 text-amber-800' },
 };
 
@@ -109,7 +109,7 @@ async function zetStatus(row, status) {
     <Head title="Feedback" />
 
     <KpiStandaloneLayout>
-        <header class="bg-[#1a1a1a] text-white">
+        <header class="bg-awc-black text-white">
             <div
                 class="mx-auto flex max-w-[1440px] items-center justify-between gap-3 px-4 py-3 lg:px-8"
             >
@@ -130,7 +130,7 @@ async function zetStatus(row, status) {
         </header>
 
         <main class="mx-auto max-w-[1440px] px-4 py-6 lg:px-8">
-            <h1 class="text-xl font-bold text-gray-900">Feedback</h1>
+            <h1 class="text-xl font-semibold text-gray-900">Feedback</h1>
             <p class="mt-1 max-w-3xl text-xs text-gray-600">
                 Meldingen uit de feedbackknop. Zet een melding op ‘In behandeling’ zodra je
                 ermee bezig bent en op ‘Afgerond’ als het is opgelost of beantwoord.
@@ -146,10 +146,10 @@ async function zetStatus(row, status) {
                     :key="f.value"
                     type="button"
                     :aria-pressed="filter === f.value"
-                    class="rounded-full border px-3 py-1 text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ff7020]"
+                    class="rounded-full border px-3 py-1 text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-awc-orange"
                     :class="
                         filter === f.value
-                            ? 'border-[#ff7020] bg-[#ff7020] font-semibold text-white'
+                            ? 'border-awc-orange bg-awc-orange font-semibold text-white'
                             : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                     "
                     @click="filter = f.value"
@@ -209,7 +209,7 @@ async function zetStatus(row, status) {
                                 <select
                                     :value="row.status"
                                     :disabled="row.saving"
-                                    class="rounded border border-gray-300 bg-white py-1 pl-2 pr-8 text-sm text-gray-800 focus:border-[#ff7020] focus:outline-none focus:ring-1 focus:ring-[#ff7020]"
+                                    class="rounded border border-gray-300 bg-white py-1 pl-2 pr-8 text-sm text-gray-800 focus:border-awc-orange focus:outline-none focus:ring-1 focus:ring-awc-orange"
                                     @change="zetStatus(row, $event.target.value)"
                                 >
                                     <option v-for="s in statuses" :key="s" :value="s">

@@ -127,8 +127,8 @@ class KpiScreenFixtureProvider
                 $this->cfgTegel('Zendingen', 'afc_zendingen', 'pgl1', 'Volume', 'kpi_afc_sprinter_maand', 'afc_zendingen', 'pgl1', 'Sprinter'),
                 $this->cfgTegel('Modal split', 'afc_modal_split', 'pgl1', 'Volume', 'kpi_afc_sprinter_maand', 'afc_modal_split', 'pgl1', 'Sprinter'),
                 $this->cfgTegel('Marge per zending', 'afc_marge_per_zending', 'pgl1', 'Marge', 'kpi_afc_sprinter_maand', 'afc_marge_per_zending', 'pgl1', 'Sprinter'),
-                $this->cfgVast('Quote conversion', 'in_opbouw', 'Definitie en bron in opbouw.'),
-                $this->cfgVast('First time right', 'in_opbouw', 'Definitie en bron in opbouw.'),
+                $this->cfgTegel('Quote conversion', 'afc_quote_conversie', 'pgl1', 'Commercieel', 'kpi_afc_offerte_maand', 'afc_quote_conversie', 'pgl1', 'Sprinter3000 · offertes'),
+                $this->cfgVast('On-time delivery', 'in_opbouw', 'Sprinter levert nog geen geplande en werkelijke afleverdatum: de eigen sync haalt alleen zendingen op, zonder mijlpalen per zending. Daarmee is op tijd nog niet te meten.'),
             ],
             'acc' => [
                 $this->cfgTegel('Bruto marge per loonkosten, ACC', 'bruto_marge_per_loonkosten', 'acco', '', 'kpi_bm_maand', 'bruto_marge_per_loonkosten', 'acco', 'Cashweb'),
@@ -247,7 +247,7 @@ class KpiScreenFixtureProvider
             'operationeel' => ['winrate', 'time_to_onboarding', 'dock_to_stock', 'churn', 'acc_dossiers'],
             'tactisch' => ['enps', 'nps_2027', 'automatisering_2027'],
             'awc' => ['bruto_marge_per_loonkosten', 'ebitda', 'omzet_brug', 'dock_to_stock', 'throughput', 'damage_rate'],
-            'afc' => ['bruto_marge_per_loonkosten', 'ebitda', 'omzet_brug', 'winrate', 'afc_zendingen', 'afc_modal_split', 'afc_marge_per_zending'],
+            'afc' => ['bruto_marge_per_loonkosten', 'ebitda', 'omzet_brug', 'winrate', 'afc_zendingen', 'afc_modal_split', 'afc_marge_per_zending', 'afc_quote_conversie'],
             'acc' => ['bruto_marge_per_loonkosten', 'ebitda', 'omzet_brug', 'acc_doorlooptijd'],
         ];
         $want = $codesByScherm[$scherm] ?? [];
@@ -300,6 +300,7 @@ class KpiScreenFixtureProvider
             $this->meet('afc_zendingen', 'pgl1', 1117, 1219, -102, 'aantal', 'neutraal', '2026-10-01'),
             $this->meet('afc_modal_split', 'pgl1', 88.7, 91.1, -2.4, 'procent', 'neutraal', '2026-10-01'),
             $this->meet('afc_marge_per_zending', 'pgl1', 152.87, 168.53, -15.66, 'euro', 'hoger_beter', '2026-10-01'),
+            $this->meet('afc_quote_conversie', 'pgl1', 47.4, 46.0, 1.4, 'procent', 'hoger_beter', '2026-10-01'),
             [
                 'kpi_code' => 'nps_2027',
                 'scope_code' => '',
@@ -406,6 +407,10 @@ class KpiScreenFixtureProvider
             $trends[] = $this->trend('afc_zendingen', 'pgl1', '2026-09-01', 1219, 'definitief', 2);
             $trends[] = $this->trend('afc_zendingen', 'pgl1', '2026-10-01', 1117, 'definitief', 3);
             $trends[] = $this->trend('afc_zendingen', 'pgl1', '2026-11-01', 363, 'voorlopig', 4);
+            $trends[] = $this->trend('afc_quote_conversie', 'pgl1', '2026-08-01', 45.2, 'definitief', 1);
+            $trends[] = $this->trend('afc_quote_conversie', 'pgl1', '2026-09-01', 46.0, 'definitief', 2);
+            $trends[] = $this->trend('afc_quote_conversie', 'pgl1', '2026-10-01', 47.4, 'definitief', 3);
+            $trends[] = $this->trend('afc_quote_conversie', 'pgl1', '2026-11-01', 48.0, 'voorlopig', 4);
         }
         if (in_array($scherm, ['operationeel', 'acc'], true)) {
             $trends[] = $this->trend('acc_dossiers', 'acco', '2026-09-01', 224, 'voorlopig', 1, 'Export');

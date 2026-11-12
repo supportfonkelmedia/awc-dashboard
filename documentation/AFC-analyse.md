@@ -191,3 +191,16 @@ Handler: app 17395 (`/kpi/data`) op v8 (`2026-11-12-kpi-v8-afc-analyse`), gelijk
 1. Eind-tot-eind controleren op de testserver (lokaal ontbreekt de Peliqan-JWT).
 2. `kpi_afc_sprinter_maand` herbouwen op `afc_zending`, zodat er één Sprinter-keten is.
 3. Teams: de teamleads krijgen later een eigen dashboard met tegels uit dit scherm; eigenaar → team volgt.
+
+## AFC-tegels (12-11-2026)
+
+- **Quote conversion (tegel 8) is live.** Gewonnen / (gewonnen + afgewezen + verlopen), offertes aangemaakt
+  in de 12 maanden t/m de laatste afgesloten maand. Status uit `afc_offerte.status_afgeleid` (Floor).
+  Oktober 2026: 47,4% (n = 456). Bouw: view `kpi_afc_offerte_maand_my_queries` (1579304), extra rij in
+  `kpi_afc_sprinter_tegel`, regel 21 in `kpi_registry`, reeks `t_off` in `kpi_trend`, AFC-positie 8 in
+  `kpi_tegel_config`, handler v9. Live SQL in `peliqan-sql/`; de stand ervoor staat in de git-historie.
+- **Let op:** de dagelijkse Sprinter-sync (app 18062) haalt alleen zendingen op. Offertes en bedrijven staan
+  op de stand van 10-11-2026 (eenmalige vulling, app 17863). Tot de sync ze meeneemt, veranderen
+  offertestatussen niet en komen nieuwe offertes niet binnen; de tegel toont dat via "bron bijgewerkt".
+- **On-time delivery (tegel 9) blijft in opbouw.** Sprinter levert geen geplande of werkelijke afleverdatum;
+  zendingen hebben alleen mijlpaal-ID's zonder tijd. Er zijn legs of mijlpalen per zending nodig.

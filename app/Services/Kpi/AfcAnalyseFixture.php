@@ -58,6 +58,7 @@ class AfcAnalyseFixture
             'kpi_afc_klant' => $this->klanten(),
             'kpi_afc_klant_retentie_jaar' => $this->retentie(),
             'kpi_afc_resultaat_maand' => $this->resultaatMaand(),
+            'kpi_afc_offerte_maand' => $this->offerteMaand(),
             default => null,
         };
     }
@@ -325,6 +326,42 @@ class AfcAnalyseFixture
         }
 
         return $rows;
+    }
+
+    /**
+     * Quote conversion (AFC-tegel 8): venster van 12 maanden per maand, zelfde kolommen als Peliqan.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function offerteMaand(): array
+    {
+        [$vj, $vm] = array_map('intval', explode('-', self::VANDAAG));
+        $rows = [];
+        for ($jaar = 2025; $jaar <= $vj; $jaar++) {
+            for ($mnd = 1; $mnd <= 12; $mnd++) {
+                if ($jaar === $vj && $mnd > $vm) {
+                    break;
+                }
+                $sleutel = "off-{$jaar}-{$mnd}";
+                $gewonnen = (int) round(205 * $this->ruis($sleutel.'g', 0.08));
+                $afgewezen = (int) round(($jaar === 2025 ? 10 : 30) * $this->ruis($sleutel.'a', 0.3));
+                $verlopen = (int) round(230 * $this->ruis($sleutel.'v', 0.12));
+                $beslist = $gewonnen + $afgewezen + $verlopen;
+                $rows[] = [
+                    'maand' => sprintf('%04d-%02d-01', $jaar, $mnd),
+                    'gewonnen' => $gewonnen,
+                    'afgewezen' => $afgewezen,
+                    'verlopen' => $verlopen,
+                    'nog_open' => (int) round(100 * $this->ruis($sleutel.'o', 0.2)),
+                    'beslist' => $beslist,
+                    'conversie_pct' => round(100 * $gewonnen / $beslist, 1),
+                    'aangemaakt_in_maand' => (int) round(50 * $this->ruis($sleutel.'n', 0.4)),
+                    'status' => $jaar === $vj && $mnd === $vm ? 'voorlopig' : 'volledig',
+                ];
+            }
+        }
+
+        return array_reverse($rows);
     }
 
     /**

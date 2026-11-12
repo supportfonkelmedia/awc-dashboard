@@ -1,4 +1,4 @@
--- Peliqan "My Queries".kpi_trend (table_id 1419146), stand 2026-11-12 vóór de AFC-tegelwijziging
+-- Peliqan "My Queries".kpi_trend (table_id 1419146), live stand 2026-11-12 na AFC Quote conversion (vorige stand: git-historie)
 WITH bm AS (
   SELECT
     admin_code AS scope_code,
@@ -253,6 +253,15 @@ WITH bm AS (
       ELSE 'onvolledig'
     END AS caseStatusStatus
   FROM "My Queries".kpi_afc_sprinter_maand
+), t_off AS (
+  SELECT
+    'afc_quote_conversie' AS literal,
+    'pgl1' AS literal,
+    CAST(NULL AS TEXT) AS cast,
+    maand,
+    conversie_pct,
+    CASE WHEN status = 'volledig' THEN 'definitief' ELSE 'voorlopig' END AS caseStatus
+  FROM "My Queries".kpi_afc_offerte_maand_my_queries
 ), alles AS (
   SELECT
     *
@@ -297,6 +306,10 @@ WITH bm AS (
   SELECT
     *
   FROM t_spr
+  UNION ALL
+  SELECT
+    *
+  FROM t_off
 )
 SELECT
   kpi_code,

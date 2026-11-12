@@ -1,4 +1,4 @@
--- Peliqan "My Queries".kpi_tegel_config (table_id 1419150), stand 2026-11-12 vóór de AFC-tegelwijziging
+-- Peliqan "My Queries".kpi_tegel_config (table_id 1419150), live stand 2026-11-12 na AFC Quote conversion (vorige stand: git-historie)
 SELECT
   scherm,
   positie,
@@ -37,7 +37,7 @@ FROM (VALUES
   ('operationeel', 4, '4 · Onboarding', 'Time to onboarding', 'time_to_onboarding', 'alaw', 'kpi_oordeel', NULL, NULL, 'time_to_onboarding', 'alaw', 'kpi_onboarding_kwartaal', 'HubSpot · tickets'),
   ('operationeel', 5, '5 · Adoptie', 'Dock-to-stock binnen 24 uur', 'dock_to_stock', 'alaw', 'kpi_oordeel', NULL, NULL, 'dock_to_stock', 'alaw', 'kpi_d2s_maand', '7T · inslag'),
   ('operationeel', 6, '5 · Adoptie', 'Bezettingsgraad', NULL, NULL, 'vast', 'in_validatie', 'Het juiste cijfer staat in space.amsterdamwarehouse.com; koppeling volgt.', NULL, NULL, NULL, 'space.amsterdamwarehouse.com'),
-  ('operationeel', 7, '5 · Adoptie', 'On-time delivery', NULL, NULL, 'vast', 'in_opbouw', 'Definitie van op tijd nog vast te leggen.', NULL, NULL, NULL, 'Sprinter3000'),
+  ('operationeel', 7, '5 · Adoptie', 'On-time delivery', NULL, NULL, 'vast', 'in_opbouw', 'Sprinter levert nog geen geplande en werkelijke afleverdatum: de eigen sync haalt alleen zendingen op, zonder mijlpalen per zending. Daarmee is op tijd nog niet te meten.', NULL, NULL, NULL, 'Sprinter3000'),
   ('operationeel', 8, '6 · Retentie', 'Churn', 'churn', 'concern', 'kpi_oordeel', NULL, NULL, 'churn', 'concern', 'kpi_churn_kwartaal', 'HubSpot · bedrijven'),
   ('operationeel', 9, '6 · Retentie', 'Dossiers per soort', 'acc_dossiers', 'acco', 'kpi_oordeel', NULL, NULL, 'acc_dossiers', 'acco', 'kpi_acc_dossiers_maand', 'HubSpot · tickets'),
   ('tactisch', 1, 'Mensen', 'eNPS', 'enps', 'concern', 'kpi_oordeel', NULL, NULL, NULL, NULL, 'kpi_handmatig', 'Handmatige invoer'),
@@ -60,8 +60,8 @@ FROM (VALUES
   ('afc', 5, 'Volume', 'Zendingen', 'afc_zendingen', 'pgl1', 'kpi_oordeel', NULL, NULL, 'afc_zendingen', 'pgl1', 'kpi_afc_sprinter_maand', 'Sprinter3000 · zendingen'),
   ('afc', 6, 'Volume', 'Modal split', 'afc_modal_split', 'pgl1', 'kpi_oordeel', NULL, NULL, 'afc_modal_split', 'pgl1', 'kpi_afc_sprinter_maand', 'Sprinter3000 · zendingen'),
   ('afc', 7, 'Marge', 'Marge per zending', 'afc_marge_per_zending', 'pgl1', 'kpi_oordeel', NULL, NULL, 'afc_marge_per_zending', 'pgl1', 'kpi_afc_sprinter_maand', 'Sprinter3000 · zendingen'),
-  ('afc', 8, 'Commercieel', 'Quote conversion', NULL, NULL, 'vast', 'in_opbouw', 'Offertes zijn er sinds de eigen Sprinter-sync (sprinter_api.quotations); definitie van conversie nog vast te leggen.', NULL, NULL, NULL, 'Sprinter3000 · offertes'),
-  ('afc', 9, 'Levering', 'On-time delivery', NULL, NULL, 'vast', 'in_opbouw', 'Definitie van op tijd nog vast te leggen.', NULL, NULL, NULL, 'Sprinter3000'),
+  ('afc', 8, 'Commercieel', 'Quote conversion', 'afc_quote_conversie', 'pgl1', 'kpi_oordeel', NULL, NULL, 'afc_quote_conversie', 'pgl1', 'kpi_afc_offerte_maand', 'Sprinter3000 · offertes'),
+  ('afc', 9, 'Levering', 'On-time delivery', NULL, NULL, 'vast', 'in_opbouw', 'Sprinter levert nog geen geplande en werkelijke afleverdatum: de eigen sync haalt alleen zendingen op, zonder mijlpalen per zending. Daarmee is op tijd nog niet te meten.', NULL, NULL, NULL, 'Sprinter3000'),
   ('acc', 1, 'Financieel', 'Bruto marge per loonkosten, ACC', 'bruto_marge_per_loonkosten', 'acco', 'kpi_oordeel', NULL, NULL, 'bruto_marge_per_loonkosten', 'acco', 'kpi_bm_maand', 'Cashweb · grootboek'),
   ('acc', 2, 'Financieel', 'EBITDA, ACC', 'ebitda', 'acco', 'kpi_oordeel', NULL, NULL, 'ebitda', 'acco', 'kpi_kosten_maand', 'Cashweb · grootboek'),
   ('acc', 3, 'Financieel', 'Omzet en klanten, ACC', 'omzet_brug', 'acco', 'kpi_oordeel', NULL, NULL, 'omzet_brug', 'acco', 'kpi_omzetbrug, kpi_omzetbrug_klant', 'Cashweb · omzet per klant'),

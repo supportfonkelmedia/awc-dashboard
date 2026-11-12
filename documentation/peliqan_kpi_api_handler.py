@@ -31,7 +31,7 @@ import pandas as pd
 
 WAREHOUSE_DW = "dw_2401"
 KPI_SCHEMA = '"My Queries"'
-HANDLER_VERSION = "2026-11-12-kpi-v8-afc-analyse"
+HANDLER_VERSION = "2026-11-12-kpi-v9-afc-offertes"
 
 SCREENS = frozenset(
     {"strategisch", "operationeel", "tactisch", "awc", "afc", "acc"}
@@ -65,6 +65,7 @@ ALLOWED_DRILL_VIEWS = frozenset(
         "kpi_afc_klant",
         "kpi_afc_klant_retentie_jaar",
         "kpi_afc_resultaat_maand",
+        "kpi_afc_offerte_maand",
         "kpi_handmatig",
         "kpi_doelen",
         "kpi_intercompany",
@@ -105,6 +106,7 @@ DRILL_ORDER = {
     "kpi_afc_klant": (None, "t.omzet_12m DESC NULLS LAST, t.klant_id"),
     "kpi_afc_klant_retentie_jaar": (None, "t.jaar"),
     "kpi_afc_resultaat_maand": ("maand", "t.maand DESC"),
+    "kpi_afc_offerte_maand": ("maand", "t.maand DESC"),
     "kpi_handmatig": ("periode_einde", "t.periode_einde DESC, t.kpi_code, t.scope_code"),
     "kpi_doelen": ("geldig_vanaf", "t.geldig_vanaf DESC, t.kpi_code, t.scope_code"),
     "kpi_intercompany": (None, "t.admin_code, t.zoek"),

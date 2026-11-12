@@ -62,6 +62,19 @@ Hercontroles na de laatste commit (19:52-snapshot):
 - EBITDA = omzet - kostengroepen: AWC 0, AFC -2, ACC +4, concern +2 euro. Afronding bewezen: alle
   599 rijen in kpi_kosten_maand zijn hele euro's (per maand en groep afgerond); ACC rechtstreeks uit
   cashweb op book_period_ledger is exact 111.710 = tegel.
+- End-to-end, Peliqan-runtime: een tijdelijke Peliqan-app (18122, na afloop verwijderd) draaide de
+  v10-handlercode in de echte runtime met precies de verzoeken van de drawer: elk scherm, elke tegel
+  met drill, plus de entiteitkeuze op Strategisch. 48 aanroepen, 0 fouten, geen lege of ontbrekende
+  views, en geen scope-lek (geen rij van een andere entiteit of pijplijn in een gefilterde drill).
+- End-to-end, Laravel-kant: `tests/Feature/KpiDrillPeliqanRouteTest.php` speelt die echte
+  v10-antwoorden (namen geanonimiseerd) af via de echte controller, service en PeliqanClient. Het
+  verzoek gaat met views, scope en de JWT-header naar Peliqan, het antwoord komt ongewijzigd terug, en
+  scope zit in de cachesleutel (AWC komt nooit uit de AFC-cache).
+- Wat dan nog overblijft is alleen de echte HTTP-hop Laravel -> api.eu.peliqan.io met het
+  productietoken; die volgt bij de eerstvolgende deploy (testserver nu geblokkeerd).
+- Gemeld aan de eigenaar (AWC Dashboard repo-sessie): kpi_ebitda_maand en kpi_kosten_maand hebben een
+  rij december 2026 (AWC omzet 0, EBITDA -167.763) door vooruitgedateerde boekingen; die staat
+  bovenaan in de drawer.
 - Peliqan-kant end-to-end: de 42 queries die handler v10 bouwt voor elke (drill-view, scope) uit de
   live tegelconfig draaien allemaal foutloos op dw_2401 en geven rijen terug (max 723, onder de limiet
   2000, dus niets afgekapt). Niet getest: de HTTP-route met JWT vanaf de testserver (deploy geblokkeerd;

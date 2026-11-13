@@ -1,4 +1,4 @@
--- Peliqan "My Queries".kpi_betrouwbaarheid (table_id 1579305), aangemaakt 2026-11-12 (fase 0 data-integriteit); throughput, dock_to_stock en damage_rate bijgewerkt na de 7T-fix van 12-11; AFC-winrate eruit (telt sinds 12-11 de juiste pijplijn, te weinig deals toont de tegel zelf)
+-- Peliqan "My Queries".kpi_betrouwbaarheid (table_id 1579305), aangemaakt 2026-11-12 (fase 0 data-integriteit); throughput, dock_to_stock en damage_rate bijgewerkt na de 7T-fix van 12-11; AFC-winrate eruit (telt sinds 12-11 de juiste pijplijn, te weinig deals toont de tegel zelf); throughput eruit op 13-11 (Edo: er gaat geen order weg zonder orderpicker)
 -- Eén rij per KPI (en eventueel scope) waarvan het cijfer niet zonder meer klopt, op basis van de
 -- Peliqan-audit van 2026-11-12. Geen rij = geen bekende kanttekening.
 --   niveau 'onbetrouwbaar' → kpi_oordeel zet weergave op 'onbetrouwbaar'; de tegel toont de reden, geen cijfer.
@@ -8,7 +8,6 @@
 SELECT
   *
 FROM (VALUES
-  ('throughput', 'alaw', 'let_op', 'Sinds 12 november telt een order alleen mee met een orderpicker, pallets of een pickscan; de factuurorders van 7T tellen niet meer mee. Edo bevestigt nog of dit alle fysieke uitleveringen zijn.', CAST('2026-11-12' AS DATE)),
   ('winrate', 'Verkooppijplijn', 'let_op', 'De trendlijn vóór augustus 2026 ligt te hoog: deals die al lang stillagen telden als open, tot de opschoning ze in augustus op verloren zette. Een definitie voor slapende deals ligt bij Mark.', CAST('2026-11-12' AS DATE)),
   ('bruto_marge_per_loonkosten', 'pgl1', 'let_op', 'De loonkosten missen rekening 4000 (ongeveer 48% van de AFC-loonkosten). Zolang Frits niet heeft besloten of die meetelt, kan de ratio te hoog liggen.', CAST('2026-11-12' AS DATE)),
   ('bruto_marge_per_loonkosten', 'acco', 'let_op', 'De loonkosten missen rekening 4000 (ongeveer 37% van de ACC-loonkosten). Zolang Frits niet heeft besloten of die meetelt, kan de ratio te hoog liggen.', CAST('2026-11-12' AS DATE)),

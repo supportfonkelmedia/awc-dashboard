@@ -96,6 +96,10 @@ Noten:
   telt sindsdien alleen fysieke uitleveringen; 7T maakt bij facturatie ook logistieke orders zonder
   picker, pickscan of pallets, die outbound ~2,5x te hoog maakten.
   Edo bevestigde op 13-11 dat er geen order weggaat zonder orderpicker; de let_op-rij is eruit.
+  Controle tegen de telling van Mark (13-11): zendingen in 7T (dbo.Zendingen, nummers 517331 t/m 573851,
+  ruim 55.000 in 2026) liggen per maand 2-9% onder de tegel (okt 5.870 zendingen tegen 6.085 orders;
+  een zending kan meer orders bevatten). Inkomend telt de tegel al de voorraad-derden-ontvangsten
+  (Spare_Orders gelost, okt 1.350; ordernummer nu 128.701).
 - Tegel en drill lezen elk hun eigen replica (ieder uur rond :51). Vlak na een bronwijziging kunnen
   ze tot een uur uiteenlopen; dat zagen we bij throughput en AFC (17:51 / 18:08 bronupdate).
 - `kpi_ebitda_maand` heeft in Peliqan `ebitda` als primary key. Onschuldig (de replica wordt elk uur

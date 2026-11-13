@@ -379,6 +379,13 @@ class KpiScreenFixtureProvider
             'waarde_vorige' => $vorige,
             'delta' => $delta,
             'stand_per' => $standPer,
+            // Zelfde vensterteksten als live (kpi_oordeel.venster): de tegel leidt daaruit af waartegen de delta vergelijkt.
+            'venster' => match ($kpi) {
+                'ebitda' => 'Twaalf afgesloten maanden tegenover de twaalf daarvoor',
+                'omzet_brug' => 'Twaalf maanden tegenover de twaalf daarvoor',
+                'churn' => 'Afgelopen 12 maanden, tegenover de 12 daarvoor',
+                default => null,
+            },
             'eigenaar' => 'MT',
             'bron' => 'Fixture',
             'bron_bijgewerkt' => $standPer.'T08:00:00Z',

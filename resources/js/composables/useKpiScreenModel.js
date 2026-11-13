@@ -2,6 +2,7 @@ import { computed } from 'vue';
 import {
     deltaSentiment,
     formatKpiDelta,
+    vergelijkLabel,
     formatKpiValue,
     formatStandPer,
     pctChangeFromDelta,
@@ -474,16 +475,14 @@ export function useKpiScreenModel(
                                 const pctSign = pct > 0 ? '+' : '';
                                 text = `${text} (${pctSign}${pct}%)`;
                             }
-                            text += ' t.o.v. vorige maand';
+                            text += ` ${vergelijkLabel(oordeelRow?.venster)}`;
                         } else if (
                             eenheid === 'ratio' ||
                             eenheid === 'procent' ||
                             eenheid === 'dagen' ||
                             eenheid === 'score'
                         ) {
-                            if (!text.includes('t.o.v.')) {
-                                text += ' t.o.v. vorige maand';
-                            }
+                            text += ` ${vergelijkLabel(oordeelRow?.venster)}`;
                         }
                         deltaFormatted = text;
                         deltaTone = deltaSentiment(

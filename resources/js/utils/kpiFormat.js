@@ -143,6 +143,19 @@ export function splitKpiValue(eenheid, waarde) {
 }
 
 /**
+ * Waartegen de delta op een tegel vergelijkt, afgeleid uit het venster van de KPI (kpi_oordeel.venster).
+ * Twaalf-maandsvensters (EBITDA, omzetbrug, churn) vergelijken met de twaalf maanden daarvoor, niet met
+ * de vorige maand; de rest vergelijkt met de vorige maand.
+ *
+ * @param {string|null|undefined} venster
+ */
+export function vergelijkLabel(venster) {
+    return /tegenover de (12|twaalf) (maanden )?daarvoor/i.test(String(venster ?? ''))
+        ? 't.o.v. de 12 maanden daarvoor'
+        : 't.o.v. vorige maand';
+}
+
+/**
  * @param {string} eenheid
  * @param {number|null|undefined} delta
  */
@@ -160,12 +173,12 @@ export function formatKpiDelta(eenheid, delta) {
     switch (eenheid) {
         case 'ratio':
             return {
-                text: `${sign}${fmtRatio(abs)} t.o.v. vorige maand`,
+                text: `${sign}${fmtRatio(abs)}`,
                 direction: d > 0 ? 'up' : 'down',
             };
         case 'procent':
             return {
-                text: `${sign}${fmtProcent(abs).replace('%', '')} pp t.o.v. vorige maand`,
+                text: `${sign}${fmtProcent(abs).replace('%', '')} pp`,
                 direction: d > 0 ? 'up' : 'down',
             };
         case 'euro':

@@ -120,7 +120,7 @@ const lezing = computed(() => {
     <AfcBlok
         :titel="`Resultaat volgens Cash t/m ${MAANDEN_KORT[tmMaand - 1]}, per jaar`"
         :uitleg="[
-            'Grootboek in Cash, op boekperiode (boekjaar leidend). Vennootschapsbelasting (9100) en de afsluitboeking (9993) tellen niet mee.',
+            'Grootboek in Cash, per grootboekperiode: dezelfde maand als de MT-tegels bruto marge en EBITDA. Vennootschapsbelasting (9100) en de afsluitboeking (9993) tellen niet mee.',
             'Niet afgesloten maanden missen vaak nog kosten; jaarafsluiting landt in december.',
             'Het richtingfilter geldt hier niet: Cash kent geen richting.',
         ]"

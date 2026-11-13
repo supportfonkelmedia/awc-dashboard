@@ -154,14 +154,21 @@ from c
 ```
 
 ### 6. `kpi_afc_resultaat_maand`
-Resultaat volgens Cash per maand. Rechtstreeks uit `afc_resultaat_maand` (boekjaar leidend).
+Resultaat volgens Cash per maand (pgl1). Sinds 13-11-2026 rechtstreeks uit `cashweb.ledger_mutations` op de
+**grootboekperiode** (`book_period_ledger`), net als de MT-tegels (`kpi_bm_maand`, `kpi_ebitda_maand`). Zelfde
+kolommen en rekeningindeling als Floors `afc_resultaat_maand`. SQL: `peliqan-sql/kpi_afc_resultaat_maand_my_queries.sql`.
 
-```sql
-select periode_id, boekjaar, maandnummer, maand, omzet, invoerrechten_doorbelast, omzet_incl_invoerrechten,
-  btw_verkoop, kostprijs, kostprijs_sim_cargo, kostprijs_svz, brutomarge, brutomarge_pct, bedrijfskosten,
-  resultaat_humber, resultaat_voor_belasting, vennootschapsbelasting, resultaat_na_belasting, periode_afwijkend
-from afc_control_center.afc_resultaat_maand_afc_control_center
-```
+Waarom niet meer uit `afc_control_center.afc_resultaat_maand`:
+- Floors tabel volgt de **documentperiode** (`book_period`). Na de periodewissel van de MT-tegels (12-11) week de
+  brutomarge daardoor per maand af (2026: jan -1.809, feb +1.810, sep +256, okt -256).
+- Floors basislaag `afc_cash_mutatie` ontdubbelt op inhoud zonder de grootboekperiode. Terugkerende boekingen
+  (zelfde document, bedrag en omschrijving, verspreid over 11 of 12 grootboekperiodes, bijv. "PGL verg. Humber"
+  1.416,67 x 11, "Raming afschrijvingen'26" 2.500 x 12) vallen daardoor deels weg. Gevolg in Floors tabel:
+  bedrijfskosten te laag met 52.911 (2026), 55.167 (2025) en 20.092 (2024), resultaat evenveel te hoog.
+  Ook omzet 2024 (-894), 2025 (-2.376) en vennootschapsbelasting 2024 (-99.418) wijken af.
+
+Controle 13-11: omzet en brutomarge van deze view = `kpi_bm_maand` (pgl1) in alle 22 maanden jan-2025 t/m
+okt-2026; EBITDA per maand (8xxx min 4/6xxx, zonder 42/47/49) = `kpi_ebitda_maand` (pgl1).
 
 ## Stand in Peliqan
 
@@ -180,7 +187,7 @@ De handler leest `"My Queries".<view>_my_queries`. In plaats van een replica (ko
 de zes queries als **databaseview** aangemaakt (`create_as_view`) en hernoemd naar `<view>_my_queries`.
 In Peliqan heten de query-tabellen dus `kpi_afc_..._my_queries`; dat is bewust, zo heet de view in
 de database precies zoals de handler hem zoekt. Een view rekent bij elke aanvraag op de replica's van
-`afc_control_center` (dagelijks 08:30 tot 09:15 UTC ververst); Laravel cachet het antwoord een uur.
+`afc_control_center` (dagelijks 08:30 tot 09:15 UTC ververst; `kpi_afc_resultaat_maand` leest cashweb rechtstreeks); Laravel cachet het antwoord een uur.
 Zet hier geen replica op: die zou `..._my_queries_my_queries` heten en niet gelezen worden.
 
 Handler: app 17395 (`/kpi/data`) op v8 (`2026-11-12-kpi-v8-afc-analyse`), gelijk aan

@@ -49,7 +49,7 @@ const ketenKolommen = [
             Sprinter tegen Cash, per maand van {{ jaar }}
             <AfcInfo
                 :tekst="[
-                    'Sprinter telt op rapportagedatum, Cash op boekperiode; per maand lopen ze uiteen. Over een heel jaar hoort de brutomarge dicht bij elkaar te liggen.',
+                    'Sprinter telt op rapportagedatum, Cash op grootboekperiode (zoals de MT-tegels); per maand lopen ze uiteen. Over een heel jaar hoort de brutomarge dicht bij elkaar te liggen.',
                     'Het omzetverschil komt deels doordat Cash invoerrechten niet als omzet boekt. Alle richtingen.',
                 ]"
             />

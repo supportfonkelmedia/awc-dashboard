@@ -273,7 +273,7 @@ export function perEigenaar(eigenaarRows, jaar) {
         .sort((a, b) => b.omzet - a.omzet);
 }
 
-/** Aansluiting Sprinter (rapportagedatum) met Cash (boekperiode), per maand van het jaar. */
+/** Aansluiting Sprinter (rapportagedatum) met Cash (grootboekperiode, zoals de MT-tegels), per maand van het jaar. */
 export function aansluiting(zendingRows, resultaatRows, jaar) {
     return Array.from({ length: 12 }, (_, i) => {
         const mnd = i + 1;

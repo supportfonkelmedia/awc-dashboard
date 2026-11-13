@@ -4,27 +4,31 @@ import AfcBlok from './AfcBlok.vue';
 import Chart from 'primevue/chart';
 import AfcInfo from '@/Components/Kpi/KpiInfo.vue';
 import AfcKeuze from './AfcKeuze.vue';
-import AfcSegment from './AfcSegment.vue';
 import AfcTabel from './AfcTabel.vue';
 import { MAANDEN_KORT, maandMetVorigJaar, perModaliteit } from '@/utils/afcAnalyse';
 import { KLEUR, MODALITEIT_KLEUR, euroAs, tickStijl } from '@/utils/afcChart';
-import { euro, getal, groeiKlasse, groeiTekst, procent } from '@/utils/afcFormat';
+import { euro, euroKort, getal, groeiKlasse, groeiTekst, procent } from '@/utils/afcFormat';
 
 const props = defineProps({
     rows: { type: Array, required: true },
     jaar: { type: Number, required: true },
+    /** Het modaliteitfilter van de pagina; de rijen zijn er al op gefilterd. */
+    modaliteit: { type: String, default: 'alle' },
 });
 
-const tabel = computed(() => perModaliteit(props.rows, props.jaar));
+// Met één modaliteit gekozen is de totaalregel een kopie: weglaten.
+const tabel = computed(() => {
+    const r = perModaliteit(props.rows, props.jaar);
+
+    return r.filter((x) => !x.isTotaal).length > 1 ? r : r.filter((x) => !x.isTotaal);
+});
 
 const kolommen = [
-    { key: 'modaliteit', label: 'Modaliteit' },
+    { key: 'modaliteit', label: 'Modaliteit', stip: (r) => MODALITEIT_KLEUR[r.modaliteit] ?? null },
     { key: 'zendingen', label: 'Zendingen', fmt: getal, rechts: true },
-    { key: 'omzet', label: 'Omzet', fmt: euro, rechts: true },
-    { key: 'marge', label: 'Marge', fmt: euro, rechts: true },
+    { key: 'omzet', label: 'Omzet', fmt: euroKort, rechts: true },
+    { key: 'marge', label: 'Marge', fmt: euroKort, rechts: true },
     { key: 'margePct', label: 'Marge %', fmt: procent, rechts: true },
-    { key: 'omzetVorig', label: 'Omzet vorig jaar', fmt: euro, rechts: true },
-    { key: 'margeVorig', label: 'Marge vorig jaar', fmt: euro, rechts: true },
     { key: 'margePctVorig', label: 'Marge % vorig jaar', fmt: procent, rechts: true },
     { key: 'groeiOmzet', label: 'Groei omzet', fmt: groeiTekst, rechts: true, klasse: (r) => groeiKlasse(r.groeiOmzet) },
     { key: 'groeiMarge', label: 'Groei marge', fmt: groeiTekst, rechts: true, klasse: (r) => groeiKlasse(r.groeiMarge) },
@@ -37,13 +41,6 @@ const maatOpties = [
     { value: 'zendingen', label: 'Zendingen' },
     { value: 'margePerZending', label: 'Marge per zending' },
     { value: 'margePct', label: 'Marge %' },
-];
-const modaliteit = ref('alle');
-const modOpties = [
-    { value: 'alle', label: 'Alle' },
-    { value: 'Weg', label: 'Weg' },
-    { value: 'Zee', label: 'Zee' },
-    { value: 'Lucht', label: 'Lucht' },
 ];
 
 const fmt = (v) => {
@@ -61,9 +58,9 @@ const fmt = (v) => {
 };
 
 const maanden = computed(() =>
-    maandMetVorigJaar(props.rows, props.jaar, { modaliteit: modaliteit.value, maat: maat.value }),
+    maandMetVorigJaar(props.rows, props.jaar, { modaliteit: props.modaliteit, maat: maat.value }),
 );
-const kleur = computed(() => MODALITEIT_KLEUR[modaliteit.value] ?? KLEUR.blauw);
+const kleur = computed(() => MODALITEIT_KLEUR[props.modaliteit] ?? KLEUR.blauw);
 const isRatio = computed(() => maat.value === 'margePerZending' || maat.value === 'margePct');
 
 const chartData = computed(() => ({
@@ -159,10 +156,7 @@ const lezing = computed(() => {
                 Per maand in {{ jaar }}, met {{ jaar - 1 }} ernaast
                 <AfcInfo tekst="Op rapportagedatum in Sprinter. Het streepje is dezelfde maand een jaar eerder. Bij de jaarovergang krijgen openstaande dossiers 1 januari als datum; daarom springt januari omhoog (vooral zee). De lopende maand is alleen omlijnd: die is nog niet compleet." />
             </h3>
-            <div class="flex flex-wrap items-center gap-3">
-                <AfcSegment v-model="modaliteit" label="Modaliteit" :opties="modOpties" />
-                <AfcKeuze v-model="maat" label="Toon" :opties="maatOpties" />
-            </div>
+            <AfcKeuze v-model="maat" label="Toon" :opties="maatOpties" />
         </div>
         <p v-if="lezing" class="mt-1 text-sm text-gray-700">{{ lezing }}</p>
         <div class="mt-3 h-64">

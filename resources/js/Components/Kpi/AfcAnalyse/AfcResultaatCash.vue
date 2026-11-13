@@ -8,10 +8,13 @@ import { MAANDEN_KORT, cumulatiefVerschil, resultaatPerJaar } from '@/utils/afcA
 import { KLEUR, euroAs, tickStijl } from '@/utils/afcChart';
 import { euro, euroKort, groeiKlasse, groeiTekst, procent } from '@/utils/afcFormat';
 
+const plusKort = (v) => (v == null ? '' : (v > 0 ? '+' : '') + euroKort(v));
+
 const props = defineProps({
     rows: { type: Array, required: true },
     lopendJaar: { type: Number, required: true },
     laatsteVolleMaand: { type: Number, required: true },
+    geldtNiet: { type: String, default: null },
 });
 
 const tmMaand = ref(props.laatsteVolleMaand || 12);
@@ -35,15 +38,15 @@ const perJaar = computed(() => resultaatPerJaar(props.rows, tmMaand.value));
 
 const kolommen = [
     { key: 'jaar', label: 'Jaar' },
-    { key: 'omzet', label: 'Omzet (8xxx)', fmt: euro, rechts: true },
-    { key: 'kostprijs', label: 'Kostprijs (6xxx)', fmt: euro, rechts: true },
-    { key: 'brutomarge', label: 'Brutomarge', fmt: euro, rechts: true },
+    { key: 'omzet', label: 'Omzet (8xxx)', fmt: euroKort, rechts: true },
+    { key: 'kostprijs', label: 'Kostprijs (6xxx)', fmt: euroKort, rechts: true },
+    { key: 'brutomarge', label: 'Brutomarge', fmt: euroKort, rechts: true },
     { key: 'brutomargePct', label: 'Brutomarge %', fmt: procent, rechts: true },
-    { key: 'bedrijfskosten', label: 'Bedrijfskosten (4xxx)', fmt: euro, rechts: true },
-    { key: 'overig', label: 'Overig (9000)', fmt: euro, rechts: true },
-    { key: 'resultaat', label: 'Resultaat vóór belasting', fmt: euro, rechts: true },
+    { key: 'bedrijfskosten', label: 'Bedrijfskosten (4xxx)', fmt: euroKort, rechts: true },
+    { key: 'overig', label: 'Overig (9000)', fmt: euroKort, rechts: true },
+    { key: 'resultaat', label: 'Resultaat vóór belasting', fmt: euroKort, rechts: true },
     { key: 'groeiOmzet', label: 'Groei omzet', fmt: groeiTekst, rechts: true, klasse: (r) => groeiKlasse(r.groeiOmzet) },
-    { key: 'resultaatVerschil', label: 'Resultaat t.o.v. vorig jaar', fmt: (v) => (v == null ? '' : (v > 0 ? '+' : '') + euro(v)), rechts: true, klasse: (r) => groeiKlasse(r.resultaatVerschil) },
+    { key: 'resultaatVerschil', label: 'Resultaat t.o.v. vorig jaar', fmt: plusKort, rechts: true, klasse: (r) => groeiKlasse(r.resultaatVerschil) },
 ];
 
 const toonOpties = [
@@ -118,6 +121,7 @@ const lezing = computed(() => {
 
 <template>
     <AfcBlok
+        :geldt-niet="geldtNiet"
         :titel="`Resultaat volgens Cash t/m ${MAANDEN_KORT[tmMaand - 1]}, per jaar`"
         :uitleg="[
             'Grootboek in Cash, per grootboekperiode: dezelfde maand als de MT-tegels bruto marge en EBITDA. Vennootschapsbelasting (9100) en de afsluitboeking (9993) tellen niet mee.',

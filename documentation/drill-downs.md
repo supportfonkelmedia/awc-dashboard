@@ -72,9 +72,14 @@ Hercontroles na de laatste commit (19:52-snapshot):
   scope zit in de cachesleutel (AWC komt nooit uit de AFC-cache).
 - Wat dan nog overblijft is alleen de echte HTTP-hop Laravel -> api.eu.peliqan.io met het
   productietoken; die volgt bij de eerstvolgende deploy (testserver nu geblokkeerd).
-- Gemeld aan de eigenaar (AWC Dashboard repo-sessie): kpi_ebitda_maand en kpi_kosten_maand hebben een
-  rij december 2026 (AWC omzet 0, EBITDA -167.763) door vooruitgedateerde boekingen; die staat
-  bovenaan in de drawer.
+- December 2026 in de EBITDA-drill (vooruitgedateerde boekingen): op 13-11 bij de bron opgelost
+  (kpi_ebitda_maand en kpi_kosten_maand eindigen op de huidige maand), 12-maands-EBITDA ongewijzigd.
+  De drawer verbergt maanden na deze maand bovendien zelf, met een melding (7d6b321).
+- Echte HTTP-hop met het productietoken: Chloë besloot 13-11 die live te testen zodra dit naar main gaat.
+- Hercontrole 13-11 06:51: tegel = drill voor EBITDA (4x), churn 65 en winrate 45,7% (venster
+  schuift dagelijks); AFC-winrate leeg (6 beslist, minimum 20).
+- Let op voor de AFC-analyse: Floors afc_control_center volgt de documentperiode, niet book_period_ledger.
+  Omzet sluit elke maand aan op kpi_bm_maand; bruto marge pgl1 wijkt af in jan/feb (1.810) en sep/okt (256).
 - Peliqan-kant end-to-end: de 42 queries die handler v10 bouwt voor elke (drill-view, scope) uit de
   live tegelconfig draaien allemaal foutloos op dw_2401 en geven rijen terug (max 723, onder de limiet
   2000, dus niets afgekapt). Niet getest: de HTTP-route met JWT vanaf de testserver (deploy geblokkeerd;

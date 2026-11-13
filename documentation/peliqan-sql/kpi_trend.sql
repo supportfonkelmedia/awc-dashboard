@@ -1,4 +1,4 @@
--- Peliqan "My Queries".kpi_trend (table_id 1419146), live stand 2026-11-12 na AFC Quote conversion (vorige stand: git-historie)
+-- Peliqan "My Queries".kpi_trend (table_id 1419146), live stand 2026-11-13: throughput op zendingen (outbound_zendingen) (vorige stand: git-historie)
 WITH bm AS (
   SELECT
     admin_code AS scope_code,
@@ -56,10 +56,16 @@ WITH bm AS (
     'winrate' AS literal,
     pipeline,
     CAST(NULL AS TEXT) AS cast,
-    peildatum,
+    CASE
+      WHEN soort = 'maandeinde'
+      THEN CAST(peildatum - INTERVAL '1 MONTH' AS DATE)
+      ELSE CAST(DATE_TRUNC('MONTH', peildatum) AS DATE)
+    END AS periodeMaand,
     ROUND(100.0 * gewonnen / NULLIF(gewonnen + verloren, 0), 1) AS roundGewonnenGewonnenVerloren,
     CASE WHEN soort = 'maandeinde' THEN 'definitief' ELSE 'voorlopig' END AS caseSoort
   FROM "My Queries".kpi_winrate_maand
+  WHERE
+    soort IN ('maandeinde', 'vandaag')
 ), t_churn AS (
   SELECT
     'churn' AS literal,
@@ -170,7 +176,7 @@ WITH bm AS (
     'alaw' AS literal,
     CAST(NULL AS TEXT) AS cast,
     maand,
-    CAST(outbound_orders AS DECIMAL) AS castOutbound_Orders,
+    CAST(outbound_zendingen AS DECIMAL) AS castOutbound_Zendingen,
     CASE WHEN afgesloten THEN 'definitief' ELSE 'voorlopig' END AS caseAfgesloten
   FROM "My Queries".kpi_awc_ops_maand
 ), t_acc AS (
@@ -321,4 +327,6 @@ SELECT
   ROW_NUMBER() OVER (PARTITION BY kpi_code, scope_code, serie ORDER BY periode) AS volgnummer
 FROM alles
 WHERE
-  periode >= CAST('2024-12-01' AS DATE) AND NOT waarde IS NULL
+  periode >= CAST('2024-12-01' AS DATE)
+  AND periode <= CAST(DATE_TRUNC('MONTH', CURRENT_DATE) AS DATE)
+  AND NOT waarde IS NULL

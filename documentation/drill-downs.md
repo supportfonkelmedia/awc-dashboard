@@ -100,6 +100,9 @@ Noten:
   ruim 55.000 in 2026) liggen per maand 2-9% onder de tegel (okt 5.870 zendingen tegen 6.085 orders;
   een zending kan meer orders bevatten). Inkomend telt de tegel al de voorraad-derden-ontvangsten
   (Spare_Orders gelost, okt 1.350; ordernummer nu 128.701).
+  Sinds 13-11 (v3, op aanwijzing van Mark) telt de tegel zendingen: kpi_data.awc_operatie_maand.outbound_zendingen,
+  geschreven door app 13737 (dbo.Zendingen per laadmaand, minstens één order, laaddatum niet in de toekomst,
+  alle statussen). Oktober 5.867 zendingen (vorige maand 5.182); de orders (6.085) staan in de toelichting.
 - Tegel en drill lezen elk hun eigen replica (ieder uur rond :51). Vlak na een bronwijziging kunnen
   ze tot een uur uiteenlopen; dat zagen we bij throughput en AFC (17:51 / 18:08 bronupdate).
 - `kpi_ebitda_maand` heeft in Peliqan `ebitda` als primary key. Onschuldig (de replica wordt elk uur

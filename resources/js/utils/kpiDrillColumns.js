@@ -61,6 +61,10 @@ const LABELS = {
     waarvan_bulk: 'Waarvan bulk',
     lopend_kwartaal: 'Lopend kwartaal',
     lopende_maand: 'Lopende maand',
+    inbounds: 'Inbounds',
+    inbounds_met_verplaatsing: 'Met verplaatsing',
+    outbound_zendingen: 'Zendingen',
+    outbound_orders: 'Uitgeleverde orders',
 };
 
 /** Columns that are plumbing, not information: never shown in the drawer. */

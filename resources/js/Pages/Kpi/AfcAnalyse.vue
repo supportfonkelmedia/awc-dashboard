@@ -13,21 +13,23 @@ import AfcSegment from '@/Components/Kpi/AfcAnalyse/AfcSegment.vue';
 import KpiFeedbackWidget from '@/Components/Kpi/KpiFeedbackWidget.vue';
 import KpiScreenHeader from '@/Components/Kpi/KpiScreenHeader.vue';
 import KpiScreenNav from '@/Components/Kpi/KpiScreenNav.vue';
+import KpiTegelGrafiek from '@/Components/Kpi/KpiTegelGrafiek.vue';
 import { fetchKpiDrill } from '@/composables/useKpiDrillFetch';
 import KpiStandaloneLayout from '@/Layouts/KpiStandaloneLayout.vue';
 import {
     AFC_VIEWS,
     MAANDEN_KORT,
+    filterModaliteit,
     filterRichting,
     groei,
     kerncijfers,
+    maandreeks,
     pct,
     topKlanten,
 } from '@/utils/afcAnalyse';
 import { euroKort, getal, groeiKlasse, groeiTekst, procent } from '@/utils/afcFormat';
 import { Head, Link } from '@inertiajs/vue3';
 import Message from 'primevue/message';
-import ProgressSpinner from 'primevue/progressspinner';
 import { computed, onMounted, ref } from 'vue';
 
 const props = defineProps({
@@ -82,12 +84,40 @@ const richtingOpties = [
     { value: 'Domestic', label: 'Binnenland' },
 ];
 
+const modaliteit = ref('alle');
+const modaliteitOpties = [
+    { value: 'alle', label: 'Alle' },
+    { value: 'Weg', label: 'Weg' },
+    { value: 'Zee', label: 'Zee' },
+    { value: 'Lucht', label: 'Lucht' },
+];
+
+const filterActief = computed(() => richting.value !== 'alle' || modaliteit.value !== 'alle');
+const filterLabel = computed(() =>
+    [
+        richting.value !== 'alle' ? richtingOpties.find((o) => o.value === richting.value)?.label : null,
+        modaliteit.value !== 'alle' ? modaliteit.value : null,
+    ]
+        .filter(Boolean)
+        .join(', '),
+);
+function wisFilters() {
+    richting.value = 'alle';
+    modaliteit.value = 'alle';
+}
+
+/** Badge voor blokken waar een actief filter niet op werkt. */
+const geldtNietCashKlant = computed(() => (filterActief.value ? 'Filters gelden hier niet' : null));
+const geldtNietEigenaar = computed(() => (modaliteit.value !== 'alle' ? 'Modaliteit geldt hier niet' : null));
+
 /** Laatste volle maand: in het lopende jaar de maand vóór vandaag, in eerdere jaren december. */
 const laatsteVolleMaand = computed(() =>
     jaar.value === vandaagJaar ? Math.max(vandaagMaand - 1, 0) : 12,
 );
 
-const zendingen = computed(() => filterRichting(rows('kpi_afc_zending_maand'), richting.value));
+const zendingen = computed(() =>
+    filterModaliteit(filterRichting(rows('kpi_afc_zending_maand'), richting.value), modaliteit.value),
+);
 
 const kern = computed(() => kerncijfers(zendingen.value, jaar.value, laatsteVolleMaand.value));
 
@@ -101,7 +131,10 @@ const eigenaarJaren = computed(() =>
 
 const top2 = computed(() =>
     klantJaren.value.includes(jaar.value)
-        ? topKlanten(rows('kpi_afc_klant_jaar'), jaar.value, { richting: richting.value }).top2Aandeel
+        ? topKlanten(rows('kpi_afc_klant_jaar'), jaar.value, {
+              richting: richting.value,
+              modaliteit: modaliteit.value,
+          }).top2Aandeel
         : null,
 );
 
@@ -114,7 +147,7 @@ const samenvatting = computed(() => {
     }
     const g = groei(nu.omzet, vorig.omzet);
     const delen = [
-        `${jaar.value} t/m ${tmLabel}: omzet ${euroKort(nu.omzet)}`,
+        `${jaar.value} t/m ${tmLabel}${filterLabel.value ? ` (${filterLabel.value})` : ''}: omzet ${euroKort(nu.omzet)}`,
         g != null ? ` (${groeiTekst(g)} t.o.v. dezelfde periode vorig jaar)` : '',
         `, brutomarge ${euroKort(nu.marge)} (${procent(pct(nu.marge, nu.omzet))} van de omzet).`,
         top2.value != null ? ` De twee grootste klanten leveren ${procent(top2.value)} van de marge.` : '',
@@ -125,43 +158,36 @@ const samenvatting = computed(() => {
 
 const maandNaam = (m) => (m ? MAANDEN_KORT[m - 1] : '');
 
+/** Vier kaarten: waarde, groei en de maandlijn van het gekozen jaar met vorig jaar als schaduw. */
 const kaarten = computed(() => {
-    const { nu, vorig, maand, maandNu, maandVorig } = kern.value;
-    const vorigeMaandNaam = maand ? maandNaam(maand > 1 ? maand - 1 : 12) : '';
-    const maandRegel = (fmt, veld) =>
-        maand && maandNu
-            ? `${maandNaam(maand)}: ${fmt(maandNu[veld])} (${vorigeMaandNaam} ${fmt(maandVorig?.[veld])})`
-            : null;
-    const margePctNu = pct(nu.marge, nu.omzet);
+    const { nu, vorig } = kern.value;
     const margePctVorig = pct(vorig.marge, vorig.omzet);
+    const trend = (maat) => maandreeks(zendingen.value, maat, props.vandaag);
 
     return [
         {
             label: 'Omzet, jaar t/m vandaag',
             waarde: euroKort(nu.omzet),
             groei: groei(nu.omzet, vorig.omzet),
-            regel2: maandRegel(euroKort, 'omzet'),
+            trend: { series: trend('omzet'), eenheid: 'euro' },
         },
         {
             label: 'Brutomarge, jaar t/m vandaag',
             waarde: euroKort(nu.marge),
             groei: groei(nu.marge, vorig.marge),
-            regel2: maandRegel(euroKort, 'marge'),
+            trend: { series: trend('marge'), eenheid: 'euro' },
         },
         {
             label: 'Marge in % van omzet',
-            waarde: procent(margePctNu),
+            waarde: procent(pct(nu.marge, nu.omzet)),
             sub: margePctVorig != null ? `vorig jaar ${procent(margePctVorig)}` : null,
-            regel2:
-                maand && maandNu
-                    ? `${maandNaam(maand)}: ${procent(pct(maandNu.marge, maandNu.omzet))}`
-                    : null,
+            trend: { series: trend('margePct'), eenheid: 'procent' },
         },
         {
-            label: 'Zendingen',
+            label: 'Zendingen, jaar t/m vandaag',
             waarde: getal(nu.zendingen),
             groei: groei(nu.zendingen, vorig.zendingen),
-            regel2: maandRegel(getal, 'zendingen'),
+            trend: { series: trend('zendingen'), eenheid: 'aantal', kpiCode: 'afc_zendingen' },
         },
     ];
 });
@@ -201,23 +227,36 @@ const heeftData = computed(() => rows('kpi_afc_zending_maand').length > 0);
                             :tekst="[
                                 'Sprinter (zendingen) naast Cash (grootboek van Amsterdam Freight Company).',
                                 'Marge is de brutomarge volgens Sprinter: verkoop min gereserveerde inkoop. Omzet overal excl. invoerrechten en btw.',
-                                'Het richtingfilter werkt op alle Sprinter-cijfers; Cash en klantstatus kennen geen richting.',
+                                'Richting en modaliteit werken op de Sprinter-cijfers. Cash en klantbehoud kennen ze niet; per dossiereigenaar geldt alleen richting. Een grijs label bij het blok zegt dat.',
                             ]"
                         />
                     </h1>
                 </div>
 
                 <div
-                    class="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-md border border-gray-200 bg-white px-3 py-2 shadow-sm"
+                    class="sticky top-0 z-20 -mx-4 flex flex-wrap items-center gap-x-6 gap-y-2 border-b border-gray-200 bg-white/95 px-4 py-2 shadow-sm backdrop-blur lg:-mx-8 lg:px-8"
                 >
                     <AfcKeuze v-model="jaar" label="Jaar" :opties="jaarOpties" />
                     <AfcSegment v-model="richting" label="Richting" :opties="richtingOpties" />
+                    <AfcSegment v-model="modaliteit" label="Modaliteit" :opties="modaliteitOpties" />
+                    <button
+                        v-if="filterActief"
+                        type="button"
+                        class="text-xs font-medium text-gray-600 underline-offset-2 hover:text-gray-900 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-awc-orange"
+                        @click="wisFilters"
+                    >
+                        Wis filters
+                    </button>
                 </div>
 
                 <Message v-if="loadError" severity="warn" class="w-full">{{ loadError }}</Message>
 
-                <div v-if="loading" class="flex justify-center py-16">
-                    <ProgressSpinner style="width: 2.5rem; height: 2.5rem" />
+                <div v-if="loading" class="animate-pulse space-y-6" aria-busy="true" aria-label="Gegevens laden">
+                    <div class="h-5 w-2/3 rounded bg-gray-200" />
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                        <div v-for="i in 4" :key="i" class="h-44 rounded-xl border border-gray-200 bg-white" />
+                    </div>
+                    <div class="h-80 rounded-xl border border-gray-200 bg-white" />
                 </div>
 
                 <template v-else-if="heeftData">
@@ -233,13 +272,21 @@ const heeftData = computed(() => rows('kpi_afc_zending_maand').length > 0);
                                 :waarde="k.waarde"
                                 :sub="k.sub ?? (k.groei != null ? `${groeiTekst(k.groei)} t.o.v. vorig jaar` : null)"
                                 :sub-klasse="k.sub ? 'text-gray-500' : groeiKlasse(k.groei)"
-                                :regel2="k.regel2"
-                            />
+                            >
+                                <KpiTegelGrafiek
+                                    :series="k.trend.series"
+                                    :periode="String(jaar)"
+                                    :eenheid="k.trend.eenheid"
+                                    :kpi-code="k.trend.kpiCode ?? null"
+                                    richting="hoger_beter"
+                                    height-class="h-16"
+                                />
+                            </AfcKaart>
                         </div>
                         <p class="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
                             <span class="inline-flex items-center gap-1">
                                 Hoe lees ik dit
-                                <AfcInfo tekst="Jaar t/m vandaag tegen dezelfde kalenderperiode een jaar eerder, op rapportagedatum. De tweede regel is de laatste volle maand naast de maand ervoor." />
+                                <AfcInfo tekst="Jaar t/m vandaag tegen dezelfde kalenderperiode een jaar eerder, op rapportagedatum. De lijn toont elke maand van het gekozen jaar; de schaduwlijn is hetzelfde jaar ervoor. De lopende maand is nog niet compleet." />
                             </span>
                             <span
                                 v-if="openZendingen"
@@ -254,26 +301,30 @@ const heeftData = computed(() => rows('kpi_afc_zending_maand').length > 0);
                     <AfcMargebrug :rows="zendingen" :jaar="jaar" :tm-label="tmLabel" />
 
                     <AfcResultaatCash
+                        :geldt-niet="geldtNietCashKlant"
                         :rows="rows('kpi_afc_resultaat_maand')"
                         :lopend-jaar="jaar"
                         :laatste-volle-maand="laatsteVolleMaand"
                     />
 
-                    <AfcModaliteit :rows="zendingen" :jaar="jaar" />
+                    <AfcModaliteit :rows="zendingen" :jaar="jaar" :modaliteit="modaliteit" />
 
                     <AfcKlanten
                         :rows="rows('kpi_afc_klant_jaar')"
                         :jaar="jaar"
                         :richting="richting"
+                        :modaliteit="modaliteit"
                         :beschikbare-jaren="klantJaren"
                     />
 
                     <AfcKlantbehoud
+                        :geldt-niet="geldtNietCashKlant"
                         :klanten="rows('kpi_afc_klant')"
                         :retentie="rows('kpi_afc_klant_retentie_jaar')"
                     />
 
                     <AfcEigenaren
+                        :geldt-niet="geldtNietEigenaar"
                         :rows="filterRichting(rows('kpi_afc_eigenaar_maand'), richting)"
                         :jaar="jaar"
                         :beschikbare-jaren="eigenaarJaren"

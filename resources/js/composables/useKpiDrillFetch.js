@@ -1,7 +1,7 @@
 /**
  * @param {string[]} views
  * @param {{ limit?: number }} [opts]
- * @returns {Promise<{ tables: Record<string, object[]>, error: string|null }>}
+ * @returns {Promise<{ tables: Record<string, object[]>, meta: Record<string, any>|null, error: string|null }>}
  */
 export async function fetchKpiDrill(views, opts = {}) {
     if (!views?.length) {
@@ -32,7 +32,7 @@ export async function fetchKpiDrill(views, opts = {}) {
             };
         }
 
-        return { tables: json.tables ?? {}, error: null };
+        return { tables: json.tables ?? {}, meta: json.meta ?? null, error: null };
     } catch (e) {
         return {
             tables: {},

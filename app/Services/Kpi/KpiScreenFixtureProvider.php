@@ -702,12 +702,28 @@ class KpiScreenFixtureProvider
             }
         }
 
+        $meta = $this->meta('drill');
+        // Zelfde vorm als handler v11: drills op live Sprinter-views melden hoe vers Sprinter is.
+        if (array_intersect($views, (array) config('peliqan.kpi_live_views', [])) !== []) {
+            $meta['sprinter_live'] = [
+                'status' => 'ok',
+                'opgehaald_om' => now()->utc()->toIso8601ZuluString(),
+                'nachtsync_om' => now()->utc()->startOfDay()->addMinutes(91)->toIso8601ZuluString(),
+                'opgehaald' => 500,
+                'nieuw' => 3,
+                'gewijzigd' => 7,
+                'duur_ms' => 0,
+                'melding' => null,
+                'interval_s' => 60,
+            ];
+        }
+
         return [
             'bundle' => 'drill',
             'views' => $views,
             'tables' => $tables,
             'errors' => [],
-            'meta' => $this->meta('drill'),
+            'meta' => $meta,
         ];
     }
 

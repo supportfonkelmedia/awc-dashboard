@@ -19,19 +19,30 @@
 # Existing keys (bundle, views, tables, errors, meta) are unchanged; truncation still also adds the
 # old {view, warning: truncated_to_N_rows} entry to errors[].
 #
+# v11 (16-11-2026): Sprinter live voor de AFC-analyse. Vraagt een drill een van de SPRINTER_LIVE_VIEWS op,
+# dan haalt de handler eerst de nieuwste zendingen uit de Sprinter-API (max. 1x per SPRINTER_LIVE_INTERVAL_S,
+# gedeeld over alle bezoekers) en werkt alleen nieuwe of gewijzigde rijen bij in sprinter_api.shipments.
+# De views daarop ("My Queries".afc_zending_live / afc_klant_live) zijn databaseviews, dus de cijfers zijn direct
+# bij. Lukt het ophalen niet (limiet, time-out, storing), dan komen de cijfers uit de stand van de laatste sync;
+# meta.sprinter_live zegt welke. Diepe sync blijft 's nachts in app 18062 (zie projectnotitie 599).
+#
 # Reads replicated KPI tables in warehouse dw_2401, schema "My Queries", suffix _my_queries.
 # Fonkel/Laravel does tegel assembly & formatting; this handler only fetches rows.
 
 import json
 import os
 import re
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import parse_qs, urlparse
 
 import pandas as pd
+import requests
 
 WAREHOUSE_DW = "dw_2401"
 KPI_SCHEMA = '"My Queries"'
-HANDLER_VERSION = "2026-11-12-kpi-v10-drill-detail-scope"
+HANDLER_VERSION = "2026-11-16-kpi-v11-afc-sprinter-live"
 
 SCREENS = frozenset(
     {"strategisch", "operationeel", "tactisch", "awc", "afc", "acc"}
@@ -143,14 +154,231 @@ DRILL_SCOPE_OTHER_COLUMN = {
 # v10: views without concern rows (concern = sum of the entities): scope=concern means "all rows".
 DRILL_CONCERN_IS_ALL = frozenset({"kpi_bm_maand", "kpi_kosten_maand"})
 
-_dbconn = None
+# v11: één verbinding per thread, zodat een drill met meerdere views ze tegelijk kan lezen.
+_conn_local = threading.local()
+DRILL_PARALLEL_MAX = 6
+
+# ---------- v11: Sprinter live (AFC-analyse) ----------
+SPRINTER_BASE = "https://amsterdamfreight.sprinter3000.com/sapi"
+# Views die op sprinter_api.shipments rusten via "My Queries".afc_zending_live / afc_klant_live.
+SPRINTER_LIVE_VIEWS = frozenset(
+    {"kpi_afc_zending_maand", "kpi_afc_eigenaar_maand", "kpi_afc_klant_jaar", "kpi_afc_klant", "kpi_afc_klant_retentie_jaar"}
+)
+# Nieuwste zendingen per keer (lijst staat op nieuwste eerst; ~500 is ruim een week).
+SPRINTER_LIVE_LIMIT = 500
+# Sprinter staat 100 aanvragen per uur per endpoint toe; de nachtsync gebruikt er 3 tot 15.
+# Eén keer per minuut ophalen houdt dit onder de 60 per uur, hoeveel mensen er ook kijken.
+SPRINTER_LIVE_INTERVAL_S = 60
+SPRINTER_LIVE_TIMEOUT_S = 20
+SPRINTER_TOKEN_TTL_S = 600
+# Kolommen die de live views lezen, met hun type in sprinter_api.shipments.
+SPRINTER_LIVE_COLS = [
+    ("shipment_id", "bigint"),
+    ("shipment_number", "text"),
+    ("customer_company_id", "bigint"),
+    ("shipment_mode", "text"),
+    ("direction", "text"),
+    ("department", "text"),
+    ("shipment_owner", "text"),
+    ("shipment_status_code", "text"),
+    ("shipment_status", "bigint"),
+    ("create_date", "timestamptz"),
+    ("report_date", "timestamptz"),
+    ("update_date", "timestamptz"),
+    ("total_sales_amount", "double precision"),
+    ("total_purchase_amount", "double precision"),
+    ("total_gpm_amount", "double precision"),
+    ("quotation_id", "bigint"),
+    ("incoterms", "text"),
+    ("external_reference", "text"),
+    ("total_gross_weight", "double precision"),
+    ("total_volume", "double precision"),
+    ("total_loading_meter", "double precision"),
+]
+# Velden waarop we 'gewijzigd' bepalen (de rest volgt mee). De eerste vijf gaan in de lichte vergelijking.
+SPRINTER_DIFF_COLS = [
+    "update_date", "shipment_status_code", "total_sales_amount", "total_purchase_amount", "total_gpm_amount",
+    "report_date", "shipment_status", "customer_company_id", "shipment_mode", "direction", "shipment_owner",
+]
+SPRINTER_DIFF_LICHT = [("shipment_id", "bigint")] + [
+    (c, t) for c, t in SPRINTER_LIVE_COLS if c in SPRINTER_DIFF_COLS[:5]
+]
+
+_sprinter_token = {"bearer": None, "at": 0.0}
+_live_table_ready = False
+
+
+def _execute(query):
+    _get_conn().execute(WAREHOUSE_DW, query=query)
+
+
+def _sql_value(value, sqltype):
+    if value is None or (isinstance(value, str) and value.strip() == "" and sqltype != "text"):
+        return f"NULL::{sqltype}"
+    if sqltype in ("bigint", "double precision"):
+        try:
+            num = float(value)
+        except (TypeError, ValueError):
+            return f"NULL::{sqltype}"
+        if num != num:  # NaN
+            return f"NULL::{sqltype}"
+        return f"{int(num)}::bigint" if sqltype == "bigint" else f"{num!r}::double precision"
+    if isinstance(value, (dict, list)):
+        value = json.dumps(value, ensure_ascii=False)
+    return f"{sql_str_literal(value)}::{sqltype}"
+
+
+def _api_values_sql(rows, cols=None):
+    """VALUES-lijst met expliciete types; tijden zonder zone worden als UTC gelezen, net als de nachtsync."""
+    cols = cols or SPRINTER_LIVE_COLS
+    out = []
+    for r in rows:
+        out.append("(" + ", ".join(_sql_value(r.get(c), t) for c, t in cols) + ")")
+    return ",\n".join(out)
+
+
+def _ensure_live_table():
+    global _live_table_ready
+    if _live_table_ready:
+        return
+    _execute(
+        """CREATE TABLE IF NOT EXISTS sprinter_api.live_sync (
+             id int PRIMARY KEY, gestart_om timestamptz, klaar_om timestamptz, status text,
+             opgehaald int, nieuw int, gewijzigd int, duur_ms int, melding text)"""
+    )
+    _execute("INSERT INTO sprinter_api.live_sync (id, status) VALUES (1, 'nog niet') ON CONFLICT (id) DO NOTHING")
+    _live_table_ready = True
+
+
+def _live_state():
+    df, err = fetch(
+        """SELECT gestart_om, klaar_om, status, opgehaald, nieuw, gewijzigd, duur_ms, melding,
+                  EXTRACT(EPOCH FROM (now() - gestart_om)) AS sinds_start_s,
+                  (SELECT max(_sdc_batched_at) FROM sprinter_api.shipments) AS nachtsync_om
+           FROM sprinter_api.live_sync WHERE id = 1""",
+        "live_sync",
+    )
+    if err or df is None or df.empty:
+        return None
+    return df_records(df)[0]
+
+
+def _live_meta(state, status=None, melding=None):
+    state = state or {}
+    return {
+        "status": status or state.get("status"),
+        "opgehaald_om": state.get("klaar_om"),
+        "nachtsync_om": state.get("nachtsync_om"),
+        "opgehaald": state.get("opgehaald"),
+        "nieuw": state.get("nieuw"),
+        "gewijzigd": state.get("gewijzigd"),
+        "duur_ms": state.get("duur_ms"),
+        "melding": melding if melding is not None else state.get("melding"),
+        "interval_s": SPRINTER_LIVE_INTERVAL_S,
+    }
+
+
+def _sprinter_headers(force=False):
+    now = time.time()
+    if not force and _sprinter_token["bearer"] and now - _sprinter_token["at"] < SPRINTER_TOKEN_TTL_S:
+        return {"Authorization": f"Bearer {_sprinter_token['bearer']}"}
+    key = pq.get_secret("sprinter_client_key").strip()
+    r = requests.get(f"{SPRINTER_BASE}/authorize/{key}", timeout=SPRINTER_LIVE_TIMEOUT_S)
+    r.raise_for_status()
+    _sprinter_token["bearer"] = r.json()["bearer_token"]
+    _sprinter_token["at"] = now
+    return {"Authorization": f"Bearer {_sprinter_token['bearer']}"}
+
+
+def _fetch_newest_shipments():
+    params = {"offset": 0, "limit": SPRINTER_LIVE_LIMIT}
+    rr = requests.get(f"{SPRINTER_BASE}/shipments", headers=_sprinter_headers(), params=params, timeout=SPRINTER_LIVE_TIMEOUT_S)
+    if rr.status_code == 401:
+        rr = requests.get(f"{SPRINTER_BASE}/shipments", headers=_sprinter_headers(force=True), params=params, timeout=SPRINTER_LIVE_TIMEOUT_S)
+    if rr.status_code == 429:
+        raise RuntimeError("sprinter_limiet")
+    if rr.status_code != 200:
+        raise RuntimeError(f"sprinter_http_{rr.status_code}")
+    body = rr.json()
+    return [x for x in (body if isinstance(body, list) else []) if isinstance(x, dict) and x.get("shipment_id") is not None]
+
+
+def sprinter_live_refresh():
+    """
+    Haal de nieuwste zendingen op en werk sprinter_api.shipments bij (alleen nieuw of gewijzigd).
+    Gooit nooit: bij elke fout blijft de drill werken op de stand van de laatste sync.
+    """
+    try:
+        _ensure_live_table()
+        state = _live_state()
+        if state and state.get("sinds_start_s") is not None and float(state["sinds_start_s"]) < SPRINTER_LIVE_INTERVAL_S:
+            return _live_meta(state, status="recent" if state.get("status") == "ok" else state.get("status"))
+        # Claim de beurt, zodat gelijktijdige bezoekers niet allemaal Sprinter aanroepen.
+        _execute("UPDATE sprinter_api.live_sync SET gestart_om = now() WHERE id = 1")
+    except Exception as exc:
+        return _live_meta(None, status="fout", melding=f"status_niet_te_lezen: {str(exc)[:200]}")
+
+    t0 = time.time()
+    status, melding, opgehaald, nieuw, gewijzigd = "ok", None, 0, 0, 0
+    try:
+        rows = _fetch_newest_shipments()
+        opgehaald = len(rows)
+        if rows:
+            # Lichte vergelijking: alleen id, wijzigdatum, status en bedragen naar de database.
+            licht_cols = ", ".join(c for c, _ in SPRINTER_DIFF_LICHT)
+            licht_diff = " OR ".join(f"s.{c} IS DISTINCT FROM a.{c}" for c, _ in SPRINTER_DIFF_LICHT if c != "shipment_id")
+            df, err = fetch(
+                f"""WITH api ({licht_cols}) AS (VALUES {_api_values_sql(rows, SPRINTER_DIFF_LICHT)})
+                    SELECT a.shipment_id, (s.shipment_id IS NULL) AS is_nieuw
+                    FROM api a LEFT JOIN sprinter_api.shipments s ON s.shipment_id = a.shipment_id
+                    WHERE s.shipment_id IS NULL OR {licht_diff}""",
+                "live_diff",
+            )
+            if err:
+                raise RuntimeError(f"vergelijken_mislukt: {err[:200]}")
+            te_schrijven = {int(x) for x in df["shipment_id"].tolist()} if not df.empty else set()
+            nieuw = int(df["is_nieuw"].astype(bool).sum()) if not df.empty else 0
+            gewijzigd = len(te_schrijven) - nieuw
+            if te_schrijven:
+                kies = [r for r in rows if int(float(r["shipment_id"])) in te_schrijven]
+                cols = ", ".join(c for c, _ in SPRINTER_LIVE_COLS)
+                set_cols = ", ".join(f"{c} = EXCLUDED.{c}" for c, _ in SPRINTER_LIVE_COLS if c != "shipment_id")
+                diff_x = " OR ".join(f"s.{c} IS DISTINCT FROM EXCLUDED.{c}" for c in SPRINTER_DIFF_COLS)
+                _execute(
+                    f"""WITH api ({cols}) AS (VALUES {_api_values_sql(kies)})
+                        INSERT INTO sprinter_api.shipments AS s ({cols})
+                        SELECT {cols} FROM api
+                        ON CONFLICT (shipment_id) DO UPDATE SET {set_cols}
+                        WHERE {diff_x}"""
+                )
+    except requests.exceptions.Timeout:
+        status, melding = "fout", "sprinter_timeout"
+    except Exception as exc:
+        status, melding = "fout", str(exc)[:300]
+
+    duur_ms = int((time.time() - t0) * 1000)
+    # klaar_om = laatste GESLAAGDE ophaalronde; bij een fout blijft die staan, zodat de pagina eerlijk toont
+    # hoe oud de cijfers zijn.
+    klaar = "klaar_om = now(), " if status == "ok" else ""
+    try:
+        _execute(
+            f"""UPDATE sprinter_api.live_sync SET {klaar}status = {sql_str_literal(status)},
+                   opgehaald = {opgehaald}, nieuw = {nieuw}, gewijzigd = {gewijzigd}, duur_ms = {duur_ms},
+                   melding = {sql_str_literal(melding) if melding else 'NULL'}
+                WHERE id = 1"""
+        )
+    except Exception:
+        pass
+    state = _live_state() or {}
+    return _live_meta(state, status=status, melding=melding)
 
 
 def _get_conn():
-    global _dbconn
-    if _dbconn is None:
-        _dbconn = pq.dbconnect(WAREHOUSE_DW)
-    return _dbconn
+    conn = getattr(_conn_local, "conn", None)
+    if conn is None:
+        conn = pq.dbconnect(WAREHOUSE_DW)
+        _conn_local.conn = conn
+    return conn
 
 
 def df_records(df):
@@ -637,10 +865,27 @@ def bundle_drill(q):
     if periode_raw and not periode_van:
         errors.append({"view": "*", "warning": f"periode_van_ignored_invalid: {periode_raw[:40]}"})
 
+    # v11: eerst Sprinter live bijwerken als er een view op sprinter_api in zit.
+    sprinter_live = sprinter_live_refresh() if any(v in SPRINTER_LIVE_VIEWS for v in views) else None
+
+    # v11: meerdere views tegelijk lezen (eigen verbinding per thread); bij een probleem gewoon na elkaar.
+    def _lees(v):
+        return fetch_drill_view(v, limit, scope, periode_van)
+
+    resultaten = None
+    if len(views) > 1:
+        try:
+            with ThreadPoolExecutor(max_workers=min(DRILL_PARALLEL_MAX, len(views))) as ex:
+                resultaten = list(ex.map(_lees, views))
+        except Exception as exc:
+            errors.append({"view": "*", "warning": f"parallel_lezen_mislukt_na_elkaar: {str(exc)[:200]}"})
+            resultaten = None
+    if resultaten is None:
+        resultaten = [_lees(v) for v in views]
+
     tables = {}
     table_meta = {}
-    for view in views:
-        recs, meta, err, warnings = fetch_drill_view(view, limit, scope, periode_van)
+    for view, (recs, meta, err, warnings) in zip(views, resultaten):
         errors.extend(warnings)
         if err:
             errors.append({"view": view, "error": err})
@@ -653,7 +898,7 @@ def bundle_drill(q):
             # Same entry as before v7, kept for clients that read errors[].
             errors.append({"view": view, "warning": f"truncated_to_{limit}_rows"})
 
-    return {
+    out = {
         "bundle": "drill",
         "views": views,
         "tables": tables,
@@ -666,6 +911,9 @@ def bundle_drill(q):
             "filters": {k: v for k, v in (("scope", scope), ("periode_van", periode_van)) if v},
         },
     }
+    if sprinter_live is not None:
+        out["meta"]["sprinter_live"] = sprinter_live
+    return out
 
 
 def resolve_bundle(q):

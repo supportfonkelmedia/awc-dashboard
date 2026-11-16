@@ -1,11 +1,11 @@
--- Peliqan "My Queries".kpi_afc_klant_retentie_jaar_my_queries (table_id 1579284), stand 2026-11-12
+-- Peliqan "My Queries".kpi_afc_klant_retentie_jaar_my_queries (table_id 1579284), stand 2026-11-16 (databaseview, live)
 -- AFC-analyse (awc-dashboard /kpi/afc/analyse) | klantbehoud per kalenderjaar (aanmaakdatum) t.o.v. het jaar ervoor
 -- Klant = Sprinter-opdrachtgever (klant_id). Omzet excl. invoerrechten. Data begint maart 2023.
--- Bron: afc_control_center.afc_zending (Floor). Contract: documentation/AFC-analyse.md in awc-dashboard.
+-- Bron: "My Queries".afc_zending_live (live kopie van Floors afc_zending, sinds 16-11-2026). Contract: documentation/AFC-analyse.md in awc-dashboard.
 with z as (
   select klant_id, extract(year from aanmaakdatum)::int as jaar, count(*) as n,
          sum(coalesce(omzet_sprinter, 0) - coalesce(invoerrechten_cash, 0)) as omzet
-  from afc_control_center.afc_zending_afc_control_center
+  from "My Queries".afc_zending_live_my_queries
   where not geannuleerd and klant_id is not null and aanmaakdatum <= current_date
   group by 1, 2
 ),

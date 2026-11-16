@@ -58,12 +58,71 @@ async function laadControles() {
     }
 }
 
+const meta = ref(null);
+const verversen = ref(false);
+
+async function laadData() {
+    const { tables: t, meta: m, error: err } = await fetchKpiDrill(AFC_VIEWS, { limit: 5000 });
+    if (!err || !Object.keys(tables.value).length) {
+        tables.value = t;
+    }
+    meta.value = m;
+    error.value = err;
+}
+
 onMounted(async () => {
     laadControles();
-    const { tables: t, error: err } = await fetchKpiDrill(AFC_VIEWS, { limit: 5000 });
-    tables.value = t;
-    error.value = err;
+    await laadData();
     loading.value = false;
+});
+
+async function ververs() {
+    verversen.value = true;
+    await laadData();
+    verversen.value = false;
+}
+
+const tijd = (iso) => {
+    if (!iso) {
+        return null;
+    }
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) {
+        return null;
+    }
+    const opties = { timeZone: 'Europe/Amsterdam', hour: '2-digit', minute: '2-digit' };
+    const vandaagNl = new Date().toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' });
+    const datumNl = d.toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam' });
+
+    return datumNl === vandaagNl
+        ? d.toLocaleTimeString('nl-NL', opties)
+        : `${d.toLocaleDateString('nl-NL', { timeZone: 'Europe/Amsterdam', day: 'numeric', month: 'short' })} ${d.toLocaleTimeString('nl-NL', opties)}`;
+};
+
+/** Hoe vers zijn de Sprinter-cijfers? Uit meta.sprinter_live van de handler (v11). */
+const sprinterStand = computed(() => {
+    const live = meta.value?.sprinter_live;
+    if (!live) {
+        return null;
+    }
+    if (meta.value?.stale) {
+        return { toon: 'let_op', tekst: 'Peliqan reageert niet: laatst opgehaalde cijfers', uitleg: null };
+    }
+    const om = tijd(live.opgehaald_om);
+    if (live.status === 'ok' || live.status === 'recent') {
+        return {
+            toon: 'ok',
+            tekst: om ? `Sprinter live, ${om}` : 'Sprinter live',
+            uitleg: `Bij het openen haalt het dashboard de nieuwste zendingen uit Sprinter, hooguit eens per minuut. Cash (facturen, invoerrechten) blijft de stand van vanochtend.${live.nieuw || live.gewijzigd ? ` Laatste ronde: ${live.nieuw ?? 0} nieuw, ${live.gewijzigd ?? 0} gewijzigd.` : ''}`,
+        };
+    }
+    const sinds = om ?? tijd(live.nachtsync_om);
+
+    return {
+        toon: 'let_op',
+        tekst: sinds ? `Sprinter niet bereikbaar, stand ${sinds}` : 'Sprinter niet bereikbaar',
+        uitleg: `Live ophalen lukte niet${live.melding ? ` (${live.melding})` : ''}. De cijfers zijn van de laatste geslaagde ronde.`,
+    };
 });
 
 const rows = (view) => tables.value[view] ?? [];
@@ -247,6 +306,28 @@ const heeftData = computed(() => rows('kpi_afc_zending_maand').length > 0);
                     >
                         Wis filters
                     </button>
+                    <div v-if="sprinterStand" class="ml-auto flex items-center gap-2 text-xs">
+                        <span
+                            class="inline-flex items-center gap-1.5 font-medium"
+                            :class="sprinterStand.toon === 'ok' ? 'text-emerald-700' : 'text-amber-800'"
+                            role="status"
+                        >
+                            <span
+                                class="inline-block h-2 w-2 rounded-full"
+                                :class="sprinterStand.toon === 'ok' ? 'bg-emerald-500' : 'bg-amber-500'"
+                            />
+                            {{ sprinterStand.tekst }}
+                            <AfcInfo v-if="sprinterStand.uitleg" :tekst="sprinterStand.uitleg" />
+                        </span>
+                        <button
+                            type="button"
+                            class="rounded border border-gray-300 px-2 py-0.5 text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-awc-orange disabled:opacity-50"
+                            :disabled="verversen"
+                            @click="ververs"
+                        >
+                            {{ verversen ? 'Bezig…' : 'Ververs' }}
+                        </button>
+                    </div>
                 </div>
 
                 <Message v-if="loadError" severity="warn" class="w-full">{{ loadError }}</Message>

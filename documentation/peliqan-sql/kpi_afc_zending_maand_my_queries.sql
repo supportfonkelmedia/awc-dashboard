@@ -1,11 +1,11 @@
--- Peliqan "My Queries".kpi_afc_zending_maand_my_queries (table_id 1579280), stand 2026-11-12
+-- Peliqan "My Queries".kpi_afc_zending_maand_my_queries (table_id 1579280), stand 2026-11-16 (databaseview, live)
 -- AFC-analyse (awc-dashboard /kpi/afc/analyse) | maand x modaliteit x richting x ytd_venster
--- Bron: afc_control_center.afc_zending (Floor). Omzet excl. invoerrechten en btw = Sprinter-omzet min invoerrechten uit Cash.
+-- Bron: "My Queries".afc_zending_live (live kopie van Floors afc_zending, sinds 16-11-2026). Omzet excl. invoerrechten en btw = Sprinter-omzet min invoerrechten uit Cash.
 -- ytd_venster: rapportagedatum op of voor dezelfde dag van het jaar als vandaag (jaar t/m vandaag vergelijken).
 -- Contract: documentation/AFC-analyse.md in awc-dashboard. Kolommen niet hernoemen zonder de pagina aan te passen.
 with z as (
   select *, (extract(doy from rapportagedatum) <= extract(doy from current_date)) as ytd_venster
-  from afc_control_center.afc_zending_afc_control_center
+  from "My Queries".afc_zending_live_my_queries
   where not geannuleerd and rapportagedatum >= date '2024-01-01' and rapportagedatum <= current_date
 )
 select rapportagemaand as maand,

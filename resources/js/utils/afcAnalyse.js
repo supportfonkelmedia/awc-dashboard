@@ -53,6 +53,44 @@ export function filterRichting(rows, richting) {
     return richting === 'alle' ? rows : rows.filter((r) => r.richting === richting);
 }
 
+export function filterModaliteit(rows, modaliteit) {
+    return modaliteit === 'alle' ? rows : rows.filter((r) => r.modaliteit === modaliteit);
+}
+
+/**
+ * Maandreeks voor de trendlijn op een kaart (vorm van KpiTegelGrafiek: series met points).
+ * De lopende maand is 'voorlopig', zodat de grafiek hem omlijnd toont.
+ *
+ * @param {Array} zendingRows kpi_afc_zending_maand, al gefilterd
+ * @param {'omzet'|'marge'|'margePct'|'zendingen'} maat
+ * @param {string} vandaag 'YYYY-MM-DD'
+ */
+export function maandreeks(zendingRows, maat, vandaag) {
+    const lopend = String(vandaag).slice(0, 7);
+    const perMaand = new Map();
+    for (const r of zendingRows) {
+        const m = maandVan(r);
+        if (!m) {
+            continue;
+        }
+        const periode = `${Number(r.jaar)}-${String(m).padStart(2, '0')}`;
+        if (periode > lopend) {
+            continue;
+        }
+        perMaand.set(periode, [...(perMaand.get(periode) ?? []), r]);
+    }
+    const points = [...perMaand.entries()]
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([periode, rows]) => {
+            const t = som(rows);
+            const waarde = maat === 'margePct' ? pct(t.marge, t.omzet) : t[maat];
+
+            return { periode, waarde, status: periode === lopend ? 'voorlopig' : 'definitief' };
+        });
+
+    return [{ serie: null, points }];
+}
+
 export function ytdRows(rows, jaar) {
     return rows.filter((r) => Number(r.jaar) === jaar && truthy(r.ytd_venster));
 }

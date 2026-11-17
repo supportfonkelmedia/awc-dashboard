@@ -3,6 +3,7 @@ import { leesbaar } from '@/utils/leesbaar';
 import KpiInfo from '@/Components/Kpi/KpiInfo.vue';
 import KpiTileFooter from '@/Components/Kpi/KpiTileFooter.vue';
 import KpiTegelGrafiek from '@/Components/Kpi/KpiTegelGrafiek.vue';
+import KpiModalSplit from '@/Components/Kpi/KpiModalSplit.vue';
 import { computed } from 'vue';
 
 const props = defineProps({
@@ -10,7 +11,17 @@ const props = defineProps({
         type: Object,
         required: true,
     },
+    /** Rijen uit kpi_afc_sprinter_maand: de Modal split-tegel toont daarmee weg / zee / lucht. */
+    modaliteitRows: {
+        type: Array,
+        default: null,
+    },
 });
+
+/** Modal split met maanddata: verdeling i.p.v. alleen de lijn van het aandeel weg. */
+const toonSplit = computed(
+    () => props.tile.kpiCode === 'afc_modal_split' && (props.modaliteitRows?.length ?? 0) > 0,
+);
 
 /** Statussen waarvan de reden zichtbaar blijft: er is actie of voorzichtigheid nodig. */
 const REDEN_ZICHTBAAR = new Set(['onbetrouwbaar', 'wacht_op_invoer', 'data_ontbreekt', 'data_onvolledig']);
@@ -109,7 +120,7 @@ const goalChip = {
                         {{ tile.valueNumber ?? tile.valueFormatted }}
                     </p>
                     <span v-if="tile.valueUnit" class="text-[11px] text-gray-500">
-                        {{ tile.valueUnit }}
+                        {{ tile.valueUnit }}{{ toonSplit ? ' over de weg' : '' }}
                     </span>
                 </div>
 
@@ -173,6 +184,12 @@ const goalChip = {
 
             <!-- Een onbetrouwbaar cijfer krijgt ook geen trendlijn: de historie heeft hetzelfde probleem. -->
             <div v-if="tile.resolved.state === 'onbetrouwbaar'" class="mt-auto" />
+            <KpiModalSplit
+                v-else-if="toonSplit"
+                :rows="modaliteitRows"
+                :stand-per="tile.oordeelRow?.stand_per ? String(tile.oordeelRow.stand_per) : null"
+                class="mt-auto pt-4"
+            />
             <KpiTegelGrafiek
                 v-else
                 :series="tile.trendSeriesAll ?? tile.trendSeries"

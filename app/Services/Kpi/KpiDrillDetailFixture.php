@@ -19,6 +19,7 @@ class KpiDrillDetailFixture
             'kpi_churn_klant' => $this->churnKlant(),
             'kpi_winrate_deal' => $this->winrateDeal(),
             'kpi_ebitda_maand' => $this->ebitdaMaand(),
+            'kpi_afc_sprinter_maand' => $this->afcSprinterMaand(),
             default => null,
         };
     }
@@ -133,5 +134,59 @@ class KpiDrillDetailFixture
         }
 
         return $out;
+    }
+
+    /**
+     * Zendingen per maand en modaliteit (kolommen als kpi_afc_sprinter_maand), voor de
+     * Modal split-tegel. Weg/zee/lucht volgen de orde van grootte van de echte maanden.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function afcSprinterMaand(): array
+    {
+        $maanden = [
+            ['2024-12-01', 733, 713, 15, 5],
+            ['2025-01-01', 1287, 1147, 136, 4],
+            ['2025-02-01', 878, 817, 57, 4],
+            ['2025-03-01', 1017, 936, 72, 9],
+            ['2025-04-01', 985, 906, 73, 6],
+            ['2025-05-01', 1017, 954, 61, 2],
+            ['2025-06-01', 1003, 923, 74, 6],
+            ['2025-07-01', 1111, 1015, 96, 0],
+            ['2025-08-01', 882, 791, 82, 9],
+            ['2025-09-01', 987, 882, 98, 7],
+            ['2025-10-01', 968, 888, 73, 7],
+            ['2025-11-01', 939, 861, 74, 4],
+            ['2025-12-01', 637, 599, 36, 2],
+            ['2026-01-01', 1206, 1054, 150, 2],
+            ['2026-02-01', 887, 815, 68, 4],
+            ['2026-03-01', 1017, 932, 79, 6],
+            ['2026-04-01', 1037, 971, 59, 7],
+            ['2026-05-01', 1050, 1027, 22, 1],
+            ['2026-06-01', 1084, 1044, 37, 3],
+            ['2026-07-01', 1367, 1176, 188, 3],
+            ['2026-08-01', 1015, 906, 107, 2],
+            ['2026-09-01', 1219, 1110, 99, 10],
+            ['2026-10-01', 1116, 990, 124, 2],
+            ['2026-11-01', 467, 420, 43, 4],
+        ];
+
+        return array_map(function (array $m) {
+            [$maand, $zendingen, $weg, $zee, $lucht] = $m;
+            $pct = fn (int $n) => round(100 * $n / $zendingen, 1);
+
+            return [
+                'maand' => $maand,
+                'zendingen' => $zendingen,
+                'weg' => $weg,
+                'zee' => $zee,
+                'lucht' => $lucht,
+                'overig' => 0,
+                'pct_weg' => $pct($weg),
+                'pct_zee' => $pct($zee),
+                'pct_lucht' => $pct($lucht),
+                'status' => $maand >= '2026-11-01' ? 'voorlopig' : 'volledig',
+            ];
+        }, $maanden);
     }
 }

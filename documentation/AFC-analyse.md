@@ -11,6 +11,40 @@ Schema `afc_control_center` in dw_2401 (Floor, opgebouwd 11-11-2026). Dagelijkse
 `<tabel>_afc_control_center` tussen 08:45 en 09:15 UTC. De views hieronder komen in
 `"My Queries"` (replica `_my_queries`, elk uur), zodat de handler geen ander schema hoeft te lezen.
 
+## Sprinter live (sinds 16-11-2026)
+
+Chloë: "AFC Sprinter moet een live verbinding zijn". Gekozen: live bij het openen van de pagina,
+met eigen live views (Floors tabellen blijven ongewijzigd).
+
+Keten nu:
+
+1. **Handler v11** (app 17395) haalt bij een drill op een van de vijf Sprinter-views eerst de nieuwste
+   500 zendingen uit de Sprinter S-API (lijst staat op nieuwste eerst, ruim een week). Hooguit 1x per
+   minuut, gedeeld over alle bezoekers (Sprinter: max. 100 aanvragen per uur per endpoint; de nachtsync
+   gebruikt er 3 tot 15). Alleen nieuwe of gewijzigde zendingen (wijzigdatum, status, bedragen) worden
+   in `sprinter_api.shipments` bijgewerkt, voor de 21 kolommen die de views lezen. Stand per ronde in
+   `sprinter_api.live_sync` (één rij). De Sprinter-sleutel blijft in Peliqan (`sprinter_client_key`).
+2. **`"My Queries".afc_zending_live_my_queries`** (1586647) en **`afc_klant_live_my_queries`** (1586649):
+   databaseviews met precies Floors SQL van `afc_zending` en `afc_klant`, maar op de live tabel in plaats
+   van zijn dagelijkse snapshot. Bij aanmaken rij voor rij gelijk aan Floors snapshot (46.159 zendingen,
+   643 klanten, 0 verschillen). Wijzigt Floor zijn SQL, neem het hier over.
+3. De vijf Sprinter-views van deze pagina lezen de live views (checksums voor en na de omzetting gelijk).
+   `kpi_afc_resultaat_maand` (Cash) en de tegels (`kpi_afc_sprinter_*`) zijn niet veranderd.
+4. **Laravel** cachet drills op deze views niet meer (`peliqan.kpi_live_views`, `kpi_live_cache_ttl` = 0);
+   het laatste volledige antwoord blijft de terugval bij een storing.
+5. De pagina toont rechts in de filterbalk "Sprinter live, hh:mm" of, als ophalen mislukt,
+   "Sprinter niet bereikbaar, stand hh:mm", plus een knop Ververs.
+
+Wat níet live is: Cash (facturen, invoerrechten, debiteur) blijft Floors snapshot van ~09:00 UTC;
+Cash zelf ververst ook dagelijks. Nieuwe klanten in Sprinter krijgen hun naam pas na de nachtsync
+(`companies`). Wijzigingen aan zendingen ouder dan de nieuwste 500 komen 's nachts binnen (app 18062).
+
+Snelheid (gemeten 16-11 in de Peliqan-runtime): ophaalronde Sprinter ~8 s (alleen als de vorige meer dan
+een minuut geleden was), de zes views samen ~5 s doordat de handler ze sinds v11 tegelijk leest.
+
+Gotcha: tijden komen uit de API zonder tijdzone (lokale tijd) en worden, net als door de nachtsync, als
+UTC opgeslagen. Laat dat zo: de datum op de pagina klopt daardoor, en live en nacht zijn gelijk.
+
 ## Besluiten (Chloë, 12-11-2026)
 
 - Klantstatus volgens `afc_klant`: Verloren = laatste zending > 90 dagen (Eenmalig bij 1 zending),
@@ -190,8 +224,9 @@ de database precies zoals de handler hem zoekt. Een view rekent bij elke aanvraa
 `afc_control_center` (dagelijks 08:30 tot 09:15 UTC ververst; `kpi_afc_resultaat_maand` leest cashweb rechtstreeks); Laravel cachet het antwoord een uur.
 Zet hier geen replica op: die zou `..._my_queries_my_queries` heten en niet gelezen worden.
 
-Handler: app 17395 (`/kpi/data`) op v8 (`2026-11-12-kpi-v8-afc-analyse`), gelijk aan
-`peliqan_kpi_api_handler.py`. De vorige versie (v7) staat in de commit ervoor.
+Handler: app 17395 (`/kpi/data`) op v11 (`2026-11-16-kpi-v11-afc-sprinter-live`), gelijk aan
+`peliqan_kpi_api_handler.py`. Sinds 16-11 lezen de Sprinter-views de live views (zie "Sprinter live").
+De vorige versie (v10) staat in de commit ervoor.
 
 ## Nog te doen
 

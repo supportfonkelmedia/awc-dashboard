@@ -108,7 +108,9 @@ class KpiScreenService
         );
 
         $cacheKey = 'peliqan:kpi:'.$bundle.':v1:'.md5(json_encode($filtered));
-        $ttl = (int) config('peliqan.kpi_cache_ttl', 3600);
+        $ttl = $this->isLiveDrill($bundle, $filtered)
+            ? (int) config('peliqan.kpi_live_cache_ttl', 0)
+            : (int) config('peliqan.kpi_cache_ttl', 3600);
         $timeout = (int) config('peliqan.timeout', 60);
 
         try {
@@ -124,9 +126,7 @@ class KpiScreenService
                 $payload = $cached;
             } else {
                 $payload = $this->peliqan->fetchKpi($filtered);
-                if ($ttl > 0) {
-                    $this->bewaar($cacheKey, $payload, $ttl);
-                }
+                $this->bewaar($cacheKey, $payload, $ttl);
             }
 
             if (isset($payload['error']) && is_string($payload['error'])) {
@@ -168,13 +168,34 @@ class KpiScreenService
         }
 
         if ($this->heeftMislukteTabellen($payload)) {
-            Cache::put($cacheKey, $payload, min($ttl, self::ONVOLLEDIG_TTL));
+            if ($ttl > 0) {
+                Cache::put($cacheKey, $payload, min($ttl, self::ONVOLLEDIG_TTL));
+            }
 
             return;
         }
 
-        Cache::put($cacheKey, $payload, $ttl);
+        if ($ttl > 0) {
+            Cache::put($cacheKey, $payload, $ttl);
+        }
+        // Ook zonder cache (live drills) blijft het laatste volledige antwoord de terugval bij storing.
         Cache::put($this->laatstGoedKey($cacheKey), $payload, self::LAATST_GOED_TTL);
+    }
+
+    /**
+     * Een drill met een view op live Sprinter-data (AFC-analyse) mag niet een uur uit de cache komen.
+     *
+     * @param  array<string, mixed>  $query
+     */
+    private function isLiveDrill(string $bundle, array $query): bool
+    {
+        if ($bundle !== 'drill') {
+            return false;
+        }
+        $views = array_map('trim', explode(',', (string) ($query['views'] ?? '')));
+        $live = (array) config('peliqan.kpi_live_views', []);
+
+        return array_intersect($views, $live) !== [];
     }
 
     /**

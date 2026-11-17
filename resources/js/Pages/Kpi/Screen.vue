@@ -106,6 +106,17 @@ watch(
     { immediate: true },
 );
 
+// Modal split (AFC): de maandverdeling weg / zee / lucht zit niet in de schermbundel.
+// Lukt het ophalen niet, dan toont de tegel gewoon de trendlijn van het aandeel weg.
+const modaliteitRows = ref(null);
+if (typeof window !== 'undefined' && props.scherm === 'afc') {
+    fetchKpiDrill(['kpi_afc_sprinter_maand']).then(({ tables, error: err }) => {
+        if (!err) {
+            modaliteitRows.value = tables.kpi_afc_sprinter_maand ?? null;
+        }
+    });
+}
+
 const { layoutRowGroups, sections, gepland2027, bijgewerktLabel, periodeOptions } =
     useKpiScreenModel(payload, effectivePeriode, effectiveEntiteit, entiteitTrends);
 
@@ -248,6 +259,7 @@ function isOmzetbrugBanner(banner) {
                                 <KpiTile
                                     v-else
                                     :tile="row"
+                                    :modaliteit-rows="modaliteitRows"
                                     @details="openDetails"
                                     @invoer="onInvoer"
                                     @doel="onDoel"

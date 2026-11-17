@@ -137,4 +137,81 @@ class KpiDrillPeliqanRouteTest extends TestCase
         $this->assertSame('alaw', $a['tables']['kpi_ebitda_maand'][0]['scope_code']);
         $this->assertArrayHasKey('kpi_winrate_deal', $b['tables']);
     }
+    /** @return array<string, mixed> */
+    private function afcLiveAntwoord(int $zendingen): array
+    {
+        return [
+            'bundle' => 'drill',
+            'views' => ['kpi_afc_zending_maand', 'kpi_afc_resultaat_maand'],
+            'tables' => [
+                'kpi_afc_zending_maand' => [
+                    ['maand' => '2026-11-01', 'jaar' => 2026, 'maandnummer' => 11, 'modaliteit' => 'Weg', 'richting' => 'Export', 'ytd_venster' => true, 'zendingen' => $zendingen, 'zendingen_open' => 12, 'omzet' => 51234.5, 'omzet_incl_invoerrechten' => 51234.5, 'marge' => 10234.1],
+                ],
+                'kpi_afc_resultaat_maand' => [],
+            ],
+            'table_meta' => [],
+            'errors' => [],
+            'meta' => [
+                'warehouse' => 'dw_2401',
+                'handler_version' => '2026-11-16-kpi-v11-afc-sprinter-live',
+                'limit' => 5000,
+                'filters' => [],
+                'sprinter_live' => ['status' => 'ok', 'opgehaald_om' => '2026-11-16T11:48:51.885Z', 'nachtsync_om' => '2026-11-16T01:31:35.912Z', 'opgehaald' => 500, 'nieuw' => 0, 'gewijzigd' => 1, 'duur_ms' => 8183, 'melding' => null, 'interval_s' => 60],
+            ],
+        ];
+    }
+
+    public function test_live_afc_drill_skips_the_hour_cache(): void
+    {
+        $n = 0;
+        Http::fake([self::URL.'*' => function () use (&$n) {
+            $n++;
+
+            return Http::response($this->afcLiveAntwoord(100 + $n), 200);
+        }]);
+        $user = User::factory()->create();
+        $url = '/kpi/peliqan/data?bundle=drill&views=kpi_afc_zending_maand,kpi_afc_resultaat_maand&limit=5000';
+
+        $a = $this->actingAs($user)->getJson($url)->assertOk()->json();
+        $b = $this->actingAs($user)->getJson($url)->assertOk()->json();
+
+        // Elke keer naar Peliqan: de handler bepaalt zelf hoe vaak Sprinter wordt opgehaald (1x per minuut).
+        Http::assertSentCount(2);
+        $this->assertSame(101, $a['tables']['kpi_afc_zending_maand'][0]['zendingen']);
+        $this->assertSame(102, $b['tables']['kpi_afc_zending_maand'][0]['zendingen']);
+        $this->assertSame('ok', $b['meta']['sprinter_live']['status']);
+    }
+
+    public function test_non_live_drill_still_uses_the_hour_cache(): void
+    {
+        Http::fake([self::URL.'*' => Http::response($this->ebitdaAwcAntwoord(), 200)]);
+        $user = User::factory()->create();
+        $url = '/kpi/peliqan/data?bundle=drill&views=kpi_ebitda_maand,kpi_kosten_maand&scope=alaw';
+
+        $this->actingAs($user)->getJson($url)->assertOk();
+        $this->actingAs($user)->getJson($url)->assertOk();
+
+        Http::assertSentCount(1);
+    }
+
+    public function test_live_afc_drill_falls_back_to_last_good_answer_on_outage(): void
+    {
+        $n = 0;
+        Http::fake([self::URL.'*' => function () use (&$n) {
+            $n++;
+
+            return $n === 1
+                ? Http::response($this->afcLiveAntwoord(101), 200)
+                : Http::response(['error' => 'storing'], 500);
+        }]);
+        $user = User::factory()->create();
+        $url = '/kpi/peliqan/data?bundle=drill&views=kpi_afc_zending_maand,kpi_afc_resultaat_maand&limit=5000';
+
+        $this->actingAs($user)->getJson($url)->assertOk();
+        $json = $this->actingAs($user)->getJson($url)->assertOk()->json();
+
+        Http::assertSentCount(2);
+        $this->assertSame(101, $json['tables']['kpi_afc_zending_maand'][0]['zendingen']);
+        $this->assertTrue($json['meta']['stale']);
+    }
 }
